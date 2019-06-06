@@ -19,9 +19,9 @@ CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
         interactorSet = new Set();
     }
     for (var c of this.children) {
-        c.getInteractors(interactorSet)
+        c.getInteractors(interactorSet);
     }
-    for (var i of this.interactors) {
+    for (var i of this.interactors.values()) {
         interactorSet.add(i);
     }
     return interactorSet;

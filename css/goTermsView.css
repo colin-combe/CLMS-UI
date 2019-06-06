@@ -29,6 +29,14 @@
     margin-left: 5px;
 }
 
+
+.bcNode {
+    fill: #eee;
+    /* stroke: steelblue; */
+    stroke-width: 1px;
+}
+
+
 .goLink {
     fill: none;
     stroke: #aaa;

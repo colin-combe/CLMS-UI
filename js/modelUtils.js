@@ -39,8 +39,10 @@ CLMSUI.modelUtils = {
         return CLMSUI.modelUtils.getResidueType(getTo ? xlink.toProtein : xlink.fromProtein, getTo ? xlink.toResidue : xlink.fromResidue, seqAlignFunc);
     },
 
-    filterOutDecoyInteractors: function (interactors) {
-        return interactors.filter (function (i) { return !i.is_decoy; });
+    filterOutDecoyInteractors: function(interactors) {
+        return interactors.filter(function(i) {
+            return !i.is_decoy;
+        });
     },
 
     makeTooltipContents: {
@@ -83,8 +85,8 @@ CLMSUI.modelUtils = {
                 var goTermsMap = CLMSUI.compositeModelInst.get("go");
                 var goTermsText = "";
                 for (var goId of interactor.go) {
-                  var goTerm = goTermsMap.get(goId);
-                  goTermsText  += goTerm.name + "<br>";
+                    var goTerm = goTermsMap.get(goId);
+                    goTermsText += goTerm.name + "<br>";
                 }
                 contents.push(["GO", goTermsText]);
             }
@@ -347,26 +349,26 @@ CLMSUI.modelUtils = {
     },
 
     amino1toMass: {
-        "A":71.03711,
-        "R":156.10111,
-        "N":114.04293,
-        "D":115.02694,
-        "C":103.00919,
-        "E":129.04259,
-        "Q":128.05858,
-        "G":57.02146,
-        "H":137.05891,
-        "I":113.08406,
-        "L":113.08406,
-        "K":128.09496,
-        "M":131.04049,
-        "F":147.06841,
-        "P":97.05276,
-        "S":87.03203,
-        "T":101.04768,
-        "W":186.07931,
-        "Y":163.06333,
-        "V":99.06841,
+        "A": 71.03711,
+        "R": 156.10111,
+        "N": 114.04293,
+        "D": 115.02694,
+        "C": 103.00919,
+        "E": 129.04259,
+        "Q": 128.05858,
+        "G": 57.02146,
+        "H": 137.05891,
+        "I": 113.08406,
+        "L": 113.08406,
+        "K": 128.09496,
+        "M": 131.04049,
+        "F": 147.06841,
+        "P": 97.05276,
+        "S": 87.03203,
+        "T": 101.04768,
+        "W": 186.07931,
+        "Y": 163.06333,
+        "V": 99.06841,
     },
 
     // return array of indices of first occurrence of a sequence when encountering a repetition
@@ -425,7 +427,7 @@ CLMSUI.modelUtils = {
             var max = {
                 key: undefined,
                 seqObj: undefined,
-                bestScore: 2   //1e-25
+                bestScore: 2 //1e-25
             };
             var seqObj = sequenceObjs[n];
             entries.forEach(function(entry) {
@@ -469,7 +471,7 @@ CLMSUI.modelUtils = {
             if (interactorCollection.length === undefined) {
                 interactorCollection = CLMS.arrayFromMapValues(interactorCollection);
             }
-            ids = CLMSUI.modelUtils.filterOutDecoyInteractors (interactorCollection)
+            ids = CLMSUI.modelUtils.filterOutDecoyInteractors(interactorCollection)
                 .map(function(prot) {
                     return prot.accession;
                 })
@@ -513,9 +515,10 @@ CLMSUI.modelUtils = {
         var subIndexedMap = {};
         d3.entries(mmap).forEach(function(entry) {
             subIndexedMap[entry.key] = d3.nest()
-                .key(function(d) { return d[subIndexingProperty];})
-                .entries(entry.value)
-            ;
+                .key(function(d) {
+                    return d[subIndexingProperty];
+                })
+                .entries(entry.value);
         });
         return subIndexedMap;
     },
@@ -851,7 +854,7 @@ CLMSUI.modelUtils = {
                     var line = lines[l];
                     if (line.trim() != "") {
                         if (line.trim() == "[Term]" || line.trim() == "[Typedef]") {
-                            if (term){//} && term.namespace == termType) {
+                            if (term) { //} && term.namespace == termType) {
                                 go.set(term.id, term);
                             }
                             term = new CLMSUI.GoTerm();
@@ -860,13 +863,13 @@ CLMSUI.modelUtils = {
                             if (parts[0] == "is_a" || parts[0] == "intersection_of" || parts[0] == "relationship") {
                                 term[parts[0]].add(parts.slice(1, parts.length).join("").trim());
                             } else {
-                              term[parts[0]] = parts.slice(1, parts.length).join("").trim();
+                                term[parts[0]] = parts.slice(1, parts.length).join("").trim();
                             }
                         }
                     }
                 }
                 // if (term.namespace == termType) {
-                    go.set(term.id, term);
+                go.set(term.id, term);
                 // }
                 console.log("go size:" + go.size)
                 CLMSUI.compositeModelInst.set("go", go);
@@ -877,18 +880,17 @@ CLMSUI.modelUtils = {
                 function checkTerm(goTerm) {
                     if (!tempMap.has(goTerm.id)) {
                         if (goTerm.is_a.size > 0) {
-                          var is_aValues = goTerm.is_a.values();
-                          for (var potentialParent of is_aValues) {
-                              var parentId = potentialParent.split(" ")[0];
-                              var parentTerm = go.get(parentId);
-                              if (goTerm.namespace = parentTerm.namespace) {
-                                goTerm.parents.push(parentTerm);
-                                checkTerm(parentTerm);
-                                parentTerm.children.push(goTerm);
-                              }
-                          }
-                        }
-                        else if (goTerm.id == "GO0008150") {
+                            var is_aValues = goTerm.is_a.values();
+                            for (var potentialParent of is_aValues) {
+                                var parentId = potentialParent.split(" ")[0];
+                                var parentTerm = go.get(parentId);
+                                if (goTerm.namespace = parentTerm.namespace) {
+                                    goTerm.parents.push(parentTerm);
+                                    checkTerm(parentTerm);
+                                    parentTerm.children.push(goTerm);
+                                }
+                            }
+                        } else if (goTerm.id == "GO0008150") {
                             goTrees.biological_process = goTerm;
                         } else if (goTerm.id == "GO0003674") {
                             goTrees.molecular_function = goTerm;
@@ -904,10 +906,21 @@ CLMSUI.modelUtils = {
                 };
 
                 for (var t of go.values()) {
-                    // if (t.namespace == termType) {
-                        checkTerm(t);
-                    // }
+                    checkTerm(t);
                 }
+
+                function setNodeDepth(node, depth) {
+                    if (depth > node.depth) {
+                        node.depth = depth;
+                    }
+                    for (var c of node.children) {
+                        setNodeDepth(c, depth + 1);
+                    }
+                }
+
+                setNodeDepth(goTrees.biological_process, 0);
+                setNodeDepth(goTrees.molecular_function, 0);
+                setNodeDepth(goTrees.cellular_component, 0);
 
                 CLMSUI.compositeModelInst.set("goTrees", goTrees);
 
@@ -918,7 +931,6 @@ CLMSUI.modelUtils = {
                 });
 
                 var gafLines = gafFileContents.split('\n');
-                //var groups = new Map();
                 for (var g = 0; g < gafLines.length; g++) {
                     line = gafLines[g];
                     if (line.startsWith("!") == false) {
@@ -926,28 +938,20 @@ CLMSUI.modelUtils = {
                         var goId = fields[4].replace(":", "");
                         var goTerm = go.get(goId);
                         if (goTerm) {
-                            var proteinId = protMap.get(fields[1]);
-                            var protein = proteins.get(proteinId);
-                            goTerm.interactors.add(protein);
-                            if (protein) {
+                            var acc = fields[1];
+                            var proteinId = protMap.get(acc);
+                            if (proteinId) {
+                                var protein = proteins.get(proteinId);
+                                goTerm.interactors.add(protein);
                                 if (!protein.go) {
                                     protein.go = new Set();
                                 }
                                 //console.log(">>"+goId);
                                 protein.go.add(goId);
-                                // if (!groups.has(goId)) {
-                                //     var accs = new Set();
-                                //     accs.add(proteinId);
-                                //     groups.set(goId, accs);
-                                // } else {
-                                //     groups.get(goId).add(proteinId);
-                                // }
                             }
                         }
                     }
                 }
-
-                // update groups
 
                 CLMSUI.vent.trigger("goAnnotationsUpdated", {
                     // groups: groups
@@ -1366,15 +1370,14 @@ CLMSUI.modelUtils = {
             .x(accessorObj.x || octree.x())
             .y(accessorObj.y || octree.y())
             .z(accessorObj.z || octree.z())
-            .addAll(bigPointArr)
-        ;
+            .addAll(bigPointArr);
 
         maxDistance = maxDistance || 200;
-        
+
         var nearest = smallPointArr.map(function(point) {
             return octree.find(octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
         });
-        var dist = smallPointArr.map (function (point, i) {
+        var dist = smallPointArr.map(function(point, i) {
             return nearest[i] ? CLMSUI.modelUtils.getDistanceSquared(point.coords, nearest[i].coords) : undefined;
         });
 
@@ -1449,14 +1452,14 @@ CLMSUI.modelUtils = {
         });
     },
 
-    getSearchGroups: function (clmsModel) {
-        var searchArr = CLMS.arrayFromMapValues (clmsModel.get("searches"));
-        var uniqueGroups = _.uniq (_.pluck (searchArr, "group"));
+    getSearchGroups: function(clmsModel) {
+        var searchArr = CLMS.arrayFromMapValues(clmsModel.get("searches"));
+        var uniqueGroups = _.uniq(_.pluck(searchArr, "group"));
         //console.log ("SSS", searchArr, uniqueGroups);
-        uniqueGroups.sort (function (a,b) {
-            var an = Number.parseFloat (a);
-            var bn = Number.parseFloat (b);
-            return !Number.isNaN(an) && !Number.isNaN(bn) ? an - bn : a.localeCompare (b);
+        uniqueGroups.sort(function(a, b) {
+            var an = Number.parseFloat(a);
+            var bn = Number.parseFloat(b);
+            return !Number.isNaN(an) && !Number.isNaN(bn) ? an - bn : a.localeCompare(b);
         });
         return uniqueGroups;
     },

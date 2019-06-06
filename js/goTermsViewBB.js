@@ -71,6 +71,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         }
 
         //four  layers
+        this.backgroundGroup = vis.append("g");
         this.linksGroup = vis.append("g");
         this.foregroundGroup = vis.append("g");
 
@@ -116,22 +117,23 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
         var nodes = new Map(); // not hidden nodes
         var linkSubsetMap = new Map();
-        /*var depthMap = new Map();*/
+        var depthMap = new Map();
+
         if (this.root) {
             recurseGroup(this.root);
         }
 
         function recurseGroup(group) {
-            if (!nodes.has(group.id)) { //}&& group.getInteractors().size > 0) {
+            if (!nodes.has(group.id)) {
                 nodes.set(group.id, group);
-                /*                var sameDepthArr = depthMap.get(group.depth);
-                                if (!sameDepthArr) {
-                                    sameDepthArr = [];
-                                    depthMap.set(group.depth, sameDepthArr)
-                                }
-                                sameDepthArr.push(group);
-                */
-                for (var p of group.getClosestVisibleParents().values()) {
+                var sameDepthArr = depthMap.get(group.depth);
+                if (!sameDepthArr) {
+                    sameDepthArr = [];
+                    depthMap.set(group.depth, sameDepthArr)
+                }
+                sameDepthArr.push(group);
+
+                for (var p of group.parents) { //getClosestVisibleParents().values()) {
                     recurseGroup(p);
                     var fromId = p.id;
                     var toId = group.id;
@@ -153,24 +155,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             }
         };
 
-        nodes = CLMS.arrayFromMapValues(nodes);
-        edges = CLMS.arrayFromMapValues(linkSubsetMap);
+        nodes = Array.from(nodes.values());
 
-
-        /*function setNodeDepth (node, depth) {
-            if (depth > node.depth) {
-                node.depth = depth;
-            }
-            for (var c of node.children){
-                setNodeDepth(c, depth + 1);
-            }
-        }
-
-        // setNodeDepth(goTrees.biological_process, 0);
-        // setNodeDepth(goTrees.molecular_function, 0);
-        // setNodeDepth(goTrees.cellular_component, 0);
-
-        /*      var constraints = [];
+        var constraints = [];
         for (var sameDepth of depthMap.values()) {
             var constraint = {
                 "type": "alignment",
@@ -187,7 +174,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             constraint.offsets = offsets;
             constraints.push(constraint);
         }
-*/
+
+        edges = Array.from(linkSubsetMap.values());
+
         delete this.d3cola._lastStress;
         delete this.d3cola._alpha;
         delete this.d3cola._descent;
@@ -198,7 +187,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .convergenceThreshold(0.1)
             .nodes(nodes)
             .links(edges)
-            // .constraints(constraints)
+            .constraints(constraints)
             .flowLayout('x', 300);
 
         var self = this;
@@ -220,10 +209,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             })
             .on("click", function(d) {
 
-                // self.model.setSelectedProteins([], false);
-                // self.toSelect = new Set();
-                // self.selectTerm(d);
-                // self.model.setSelectedProteins(Array.from(self.toSelect), true);
+                self.model.setSelectedProteins([], false);
+                self.model.setSelectedProteins(Array.from(d.getInteractors().values()), true);
             })
             .on("mouseover", function(d) {
                 d3.select(this).select("circle").classed("highlightedProtein", true);
@@ -263,6 +250,18 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 return d.expanded ? 5 : 3;
             });
 
+        var backgroundCircleSel = this.backgroundGroup.selectAll(".bcNode")
+            .data(nodes, function(d) {
+                return d.id;
+            });
+
+        var bcEnter = backgroundCircleSel.enter().append("circle")
+            .classed("bcNode", true)
+            .attr("r", function(d) {
+              console.log("I", d.getInteractors().size)
+                return Math.sqrt(d.getInteractors().size / Math.PI) * 10;
+            })
+        backgroundCircleSel.exit().remove();
 
         var link = this.linksGroup.selectAll(".goLink")
             .data(edges, function(d) {
@@ -277,9 +276,6 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         link.exit().remove();
-
-        //        node.select("circle").attr("r", function (d) {return d.expanded? 0 : d.getBlobRadius();})
-        // Math.sqrt(d.getInteractors().size / Math.PI) * 10
 
         /*var nodeDebug = this.vis.selectAll(".nodeDebug")
             .data(nodes, function(d) {
@@ -300,6 +296,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.d3cola.start(10, 15, 20).on("tick", function() {
             node.attr("transform", function(d) {
+                return "translate(" + d.x + "," + d.y + ")";
+            });
+            backgroundCircleSel.attr("transform", function(d) {
                 return "translate(" + d.x + "," + d.y + ")";
             });
 
