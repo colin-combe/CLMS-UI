@@ -208,7 +208,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             decoysTD: [], // links with a decoy protein at one end (will include any decoy linears)
             decoysDD: [], // links with decoy proteins at both ends
         };
-        
+
         this.filteredStats = {
             ppi: 0
         };
@@ -270,11 +270,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     getFilteredCrossLinks: function(type) { // if type of crosslinks not declared, make it 'targets' by default
         return this.filteredXLinks[type || "targets"];
     },
-    
+
     getFilteredDatum: function (key) {
         return this.filteredStats[key];
     },
-    
+
     getAllTTCrossLinks: function () {
         var clmsModel = this.get("clmsModel");
         if (clmsModel) {
@@ -519,19 +519,37 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         }
 
         //this.get("filterModel").trigger("change");
-        //~ this.setSelectedProteins(CLMS.arrayFromMapValues(idsToSelect));//todo: IE
-        this.setSelectedProteins(Array.from(toSelect)); //todo: IE
+        this.setSelectedProteins(Array.from(toSelect));
 
     },
 
     proteinSelectionTextFilter: function () {
         var filterText = d3.select("#proteinSelectionFilter").property("value").trim().toLowerCase();
         var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
-        
+
         var toSelect = participantsArr.filter (function (p) {
             return (p.name.toLowerCase().indexOf(filterText) != -1 || p.description.toLowerCase().indexOf(filterText) != -1);
         });
         this.setSelectedProteins(toSelect);
+    },
+
+    groupSelectedProteins: function() {
+        var groups = this.get("groups");
+        if (!groups){
+          groups = [];
+        }
+        var group = [];
+        var selectedArr = this.get("selectedProteins");
+        var selectedCount = selectedArr.length;
+        for (var s = 0; s < selectedCount; s++) {
+            var participant = selectedArr[s];
+            group.push(participant);
+        }
+        groups.push(group);
+    //    this.setSelectedProteins([]);
+        this.set("groups", groups);
+        this.trigger("groupsChanged");
+
     },
 
     getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
@@ -568,23 +586,23 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         return distArr;
     },
-    
+
     getParticipantFeatures: function (participant) {
         var alignColl = this.get("alignColl");
         var featuresArray = [
-            participant.uniprot ? participant.uniprot.features : [], 
+            participant.uniprot ? participant.uniprot.features : [],
             alignColl.getAlignmentsAsFeatures(participant.id),
             participant.userAnnotations || [],
-        ];    
+        ];
         return d3.merge(featuresArray.filter(function(arr) {
             return arr !== undefined;
         }));
     },
-    
+
     getFilteredFeatures: function (participant) {
 
         var features = this.getParticipantFeatures (participant);
-        
+
         var annots = this.get("annotationTypes").where({
             shown: true
         });

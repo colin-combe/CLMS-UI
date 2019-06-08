@@ -75,7 +75,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.linksGroup = vis.append("g");
         this.foregroundGroup = vis.append("g");
 
-        var termSelectData = ["biological_process", "molecular_function", "cellular_component"];
+        var termSelectData = [ "cellular_component", "biological_process", "molecular_function"];
 
         var options = this.termSelect.selectAll("option")
             .data(termSelectData)
@@ -92,7 +92,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
-        //  this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
+        this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
         // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
 
         this.d3cola = cola.d3adaptor(d3)
@@ -221,10 +221,12 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                         pageX: d3.event.pageX,
                         pageY: d3.event.pageY
                     });
+                self.model.setHighlightedProteins(Array.from(d.getInteractors().values()));
             })
             .on("mouseout", function(d) {
                 d3.select(this).select("circle").classed("highlightedProtein", false);
                 self.model.get("tooltipModel").set("contents", null);
+                self.model.setHighlightedProteins([]);
             });
 
         node.exit().remove();
@@ -258,7 +260,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var bcEnter = backgroundCircleSel.enter().append("circle")
             .classed("bcNode", true)
             .attr("r", function(d) {
-              console.log("I", d.getInteractors().size)
+              // console.log("I", d.getInteractors().size)
                 return Math.sqrt(d.getInteractors().size / Math.PI) * 10;
             })
         backgroundCircleSel.exit().remove();
@@ -392,7 +394,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         //        this.render();
         return this;
     },
-    /*
+
         highlightedProteinsChanged: function() {
             var highlightedParticipants = this.model.get("highlightedProteins");
             for (var highlightedParticipant of highlightedParticipants) {
@@ -400,14 +402,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 if (highlightedParticipant.go) {
                     for (var goTerm of highlightedParticipant.go) {
                         d3.select("#" + goTerm)
-                            .style("fill", "#000");
+                            .style("fill", "yellow");
                     }
                 }
             }
             return this;
         },
 
-        selectedProteinsChanged: function() {
+    /*        selectedProteinsChanged: function() {
             for (var group of this.groupMap.values()) {
                 if (group.children) {
                     group._children = group.children;

@@ -12,6 +12,19 @@ CLMSUI.GoTerm = function() {
     this.width = 50;
     this.expanded = false;
     this.depth = 0;
+
+    //TODO - this wastes a bit memory coz the property is not on the prototype, fix
+    // Object.defineProperty(this, "width", {
+    //     get: function width() {
+    //         return this.upperGroup.getBBox().width;
+    //     }
+    // });
+    // var self = this;
+    // Object.defineProperty(this, "height", {
+    //     get: function height() {
+    //         return Math.sqrt(self.getInteractors().size / Math.PI) * 10;;//this.upperGroup.getBBox().height;
+    //     }
+    // });
 }
 
 CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
