@@ -1,13 +1,14 @@
 CLMSUI = CLMSUI || {};
 
 CLMSUI.GoTerm = function() {
-    this.is_a = new Set();
-    this.intersection_of = new Set();
+  this.is_a = new Set();
+  this.part_of = new Set();
+  this.intersection_of = new Set();
     this.relationship = new Set();
     this.interactors = new Set();
 
-    this.children = [];
-    this.parents = [];
+    this.is_aChildren = [];
+    this.part_ofChildren = [];
     this.height = 25;
     this.width = 50;
     this.expanded = false;
@@ -31,7 +32,7 @@ CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
     if (!interactorSet) {
         interactorSet = new Set();
     }
-    for (var c of this.children) {
+    for (var c of this.is_aChildren) {
         c.getInteractors(interactorSet);
     }
     for (var i of this.interactors.values()) {
@@ -40,6 +41,7 @@ CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
     return interactorSet;
 }
 
+/*
 CLMSUI.GoTerm.prototype.getClosestVisibleParents = function(visibleParents) {
     if (!visibleParents) {
         visibleParents = new Set();
@@ -66,3 +68,4 @@ CLMSUI.GoTerm.prototype.isVisible = function() {
     }
     return false;
 }
+*/

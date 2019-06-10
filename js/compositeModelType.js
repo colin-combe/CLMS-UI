@@ -259,9 +259,9 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         subsetDimension.filterExact (true);
         console.log (cfilter.allFiltered());
         */
-
-        this.trigger("filteringDone");
         this.trigger("hiddenChanged");
+        this.trigger("filteringDone");
+
 
         return this;
 

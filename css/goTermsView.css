@@ -6,20 +6,19 @@
     height: 500px;
 }
 
-.goTermsView svg {
-    height: 4500px;
-    width: 4500px;
-    position: absolute;
+ .goTermsView svg {
+    /* height: 100%;
+    width: 100%;
+    position: absolute; */
     /* shape-rendering: crispedges; */
 }
 
-.node {
+/* .node {
     cursor: pointer;
 }
 
 .node circle {
     fill: #000;
-    /* stroke: steelblue; */
     stroke-width: 1px;
 }
 
@@ -32,7 +31,6 @@
 
 .bcNode {
     fill: #eee;
-    /* stroke: steelblue; */
     stroke-width: 1px;
 }
 
@@ -41,9 +39,26 @@
     fill: none;
     stroke: #aaa;
     stroke-width: 1px;
-      /* marker-start: url(#end-arrow); */
+} */
+.node {
+  cursor: pointer;
 }
 
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 3px;
+}
+
+.node text {
+  font: 12px sans-serif;
+}
+
+.goLink {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 2px;
+}
 
 div.goTermsView > div > div.panelInner {
   /* overflow: scroll; */
