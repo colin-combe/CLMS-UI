@@ -215,7 +215,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         if (alternativeCount > 4) { // if more than a certain number of possible pairings whittle it down to the closest one
                             addAtomPoints.call (this, fromPDBResidues);
                             addAtomPoints.call (this, toPDBResidues);
-                            var results = CLMSUI.modelUtils.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 200, octreeIgnoreFunc);
+                            var results = CLMSUI.modelUtils.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 2000, octreeIgnoreFunc);
                             results = results.filter (function (res) { return res[2] !== undefined; });
                             if (results.length) {
                                 results.forEach (function (r) { r[2] = CLMSUI.utils.toNearest (Math.sqrt(r[2]), 1); });

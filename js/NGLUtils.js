@@ -90,7 +90,7 @@ CLMSUI.NGLUtils = {
                             CLMSUI.utils.xilog ("UniprotMapRes", uniprotMappingResults, nglSequences);
                             if (uniprotMappingResults.remaining.length) { // Some PDB sequences don't have unicode protein matches in this search
                                 var remainingSequences = _.pluck (uniprotMappingResults.remaining, "seqObj");   // strip the remaining ones back to just sequence objects
-                                //console.log ("rem", remainingSequences);
+                                //console.log ("rem", remainingSequences, uniprotMappingResults);
                                 matchByXiAlignment (remainingSequences, uniprotMappingResults.uniprotMapped);   // fire them into xi alignment routine
                                 //returnFailure ("No valid uniprot data returned");
                             } else {

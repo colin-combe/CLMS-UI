@@ -444,7 +444,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var linkText = "Currently showing " + commaFormat(fullLinkCount) + " in full "+
             (halfLinkCount ? "and "+commaFormat(halfLinkCount)+" in part " : "" ) + 
             "of " + commaFormat(currentFilteredLinkCount) + " filtered TT crosslinks"+
-            (missingLinkCount ? " ("+missingLinkCount+" others outside of structure scope)" : "")
+            (missingLinkCount ? " ("+commaFormat(missingLinkCount)+" others outside of structure scope)" : "")
         ;
         this.chartDiv.select("div.linkInfo").html(linkText);
         return this;
