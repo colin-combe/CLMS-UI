@@ -446,6 +446,12 @@ CLMSUI.NGLUtils = {
         writer.download (name || structure.name+"-Crosslinked");
     },
     
+    //TODO
+    exportPymolCrosslinks: function (structure, nglModelWrapper, name, remarks) {
+        var pdbids = structure.chainToOriginalStructureIDMap || [structure.name];
+        var links = nglModelWrapper.getFullLinks(); // filter to ones between different models
+    },
+    
     copyEntities: function (combinedStructure, originalStructures) {
         var gci = 0;
         
