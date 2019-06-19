@@ -980,8 +980,17 @@ CLMSUI.utils = {
         node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
         */
     },
-
-
+    
+    isModernWeb: function () {
+        var modernWeb;
+        try {
+            modernWeb = !!new Blob();
+        } catch (e) {
+            modernWeb = false;
+        }
+        return modernWeb;
+    },
+    
     BaseFrameView: Backbone.View.extend({
 
         events: {
@@ -1368,20 +1377,20 @@ CLMSUI.utils = {
         makeChartTitle: function(counts, colourScheme, titleElem, matchLevel) {
             var labels = colourScheme.isCategorical() ? colourScheme.get("labels").range() : [];
             var commaed = d3.format(",");
-            var total = d3.sum(counts);
+            var totalStr = commaed(d3.sum(counts));
             var itemStr = matchLevel ? " Matches" : " Cross-Links";
             var pairs = _.zip (labels, counts);
             var linkCountStr = counts.map(function(count, i) {
                 return commaed(count) + " " + (matchLevel ? "in " : "") + (labels[i] || colourScheme.get("undefinedLabel"));
             }, this);
             
-            var titleText = this.identifier + ": " + commaed(total) + itemStr + " - " + linkCountStr.join(", ");
+            var titleText = this.identifier + ": " + totalStr + itemStr + " - " + linkCountStr.join(", ");
             titleElem.text(titleText);
             
             var self = this;
             titleElem.on("mouseenter", function(d) {
                 self.model.get("tooltipModel")
-                    .set("header", self.identifier+", "+total+itemStr)
+                    .set("header", self.identifier+": "+totalStr+itemStr)
                     .set("contents", linkCountStr)
                     .set("location", {
                         pageX: d3.event.pageX,

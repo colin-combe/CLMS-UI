@@ -379,7 +379,8 @@
                 label: "No. of Aligned Sequences",
                 compFunc: function(m) {
                     return m.get("seqCollection").length;
-                }
+                },
+                reverse: true
             },
             {
                 label: "Total Alignment Score",
@@ -387,7 +388,8 @@
                     return d3.sum(m.get("seqCollection").pluck("compAlignment").map(function(ca) {
                         return ca.score;
                     }));
-                }
+                },
+                reverse: true
             }
         ],
 
