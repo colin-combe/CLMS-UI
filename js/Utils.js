@@ -980,8 +980,17 @@ CLMSUI.utils = {
         node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
         */
     },
-
-
+    
+    isModernWeb: function () {
+        var modernWeb;
+        try {
+            modernWeb = !!new Blob();
+        } catch (e) {
+            modernWeb = false;
+        }
+        return modernWeb;
+    },
+    
     BaseFrameView: Backbone.View.extend({
 
         events: {
