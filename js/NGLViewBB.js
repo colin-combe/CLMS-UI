@@ -414,6 +414,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.xlRepr.dispose(); // remove old mouse handlers or they keep firing and cause errors
                 this.xlRepr = null;
             }
+            
+            var disableHaddock = function (stageModel) {
+                mainDivSel.select(".exportHaddockButton").property("disabled", !stageModel.get("allowInterModelDistances") || stageModel.get("structureComp").structure.modelStore.count == 1);
+            };
+            
             this
                 .listenTo (newStageModel, "change:linkList", function () {
                     if (this.xlRepr) {
@@ -427,6 +432,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     if (this.xlRepr) {
                         this.showFiltered();
                     }
+                    disableHaddock (newStageModel);     
                 })
                 .listenTo (newStageModel, "change:showShortestLinksOnly", function (stageModel, value) {
                     this.options.shortestLinksOnly = value;
@@ -455,7 +461,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             d3.select(this.el).select(".savePDBButton").property("disabled", newStageModel.get("structureComp").structure.atomCount > 99999);
             
             // can't do haddocky stuff if only 1 model
-            d3.select(this.el).select(".exportHaddockButton").property("disabled", newStageModel.get("structureComp").structure.modelStore.count == 1);          
+            disableHaddock (newStageModel);          
         });
 
         this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {
