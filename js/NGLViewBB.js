@@ -415,8 +415,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.xlRepr = null;
             }
             
-            var disableHaddock = function (interModelValue) {
-                d3.select(this.el).select(".exportHaddockButton").property("disabled", !interModelValue || newStageModel.get("structureComp").structure.modelStore.count == 1);
+            var disableHaddock = function (stageModel) {
+                mainDivSel.select(".exportHaddockButton").property("disabled", !stageModel.get("allowInterModelDistances") || stageModel.get("structureComp").structure.modelStore.count == 1);
             };
             
             this
@@ -432,7 +432,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     if (this.xlRepr) {
                         this.showFiltered();
                     }
-                    disableHaddock (value);     
+                    disableHaddock (newStageModel);     
                 })
                 .listenTo (newStageModel, "change:showShortestLinksOnly", function (stageModel, value) {
                     this.options.shortestLinksOnly = value;
@@ -461,7 +461,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             d3.select(this.el).select(".savePDBButton").property("disabled", newStageModel.get("structureComp").structure.atomCount > 99999);
             
             // can't do haddocky stuff if only 1 model
-            disableHaddock (newStageModel.get ("allowInterModelDistances"));          
+            disableHaddock (newStageModel);          
         });
 
         this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {
