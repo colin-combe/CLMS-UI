@@ -26,7 +26,7 @@ _.extend(CLMSUI.vent, Backbone.Events);
 var allDataLoaded = _.after(3, function() {
     console.log("DATA LOADED AND WINDOW LOADED");
 
-    CLMSUI.blosumCollInst.trigger ("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
+    CLMSUI.blosumCollInst.trigger("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
 
     //init annotation types
     var annotationTypes = [
@@ -76,8 +76,7 @@ var allDataLoaded = _.after(3, function() {
                     var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);
                     annotationType
                         .set("source", "Uniprot")
-                        .set("typeAlignmentID", "Canonical")
-                    ;
+                        .set("typeAlignmentID", "Canonical");
                     uniprotFeatureTypes.set(key, annotationType);
                 }
             }
@@ -109,8 +108,8 @@ CLMSUI.init.models = function(options) {
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.ProtAlignCollection();
     options.alignmentCollectionInst = alignmentCollectionInst;
 
-    alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
-        this.addNewProteins (CLMS.arrayFromMapValues (clmsModel.get("participants")));
+    alignmentCollectionInst.listenToOnce(CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
+        this.addNewProteins(CLMS.arrayFromMapValues(clmsModel.get("participants")));
         console.log("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
     });
@@ -143,20 +142,22 @@ CLMSUI.init.models = function(options) {
     // this listener adds new sequences obtained from pdb files to existing alignment sequence models
     alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst, "3dsync", function(sequences, removeThese) {
         if (!_.isEmpty(sequences)) { // if sequences passed and it has a non-zero length...
-            console.log ("3dsync", arguments);
+            console.log("3dsync", arguments);
             // remove before add so if someone decides to reload the same file/code (why, but possible) we don't end up removing what we've just added
             if (removeThese && removeThese.length) {
-                removeThese.forEach (function (structureName) {
-                    var seqModels = this.getSequencesByPredicate (function (seq) { return structureName+":" === seq.get("id").substring(0, structureName.length + 1); });
-                    this.removeSequences (seqModels);
+                removeThese.forEach(function(structureName) {
+                    var seqModels = this.getSequencesByPredicate(function(seq) {
+                        return structureName + ":" === seq.get("id").substring(0, structureName.length + 1);
+                    });
+                    this.removeSequences(seqModels);
                 }, this);
             }
             sequences.forEach(function(entry) {
-                this.addSeq (entry.id, entry.name, entry.data, entry.otherAlignSettings);
+                this.addSeq(entry.id, entry.name, entry.data, entry.otherAlignSettings);
             }, this);
             // this triggers an event to say loads has changed in the alignment collection
             // more efficient to listen to that then redraw/recalc for every seq addition
-            
+
             this.bulkAlignChangeFinished();
 
             console.log("3D sequences poked to collection", this);
@@ -166,8 +167,8 @@ CLMSUI.init.models = function(options) {
 
     // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
     // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
-    alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
-        this.addNewProteins (CLMS.arrayFromMapValues (CLMSUI.compositeModelInst.get("clmsModel").get("participants")));
+    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
+        this.addNewProteins(CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants")));
         // this triggers an event to say loads has changed in the alignment collection
         // more efficient to listen to that then redraw/recalc for every seq addition
         this.bulkAlignChangeFinished();
@@ -191,7 +192,7 @@ CLMSUI.init.modelsEssential = function(options) {
     var hasIncorrect = !_.isEmpty(options.incorrectSearchIDs);
     var hasNoMatches = _.isEmpty(options.rawMatches);
 
-    CLMSUI.utils.displayError (function() {
+    CLMSUI.utils.displayError(function() {
             return hasMissing || hasIncorrect || hasNoMatches;
         },
         (hasMissing ? "Cannot find Search ID" + (options.missingSearchIDs.length > 1 ? "s " : " ") + options.missingSearchIDs.join(", ") + ".<br>" : "") +
@@ -231,7 +232,7 @@ CLMSUI.init.modelsEssential = function(options) {
 
     var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange(clmsModelInst.get("matches"), true);
     if (scoreExtentInstance[0]) {
-    scoreExtentInstance[0] = Math.min(0, scoreExtentInstance[0]); // make scoreExtent min zero, if existing min isn't negative
+        scoreExtentInstance[0] = Math.min(0, scoreExtentInstance[0]); // make scoreExtent min zero, if existing min isn't negative
     }
     var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
@@ -246,14 +247,14 @@ CLMSUI.init.modelsEssential = function(options) {
         //matchScoreCutoff: [undefined, undefined],
         //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined, Math.ceil(clmsModelInst.get("maxScore")) || undefined],
         matchScoreCutoff: scoreExtentInstance.slice(),
-        searchGroups: CLMSUI.modelUtils.getSearchGroups (clmsModelInst),
+        searchGroups: CLMSUI.modelUtils.getSearchGroups(clmsModelInst),
     };
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
     filterSettings = _.extend(filterSettings, urlFilterSettings); // overwrite default settings with url settings
     console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
         scoreExtent: scoreExtentInstance,
-        possibleSearchGroups: CLMSUI.modelUtils.getSearchGroups (clmsModelInst),
+        possibleSearchGroups: CLMSUI.modelUtils.getSearchGroups(clmsModelInst),
     });
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel();
@@ -382,14 +383,22 @@ CLMSUI.init.views = function() {
         // },
     ];
     checkBoxData.forEach(function(cbdata) {
-        var options = $.extend ({labelFirst: false}, cbdata);
-        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: options});
+        var options = $.extend({
+            labelFirst: false
+        }, cbdata);
+        var cbView = new CLMSUI.utils.checkBoxView({
+            myOptions: options
+        });
         $("#viewDropdownPlaceholder").append(cbView.$el);
     }, this);
 
     // Add them to a drop-down menu (this rips them away from where they currently are - document)
     var maybeViews = ["#nglChkBxPlaceholder" /*, "#distoChkBxPlaceholder"*/ ];
-    var mostViews = checkBoxData.map(function(d) { return "#"+d.id;}).filter(function(id) { return id !== "#keyChkBxPlaceholder" && id !== "#nglChkBxPlaceholder";});
+    var mostViews = checkBoxData.map(function(d) {
+        return "#" + d.id;
+    }).filter(function(id) {
+        return id !== "#keyChkBxPlaceholder" && id !== "#nglChkBxPlaceholder";
+    });
     new CLMSUI.DropDownMenuViewBB({
             el: "#viewDropdownPlaceholder",
             model: compModel.get("clmsModel"),
@@ -400,22 +409,20 @@ CLMSUI.init.views = function() {
             }
         })
         // hide/disable view choices that depend on certain data being present until that data arrives
-        .enableItemsByID (maybeViews, false)
-        .enableItemsByID (mostViews, matchesFound)
-        .listenTo (compModel.get("clmsModel"), "change:distancesObj", function(model, newDistancesObj) {
-            this.enableItemsByID (maybeViews, !!newDistancesObj);
+        .enableItemsByID(maybeViews, false)
+        .enableItemsByID(mostViews, matchesFound)
+        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function(model, newDistancesObj) {
+            this.enableItemsByID(maybeViews, !!newDistancesObj);
         })
-        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
-            this.enableItemsByID (mostViews, true);
-        })
-    ;
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() {
+            this.enableItemsByID(mostViews, true);
+        });
 
 
     // Generate protein selection drop down
     d3.select("body").append("input")
         .attr("type", "text")
-        .attr("id", "proteinSelectionFilter")
-    ;
+        .attr("id", "proteinSelectionFilter");
     new CLMSUI.DropDownMenuViewBB({
             el: "#proteinSelectionDropdownPlaceholder",
             model: compModel.get("clmsModel"),
@@ -451,11 +458,10 @@ CLMSUI.init.views = function() {
                 tooltipModel: compModel.get("tooltipModel")
             }
         })
-        .wholeMenuEnabled (matchesFound)
-        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
-            this.wholeMenuEnabled (true);
-        })
-    ;
+        .wholeMenuEnabled(matchesFound)
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() {
+            this.wholeMenuEnabled(true);
+        });
 
     // Generate buttons for load dropdown
     var loadButtonData = [{
@@ -507,12 +513,12 @@ CLMSUI.init.views = function() {
                 menu: loadButtonData,
                 tooltipModel: compModel.get("tooltipModel"),
             }
-        })// hide/disable view choices that depend on certain data being present until that data arrives
-        .enableItemsByIndex ([0, 2, 3], matchesFound)
-        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
-            this.enableItemsByIndex ([0, 2, 3], true);
+        }) // hide/disable view choices that depend on certain data being present until that data arrives
+        .enableItemsByIndex([0, 2, 3], matchesFound)
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() {
+            this.enableItemsByIndex([0, 2, 3], true);
         })
-        .setVis (!matchesFound) // open as default if empty search
+        .setVis(!matchesFound) // open as default if empty search
     ;
 
     new CLMSUI.URLSearchBoxViewBB({
@@ -610,8 +616,7 @@ CLMSUI.init.viewsEssential = function(options) {
                 domainEnd: newCutoff[1]
             });
             //console.log ("cutoff changed");
-        })
-    ;
+        });
 
 
     // World of code smells vol.1
@@ -734,14 +739,19 @@ CLMSUI.init.viewsEssential = function(options) {
             myOptions: {
                 title: "Export",
                 menu: [{
+                        name: "Filtered Matches as CSV",
+                        func: downloadMatches,
+                        tooltip: "Produces a CSV File of Filtered Matches data"
+                    },
+                    {
                         name: "Filtered Cross-Links as CSV",
                         func: downloadLinks,
                         tooltip: "Produces a CSV File of Filtered Cross-Link data"
                     },
                     {
-                        name: "Filtered Matches as CSV",
-                        func: downloadMatches,
-                        tooltip: "Produces a CSV File of Filtered Matches data"
+                        name: "Filtered PPI as CSV",
+                        func: downloadPPIs,
+                        tooltip: "Produces a CSV File of Filtered Protein-Protein Interaction data"
                     },
                     {
                         name: "Filtered Matches as SSL",
@@ -771,11 +781,10 @@ CLMSUI.init.viewsEssential = function(options) {
                 tooltipModel: compModel.get("tooltipModel"),
             }
         })
-        .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
-        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
-            this.wholeMenuEnabled (true);
-        })
-    ;
+        .wholeMenuEnabled(!_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() {
+            this.wholeMenuEnabled(true);
+        });
 
     // Generate help drop down
     new CLMSUI.DropDownMenuViewBB({
@@ -871,11 +880,10 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
                 },
             }
         })
-        .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
-        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
-            this.wholeMenuEnabled (true);
-        })
-    ;
+        .wholeMenuEnabled(!_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() {
+            this.wholeMenuEnabled(true);
+        });
 
 
     new CLMSUI.utils.ColourCollectionOptionViewBB({

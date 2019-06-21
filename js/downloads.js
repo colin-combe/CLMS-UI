@@ -33,6 +33,10 @@ function downloadLinks() {
     download(getLinksCSV(), 'text/csv', downloadFilename("links"));
 }
 
+function downloadPPIs() {
+    download(getPPIsCSV(), 'text/csv', downloadFilename("PPIs"));
+}
+
 function downloadResidueCount() {
     download(getResidueCount(), 'text/csv', downloadFilename("residueCount"));
 }
@@ -391,7 +395,7 @@ function getSSL() {
 
 
 function getLinksCSV() {
-    var validatedTypes = ["A", "B", "C", "?", "R"];
+    var validatedTypes = ["A", "B", "C", "?", "R"]; //todo - what is this for - cc
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
 
     var headerArray = ["Protein1", "SeqPos1", "LinkedRes1", "Protein2", "SeqPos2", "LinkedRes2", "Highest Score", "Match Count", "AutoValidated", "Validated", "Link FDR", "3D Distance", "From Chain", "To Chain", "PDB SeqPos 1", "PDB SeqPos 2"];
@@ -467,6 +471,101 @@ function getLinksCSV() {
     }, this);
 
     rows.unshift(headerRow);
+    var csv = rows.join("\r\n") + '\r\n';
+    return csv;
+}
+
+function getPPIsCSV() {
+    var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+
+    var headerArray = ["Protein1", "Protein2", "Unique Distance Restraints"];
+    // var searchIDs = Array.from(clmsModel.get("searches").keys());
+    // searchIDs.forEach(function(sid) {
+    //     headerArray.push("Search_" + sid);
+    // });
+    // console.log("searchIds", searchIDs);
+
+    // var metaColumns = (clmsModel.get("crossLinkMetaRegistry") || d3.set()).values();
+    // headerArray = headerArray.concat(metaColumns);
+
+    var headerRow = '"' + headerArray.join('","') + '"';
+    var rows = [headerRow];
+
+    var crosslinks = CLMSUI.compositeModelInst.getFilteredCrossLinks("all");
+
+    var ppiMap = new Map();
+
+    for (let crosslink of crosslinks) {
+        // its ok, fromProtein and toProtein are already alphabetically ordered
+        var ppiId = crosslink.fromProtein.id;
+        if (!crosslink.isLinearLink()) {
+            ppiId = ppiId + "-" + crosslink.toProtein.id;
+        }
+        var ppi = ppiMap.get(ppiId);
+        if (!ppi) {
+            ppi = [];
+            ppiMap.set(ppiId, ppi);
+        }
+        ppi.push(crosslink);
+    }
+
+    for (let ppi of ppiMap.values()) {
+        var aCrosslink = ppi[0];
+        var linear = aCrosslink.isLinearLink();
+        rows.push([mostReadableId(aCrosslink.fromProtein), (linear ? "" : mostReadableId(aCrosslink.toProtein)), ppi.length].join(","))
+    }
+
+    /*    var ppiMap = crossLinks.map(function(crossLink, i) {
+            var row = [];
+            var linear = crossLink.isLinearLink();
+            var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
+            row.push(
+                mostReadableId(crossLink.fromProtein), crossLink.fromResidue, crossLink.fromProtein.sequence[crossLink.fromResidue - 1],
+                (linear ? "" : mostReadableId(crossLink.toProtein)), crossLink.toResidue, !linear && crossLink.toResidue ? crossLink.toProtein.sequence[crossLink.toResidue - 1] : ""
+            );
+
+            var highestScore = null;
+            var searchesFound = new Set();
+            var filteredMatchCount = filteredMatchesAndPepPos.length; // me n lutz fix
+            var linkAutovalidated = false;
+            var validationStats = [];
+            for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
+                var match = filteredMatchesAndPepPos[fm_pp].match;
+                if (highestScore == null || match.score() > highestScore) {
+                    highestScore = match.score().toFixed(4);
+                }
+                if (match.autovalidated === true) {
+                    linkAutovalidated = true;
+                }
+                validationStats.push(match.validated);
+                searchesFound.add(match.searchId);
+            }
+            row.push(highestScore, filteredMatchCount, linkAutovalidated, validationStats.toString(), crossLink.getMeta("fdr"));
+
+            // Distance info
+            var pDist = physicalDistances[i];
+            if (pDist && pDist.distance) {
+                var chain = pDist.chainInfo;
+                row.push(distance2dp(pDist.distance), chain.from, chain.to, chain.fromRes + 1, chain.toRes + 1); // +1 to return to 1-INDEXED
+            } else {
+                row.push("", "", "", "", "");
+            }
+
+            // // Add presence in searches
+            // for (var s = 0; s < searchIDs.length; s++) {
+            //     row.push(searchesFound.has(searchIDs[s]) ? "X" : "");
+            // }
+            //
+            // // Add metadata information
+            // for (var m = 0; m < metaColumns.length; m++) {
+            //     var mval = crossLink.getMeta(metaColumns[m]);
+            //     row.push(mval === undefined ? "" : mval);
+            // }
+
+            return '"' + row.join('","') + '"';
+        }, this);
+
+    */
     var csv = rows.join("\r\n") + '\r\n';
     return csv;
 }
