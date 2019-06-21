@@ -485,14 +485,15 @@ CLMSUI.NGLUtils = {
         return lines;
     },
     
-    exportHaddockCrossLinkSyntax: function (structure, nglModelWrapper, name, remarks) {
+    exportHaddockCrossLinkSyntax: function (structure, nglModelWrapper, name, remarks, crossLinkerObj) {
         var crossLinks = nglModelWrapper.getFullLinks();
-        var haddockLinks = CLMSUI.NGLUtils.makeHaddockCrossLinkSyntax (structure, crossLinks, remarks);
+        var haddockLinks = CLMSUI.NGLUtils.makeHaddockCrossLinkSyntax (structure, crossLinks, remarks, crossLinkerObj);
         var fileName = downloadFilename ("haddock", "txt");
         download (haddockLinks.join("\r\n"), "plain/text", fileName);
     },
     
-    makeHaddockCrossLinkSyntax: function (structure, links, remarks, crosslinkerInfo) {
+    makeHaddockCrossLinkSyntax: function (structure, links, remarks, crossLinkerObj) {
+        //console.log ("CLO", crossLinkerObj);
         var str = ["zeroth", "first", "second", "third", "fourth", "fifth", "next"];
         var pdbids = structure.chainToOriginalStructureIDMap || {};
 
@@ -500,9 +501,9 @@ CLMSUI.NGLUtils = {
             return "! "+remark;    
         });
         
-        var restraints = {
-            
-        };
+        var crossLinkers = d3.values(crossLinkerObj.crossLinkerInfo);
+        crossLinkers.push ({id: "default", name: "default", restraints: "12.0 10.0 18.0"});
+        var restraints = d3.map (crossLinkers, function(d) { return d.id; });
         
         var pdbs = d3.set(d3.values(pdbids)).values();
         if (_.isEmpty (pdbs)) { pdbs = [structure.name]; }
@@ -511,15 +512,33 @@ CLMSUI.NGLUtils = {
         var interModelLinks = links.filter (function (link) {
             return link.residueA.modelIndex != link.residueB.modelIndex;
         });
-        var crossLinkLines = interModelLinks.map (function (link) {
-            return "assign"+
-                " (segid "+String.fromCharCode(65+link.residueA.modelIndex)+" and name CA and resi "+link.residueA.resno+")"+
-                " (segid "+String.fromCharCode(65+link.residueB.modelIndex)+" and name CA and resi "+link.residueB.resno+")"+
-                " 12.0 10.0 18.0"
-            ;
+        
+        var crossLinkLines = {};
+        crossLinkers.forEach (function (clinker) { crossLinkLines[clinker.id] = ["! "+clinker.name+" based length restraints"]; });
+        var origCrossLinks = crossLinkerObj.crossLinks;
+        interModelLinks.forEach (function (link) {
+            var origLink = origCrossLinks.get(link.origId);
+            // get crosslinkers used by this crosslink
+            var crossLinkerIDs = origLink ? d3.set (origLink.filteredMatches_pp.map (function (match) { return match.match.crosslinker_id; })).values() : [];
+            if (_.isEmpty (crossLinkerIDs)) { crossLinkerIDs = ["default"]; }
+            
+            // add a restraint line for each different crosslinker
+            crossLinkerIDs.forEach (function (clid) {
+                //console.log ("clid", clid, restraints);
+                var clRestraints = restraints.get(clid).restraints || restraints.get("default").restraints;
+                var line = "assign"+
+                    " (segid "+String.fromCharCode(65+link.residueA.modelIndex)+" and name CA and resi "+link.residueA.resno+")"+
+                    " (segid "+String.fromCharCode(65+link.residueB.modelIndex)+" and name CA and resi "+link.residueB.resno+")"+
+                    " "+clRestraints
+                ;
+                crossLinkLines[clid].push (line);
+            });
         });
         
-        var lines = remarkLines.concat(pdbLines, crossLinkLines);     
+        // merge all the lines together (this keeps them grouped by crosslinker, rather than crosslink)
+        var allCrossLinkLines = d3.merge (d3.values(crossLinkLines));
+        
+        var lines = remarkLines.concat(pdbLines, allCrossLinkLines);     
         return lines;
     },
     

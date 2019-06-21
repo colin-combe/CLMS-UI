@@ -95,7 +95,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 class: "exportHaddockButton",
                 label: "Haddock Distance Restraints File",
                 id: "haddockExport",
-                d3tooltip: "Export a Haddock command script containing the complete filtered inter-pdb(model) cross-links"
+                d3tooltip: "Export a Haddock command script containing the complete filtered inter-pdb(model) cross-links. Requires 'Show > Inter-Model Distances' to be set"
             },
         ];
         saveExportButtonData
@@ -671,7 +671,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 "Exported by "+this.identifier+" and XiView", 
                  "Search ID: "+CLMSUI.utils.searchesToString(), 
                  "Filter: "+CLMSUI.utils.filterStateToString()
-                ]
+                ],
+                {crossLinkerInfo: this.model.get("clmsModel").get("crosslinkerSpecificity"), crossLinks: this.model.get("clmsModel").get("crossLinks")}
         );
         return this;
     },
