@@ -492,13 +492,17 @@ CLMSUI.NGLUtils = {
         download (haddockLinks.join("\r\n"), "plain/text", fileName);
     },
     
-    makeHaddockCrossLinkSyntax: function (structure, links, remarks) {
+    makeHaddockCrossLinkSyntax: function (structure, links, remarks, crosslinkerInfo) {
         var str = ["zeroth", "first", "second", "third", "fourth", "fifth", "next"];
         var pdbids = structure.chainToOriginalStructureIDMap || {};
 
         var remarkLines = (remarks || []).map (function (remark) {
             return "! "+remark;    
         });
+        
+        var restraints = {
+            
+        };
         
         var pdbs = d3.set(d3.values(pdbids)).values();
         if (_.isEmpty (pdbs)) { pdbs = [structure.name]; }
@@ -511,7 +515,7 @@ CLMSUI.NGLUtils = {
             return "assign"+
                 " (segid "+String.fromCharCode(65+link.residueA.modelIndex)+" and name CA and resi "+link.residueA.resno+")"+
                 " (segid "+String.fromCharCode(65+link.residueB.modelIndex)+" and name CA and resi "+link.residueB.resno+")"+
-                " 1.5 "+link.distance+" 30"
+                " 12.0 10.0 18.0"
             ;
         });
         
