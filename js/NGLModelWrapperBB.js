@@ -215,7 +215,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                         if (alternativeCount > 4) { // if more than a certain number of possible pairings whittle it down to the closest one
                             addAtomPoints.call (this, fromPDBResidues);
                             addAtomPoints.call (this, toPDBResidues);
-                            var results = CLMSUI.modelUtils.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 200, octreeIgnoreFunc);
+                            var results = CLMSUI.modelUtils.getMinimumDistance (fromPDBResidues, toPDBResidues, octAccessorObj, 2000, octreeIgnoreFunc);
                             results = results.filter (function (res) { return res[2] !== undefined; });
                             if (results.length) {
                                 results.forEach (function (r) { r[2] = CLMSUI.utils.toNearest (Math.sqrt(r[2]), 1); });
@@ -292,11 +292,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var halfLinkIdMap = {};
         var residueIdMap = {};
         
-        halfLinkList.forEach (function (halfLink) {
-            halfLinkIdMap[halfLink.linkId] = halfLink;
-            insertResidue(halfLink.residue, halfLink, residueIdToHalfLinkIds);
-        });
-        
         function insertResidue (residue, link, map) {
             var resID = residue.residueId;
             var list = map[resID];
@@ -312,6 +307,20 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             linkIdMap[link.linkId] = link;
             insertResidue(link.residueA, link, residueIdToFullLinkIds);
             insertResidue(link.residueB, link, residueIdToFullLinkIds);
+        });
+        
+        // remove half links that also have full link instances
+        if (this.get("showShortestLinksOnly")) {
+            var origFullLinkIDs = d3.set (_.pluck (linkList, "origId"));
+            halfLinkList = halfLinkList.filter (function (halfLink) {
+                return !origFullLinkIDs.has (halfLink.origId);
+            });
+        }
+        
+        
+        halfLinkList.forEach (function (halfLink) {
+            halfLinkIdMap[halfLink.linkId] = halfLink;
+            insertResidue(halfLink.residue, halfLink, residueIdToHalfLinkIds);
         });
 
         // Useful maps for later work
@@ -331,6 +340,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         
         //console.log ("setLinkList", residueIdMap, this._residueList, residueIdToFullLinkIds, linkIdMap);
         this.set("linkList", linkList);
+        this.set("halfLinkList", halfLinkList);
     },
 
     getFullLinkCount: function () {
@@ -355,6 +365,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     
     getHalfLinkCount: function () {
         return this._origHalfLinkCount;    
+    },
+    
+    getHalfLinks: function (residue) {
+        return residue === undefined ? this.get("halfLinkList") : this.getHalfLinksByResidueID (residue.residueId);
     },
     
     getHalfLinkCountByResidue: function (residue) {

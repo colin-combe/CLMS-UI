@@ -17,6 +17,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .centreButton": "centerView",
             "click .downloadButton": "downloadImage",
             "click .savePDBButton": "savePDB",
+            "click .exportPymolButton": "exportPymol",
+            "click .exportHaddockButton": "exportHaddock",
             "click .distanceLabelCB": "toggleLabels",
             "click .selectedOnlyCB": "toggleNonSelectedLinks",
             "click .showResiduesCB": "toggleResidues",
@@ -65,13 +67,6 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 tooltip: "Save a PNG image of the view"
             },
             {
-                label: "Save PDB + CrossLinks",
-                class: "savePDBButton",
-                type: "button",
-                id: "savePDB",
-                tooltip: "Saves a copy of the PDB with filtered fully visible cross-links"
-            },
-            {
                 label: "Re-Centre",
                 class: "centreButton",
                 type: "button",
@@ -82,6 +77,52 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         var toolbar = flexWrapperPanel.append("div").attr("class", "toolbar toolbarArea");
         CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
+        
+        // Generate Export/Save cross-link data dropdown
+        var saveExportButtonData = [{
+                class: "savePDBButton",
+                label: "PDB & CrossLinks",
+                id: "savePDB",
+                d3tooltip: "Saves a copy of the PDB with complete filtered cross-links"
+            },
+            {
+                class: "exportPymolButton",
+                label: "Pymol Command File",
+                id: "pymolExport",
+                d3tooltip: "Export a Pymol command script for recreating this pdb and complete filtered cross-links"
+            },
+            {
+                class: "exportHaddockButton",
+                label: "Haddock Distance Restraints File",
+                id: "haddockExport",
+                d3tooltip: "Export a Haddock command script containing the complete filtered inter-pdb(model) cross-links. Requires 'Show > Inter-Model Distances' to be set"
+            },
+        ];
+        saveExportButtonData
+            .forEach(function(d) {
+                d.type = d.type || "button";
+                d.value = d.value || d.label;
+            }, this)
+        ;
+        CLMSUI.utils.makeBackboneButtons(toolbar, self.el.id, saveExportButtonData);
+
+        // ...then moved to a dropdown menu
+        var optid = this.el.id + "Exports";
+        toolbar.append("p").attr("id", optid);
+        new CLMSUI.DropDownMenuViewBB({
+            el: "#" + optid,
+            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            myOptions: {
+                title: "Export ▼",
+                menu: saveExportButtonData.map(function(d) {
+                    d.id = self.el.id + d.id;
+                    d.tooltip = d.d3tooltip;
+                    return d;
+                }),
+                closeOnClick: true,
+                tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+            }
+        });
 
 
         // Assembly choice dropdown
@@ -373,6 +414,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.xlRepr.dispose(); // remove old mouse handlers or they keep firing and cause errors
                 this.xlRepr = null;
             }
+            
+            var disableHaddock = function (stageModel) {
+                mainDivSel.select(".exportHaddockButton").property("disabled", !stageModel.get("allowInterModelDistances") || stageModel.get("structureComp").structure.modelStore.count == 1);
+            };
+            
             this
                 .listenTo (newStageModel, "change:linkList", function () {
                     if (this.xlRepr) {
@@ -386,6 +432,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     if (this.xlRepr) {
                         this.showFiltered();
                     }
+                    disableHaddock (newStageModel);     
                 })
                 .listenTo (newStageModel, "change:showShortestLinksOnly", function (stageModel, value) {
                     this.options.shortestLinksOnly = value;
@@ -413,6 +460,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             // can't save pdb files with 100,000 or more atoms
             d3.select(this.el).select(".savePDBButton").property("disabled", newStageModel.get("structureComp").structure.atomCount > 99999);
             
+            // can't do haddocky stuff if only 1 model
+            disableHaddock (newStageModel);          
         });
 
         this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {
@@ -427,7 +476,6 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.showFiltered().centerView();
             }
         });
-
     },
 
     setAssemblyChains: function() {
@@ -444,7 +492,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var linkText = "Currently showing " + commaFormat(fullLinkCount) + " in full "+
             (halfLinkCount ? "and "+commaFormat(halfLinkCount)+" in part " : "" ) + 
             "of " + commaFormat(currentFilteredLinkCount) + " filtered TT crosslinks"+
-            (missingLinkCount ? " ("+missingLinkCount+" others outside of structure scope)" : "")
+            (missingLinkCount ? " ("+commaFormat(missingLinkCount)+" others outside of structure scope)" : "")
         ;
         this.chartDiv.select("div.linkInfo").html(linkText);
         return this;
@@ -598,6 +646,33 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                  "Search ID: "+CLMSUI.utils.searchesToString(), 
                  "Filter: "+CLMSUI.utils.filterStateToString()
                 ]
+        );
+        return this;
+    },
+    
+    exportPymol: function () {
+        var stageModel = this.model.get("stageModel");
+        CLMSUI.NGLUtils.exportPymolCrossLinkSyntax (
+            stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(), 
+                ["PDB ID: "+stageModel.getStructureName(), 
+                "Exported by "+this.identifier+" and XiView", 
+                 "Search ID: "+CLMSUI.utils.searchesToString(), 
+                 "Filter: "+CLMSUI.utils.filterStateToString()
+                ]
+        );
+        return this;
+    },
+    
+    exportHaddock: function () {
+        var stageModel = this.model.get("stageModel");
+        CLMSUI.NGLUtils.exportHaddockCrossLinkSyntax (
+            stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(), 
+                ["PDB ID: "+stageModel.getStructureName(), 
+                "Exported by "+this.identifier+" and XiView", 
+                 "Search ID: "+CLMSUI.utils.searchesToString(), 
+                 "Filter: "+CLMSUI.utils.filterStateToString()
+                ],
+                {crossLinkerInfo: this.model.get("clmsModel").get("crosslinkerSpecificity"), crossLinks: this.model.get("clmsModel").get("crossLinks")}
         );
         return this;
     },
@@ -757,7 +832,7 @@ CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
         displayedLabelVisible: false,
         selectedLabelVisible: true,
         highlightedLabelVisible: true,
-        labelSize: 3.0,
+        labelSize: 6.0,
         selectedResiduesColor: params.selectedColor || "lightgreen",
         selectedLinksColor: "lightgreen",
         highlightedLinksColor: params.highlightedColor || "orange",

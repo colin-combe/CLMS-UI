@@ -238,13 +238,11 @@
         ?>
 
 		var spinner = new Spinner({scale: 5}).spin (d3.select("#main").node());
+        var z;
 
-		var success = function (text) {
-			spinner.stop(); // stop spinner on request returning
-
+		var success = function (json) {
 			try {
-				var json = {};
-				if (text) { json = JSON.parse (text);}
+                console.log ("TIME t2", performance.now(), json.times);
 
 				CLMSUI.init.models (json);
 				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
@@ -259,16 +257,25 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 			} catch (err) {
-				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+text.substring (0, 150)+"</p>");
-				console.error ("Error", err, text.substring (0, 1000));
+				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
+				console.error ("Error");
 			}
 		};
 
+        
 		var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
 
-		d3.text (url, function (error, text) {
+        z = performance.now();
+        console.log ("TIME t1", performance.now());
+
+        d3.json (url, function (error, json) {
+            spinner.stop(); // stop spinner on request returning
+            
 			if (!error) {
-				success (text);
+				success (json);
+			} else {
+                CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
+				console.error ("Error", error);
 			}
 		});
 

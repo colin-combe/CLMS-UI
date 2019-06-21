@@ -90,7 +90,7 @@ CLMSUI.NGLUtils = {
                             CLMSUI.utils.xilog ("UniprotMapRes", uniprotMappingResults, nglSequences);
                             if (uniprotMappingResults.remaining.length) { // Some PDB sequences don't have unicode protein matches in this search
                                 var remainingSequences = _.pluck (uniprotMappingResults.remaining, "seqObj");   // strip the remaining ones back to just sequence objects
-                                //console.log ("rem", remainingSequences);
+                                //console.log ("rem", remainingSequences, uniprotMappingResults);
                                 matchByXiAlignment (remainingSequences, uniprotMappingResults.uniprotMapped);   // fire them into xi alignment routine
                                 //returnFailure ("No valid uniprot data returned");
                             } else {
@@ -446,6 +446,102 @@ CLMSUI.NGLUtils = {
         writer.download (name || structure.name+"-Crosslinked");
     },
     
+    exportPymolCrossLinkSyntax: function (structure, nglModelWrapper, name, remarks) {
+        var crossLinks = nglModelWrapper.getFullLinks();
+        var pymolLinks =  CLMSUI.NGLUtils.makePymolCrossLinkSyntax (structure, crossLinks, remarks);
+        var fileName = downloadFilename ("pymol", "pml");
+        download (pymolLinks.join("\r\n"), "plain/text", fileName);
+    },
+    
+    makePymolCrossLinkSyntax: function (structure, links, remarks) {
+        var pdbids = structure.chainToOriginalStructureIDMap || {};
+        var cp = structure.getChainProxy();
+        var rp = structure.getResidueProxy();
+        
+        var remarkLines = (remarks || []).map (function (remark) {
+            return "# "+remark;    
+        });
+                    
+        var pdbs = d3.set(d3.values(pdbids)).values();
+        if (_.isEmpty (pdbs)) { pdbs = [structure.name]; }
+        var pdbLines = pdbs.map (function (pdb) { return "fetch "+pdb+", async=0"; });
+        
+        var crossLinkLines = links.map (function (link) {
+            cp.index = link.residueA.chainIndex;
+            var chainA = cp.chainname;
+            cp.index = link.residueB.chainIndex;
+            var chainB = cp.chainname;
+            rp.index = link.residueA.NGLglobalIndex;
+            var name1 = rp.qualifiedName().replace("/", ":");
+            rp.index = link.residueB.NGLglobalIndex;
+            var name2 = rp.qualifiedName().replace("/", ":");
+            return "distance "+name1+"-"+name2+
+                ", resi "+link.residueA.resno+" and name CA and chain "+chainA+" and "+(pdbids[link.residueA.chainIndex] || structure.name)+
+                ", resi "+link.residueB.resno+" and name CA and chain "+chainB+" and "+(pdbids[link.residueB.chainIndex] || structure.name)
+            ;
+        });
+
+        var lines = remarkLines.concat(pdbLines, crossLinkLines);
+        return lines;
+    },
+    
+    exportHaddockCrossLinkSyntax: function (structure, nglModelWrapper, name, remarks, crossLinkerObj) {
+        var crossLinks = nglModelWrapper.getFullLinks();
+        var haddockLinks = CLMSUI.NGLUtils.makeHaddockCrossLinkSyntax (structure, crossLinks, remarks, crossLinkerObj);
+        var fileName = downloadFilename ("haddock", "txt");
+        download (haddockLinks.join("\r\n"), "plain/text", fileName);
+    },
+    
+    makeHaddockCrossLinkSyntax: function (structure, links, remarks, crossLinkerObj) {
+        //console.log ("CLO", crossLinkerObj);
+        var str = ["zeroth", "first", "second", "third", "fourth", "fifth", "next"];
+        var pdbids = structure.chainToOriginalStructureIDMap || {};
+
+        var remarkLines = (remarks || []).map (function (remark) {
+            return "! "+remark;    
+        });
+        
+        var crossLinkers = d3.values(crossLinkerObj.crossLinkerInfo);
+        crossLinkers.push ({id: "default", name: "default", restraints: "12.0 10.0 18.0"});
+        var restraints = d3.map (crossLinkers, function(d) { return d.id; });
+        
+        var pdbs = d3.set(d3.values(pdbids)).values();
+        if (_.isEmpty (pdbs)) { pdbs = [structure.name]; }
+        var pdbLines = pdbs.map (function (pdb, i) { return "! upload "+pdb+" as "+str[Math.min(i+1, 6)]+" file"; });
+        
+        var interModelLinks = links.filter (function (link) {
+            return link.residueA.modelIndex != link.residueB.modelIndex;
+        });
+        
+        var crossLinkLines = {};
+        crossLinkers.forEach (function (clinker) { crossLinkLines[clinker.id] = ["! "+clinker.name+" based length restraints"]; });
+        var origCrossLinks = crossLinkerObj.crossLinks;
+        interModelLinks.forEach (function (link) {
+            var origLink = origCrossLinks.get(link.origId);
+            // get crosslinkers used by this crosslink
+            var crossLinkerIDs = origLink ? d3.set (origLink.filteredMatches_pp.map (function (match) { return match.match.crosslinker_id; })).values() : [];
+            if (_.isEmpty (crossLinkerIDs)) { crossLinkerIDs = ["default"]; }
+            
+            // add a restraint line for each different crosslinker
+            crossLinkerIDs.forEach (function (clid) {
+                //console.log ("clid", clid, restraints);
+                var clRestraints = restraints.get(clid).restraints || restraints.get("default").restraints;
+                var line = "assign"+
+                    " (segid "+String.fromCharCode(65+link.residueA.modelIndex)+" and name CA and resi "+link.residueA.resno+")"+
+                    " (segid "+String.fromCharCode(65+link.residueB.modelIndex)+" and name CA and resi "+link.residueB.resno+")"+
+                    " "+clRestraints
+                ;
+                crossLinkLines[clid].push (line);
+            });
+        });
+        
+        // merge all the lines together (this keeps them grouped by crosslinker, rather than crosslink)
+        var allCrossLinkLines = d3.merge (d3.values(crossLinkLines));
+        
+        var lines = remarkLines.concat(pdbLines, allCrossLinkLines);     
+        return lines;
+    },
+    
     copyEntities: function (combinedStructure, originalStructures) {
         var gci = 0;
         
@@ -461,7 +557,7 @@ CLMSUI.NGLUtils = {
                 var targetcp = combinedStructure.getChainProxy (gci);
                 targetcp.entityIndex = targetEntityIndex;
                 gci++;
-            })
+            });
         });
         
         //console.log (combinedStructure.entityList);
@@ -472,7 +568,7 @@ CLMSUI.NGLUtils = {
         var chainToOriginalStructureIDMap = [];
         
         originalStructures.forEach (function (s) {
-            s.eachChain (function (cp) {
+            s.eachChain (function () {
                 chainToOriginalStructureIDMap[gci] = s.name;
                 gci++;
             });

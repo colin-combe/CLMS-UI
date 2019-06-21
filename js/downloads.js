@@ -16,8 +16,9 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
-function downloadFilename(type) {
-    return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + type + "--" + CLMSUI.utils.filterStateToString()) + ".csv";
+function downloadFilename(type, suffix) {
+    suffix = suffix || "csv";
+    return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + type + "--" + CLMSUI.utils.filterStateToString()) + "." + suffix;
 }
 
 function downloadMatches() {
@@ -47,12 +48,7 @@ function downloadProteinAccessions() {
 function download(content, contentType, fileName) {
     //var b64svg = window.btoa(content);
 
-    var modernWeb;
-    try {
-        modernWeb = !!new Blob();
-    } catch (e) {
-        modernWeb = false;
-    }
+    var modernWeb = CLMSUI.utils.isModernWeb();
 
     //console.log ("svg filename", fileName, modernWeb);
 

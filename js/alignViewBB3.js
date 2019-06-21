@@ -40,7 +40,7 @@
                     return d.compFunc;
                 },
                 changeFunc: function() {
-                    var compFunc;
+                    var compFunc, reverse;
                     // cant rely on event.target.value as it returns functions as a string
                     d3.select(d3.event.target)
                         .selectAll("option")
@@ -150,7 +150,7 @@
                         .set("header", d.get("displayLabel"))
                         .set("contents",
                             self.collection.possibleComparators.slice(1).map(function(comp) {
-                                return [comp.label, d.get("seqCollection") ? nformat(comp.compFunc(d)) : 0]
+                                return [comp.label, d.get("seqCollection") ? nformat(comp.compFunc(d)) : 0];
                             })
                         )
                         .set("location", d3.event);
