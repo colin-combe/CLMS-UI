@@ -851,7 +851,9 @@ CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
             // then blank the current selection
             nglModelWrapper.getModel().setMarkedCrossLinks("selection", [], false, false);
         }
+        return false;
     });
+    console.log ("MOUSE", this.stage.mouseControls);
 };
 
 CLMSUI.CrosslinkRepresentation.prototype = {
