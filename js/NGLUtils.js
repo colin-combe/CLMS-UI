@@ -488,7 +488,7 @@ CLMSUI.NGLUtils = {
     exportHaddockCrossLinkSyntax: function (structure, nglModelWrapper, name, remarks, crossLinkerObj) {
         var crossLinks = nglModelWrapper.getFullLinks();
         var haddockLinks = CLMSUI.NGLUtils.makeHaddockCrossLinkSyntax (structure, crossLinks, remarks, crossLinkerObj);
-        var fileName = downloadFilename ("haddock", "txt");
+        var fileName = downloadFilename ("haddock", "tbl");
         download (haddockLinks.join("\r\n"), "plain/text", fileName);
     },
     
