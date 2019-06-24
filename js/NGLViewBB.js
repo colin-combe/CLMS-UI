@@ -853,7 +853,6 @@ CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
         }
         return false;
     });
-    console.log ("MOUSE", this.stage.mouseControls);
 };
 
 CLMSUI.CrosslinkRepresentation.prototype = {
