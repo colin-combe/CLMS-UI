@@ -263,21 +263,27 @@
 		};
 
         
-		var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
+		
 
         z = performance.now();
         console.log ("TIME t1", performance.now());
 
-        d3.json (url, function (error, json) {
-            spinner.stop(); // stop spinner on request returning
-            
-			if (!error) {
-				success (json);
-			} else {
-                CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
-				console.error ("Error", error);
-            }
-		});
+        if (window.location.search) {
+            var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
+            d3.json (url, function (error, json) {
+                spinner.stop(); // stop spinner on request returning
+
+                if (!error) {
+                    success (json);
+                } else {
+                    CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
+                    console.error ("Error", error);
+                }
+            });
+        } else {
+            spinner.stop(); // stop spinner
+            success ({});
+        }
 
     //]]>
     </script>
