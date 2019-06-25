@@ -570,14 +570,29 @@ CLMSUI.modelUtils = {
         });
         return searchMap;
     },
-
-    updateLinkMetadata: function(metaDataFileContents, clmsModel) {
-        var crossLinks = clmsModel.get("crossLinks");
+    
+    makeMultiKeyProteinMap: function (clmsModel) {
         var protMap = d3.map();
         clmsModel.get("participants").forEach(function(value, key) {
             protMap.set(value.accession, key);
             protMap.set(value.name, key);
+            protMap.set(value.id, key);
+        }); 
+        return protMap;
+    },
+    
+    parseProteinID: function (protMap, pid) {
+        var parts = pid.split("|");
+        var pkey;
+        parts.forEach(function(part) {
+            pkey = pkey || protMap.get(part);
         });
+        return pkey;
+    },
+
+    updateLinkMetadata: function(metaDataFileContents, clmsModel) {
+        var crossLinks = clmsModel.get("crossLinks");
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
         var first = true;
         var columns = [];
         var columnTypes = {};
@@ -588,14 +603,9 @@ CLMSUI.modelUtils = {
             return d[ref + " " + n] || d[ref + n];
         }
 
-        function parseProteinID(i, d) {
-            var p = getValueN("Protein", i, d);
-            var parts = p ? p.split("|") : [];
-            var pkey;
-            parts.forEach(function(part) {
-                pkey = pkey || protMap.get(part);
-            });
-            return pkey;
+        function parseProteinID2 (i, d) {
+            var p = getValueN("Protein", i, d) || "";
+            return CLMSUI.modelUtils.parseProteinID (protMap, p);
         }
 
         var matchedCrossLinks = [];
@@ -605,8 +615,8 @@ CLMSUI.modelUtils = {
 
             // Maybe need to generate key from several columns
             if (!crossLink) {
-                var pkey1 = parseProteinID(1, d);
-                var pkey2 = parseProteinID(2, d);
+                var pkey1 = parseProteinID2 (1, d);
+                var pkey2 = parseProteinID2 (2, d);
                 linkID = pkey1 + "_" + getValueN("SeqPos", 1, d) + "-" + pkey2 + "_" + getValueN("SeqPos", 2, d);
                 crossLink = crossLinks.get(linkID);
             }
@@ -683,6 +693,7 @@ CLMSUI.modelUtils = {
             }
         });
     },
+    
 
     updateProteinMetadata: function(metaDataFileContents, clmsModel) {
         var proteins = clmsModel.get("participants");
@@ -694,12 +705,7 @@ CLMSUI.modelUtils = {
         var dontStoreSet = d3.set(dontStoreArray);
         var matchedProteinCount = 0;
 
-        var protMap = d3.map();
-        proteins.forEach(function(value, key) {
-            protMap.set(value.accession, key);
-            protMap.set(value.name, key);
-            protMap.set(value.id, key);
-        });
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
 
         d3.csv.parse(metaDataFileContents, function(d) {
             if (first) {
@@ -711,14 +717,13 @@ CLMSUI.modelUtils = {
             }
 
             var proteinIDValue = d.proteinID || d.ProteinID || d.Accession || d.accession;
-            var proteinID = protMap.get(proteinIDValue);
+            var proteinID = protMap.get (CLMSUI.modelUtils.parseProteinID (protMap, proteinIDValue));
             if (proteinID !== undefined) {
                 var protein = proteins.get(proteinID);
 
                 if (protein) {
                     matchedProteinCount++;
-                    var name = d.name || d.Name;
-                    protein.name = name || protein.name;
+                    protein.name = d.name || d.Name || protein.name;
 
                     protein.meta = protein.meta || {};
                     var meta = protein.meta;
@@ -766,12 +771,7 @@ CLMSUI.modelUtils = {
         var first = true;
         var columns = [];
 
-        var protMap = d3.map();
-        proteins.forEach(function(value, key) {
-            protMap.set(value.accession, key);
-            protMap.set(value.name, key);
-            protMap.set(value.id, key);
-        });
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
         var newAnnotations = [];
         var annotationMap = d3.map();
         var proteinSet = d3.set();
@@ -790,8 +790,7 @@ CLMSUI.modelUtils = {
                 dl[key.toLocaleLowerCase()] = d[key];
             });
 
-            var proteinIDValue = dl.proteinid;
-            var proteinID = protMap.get(proteinIDValue);
+            var proteinID = protMap.get (CLMSUI.modelUtils.parseProteinID (protMap, dl.proteinid));
             if (proteinID !== undefined) {
                 var protein = proteins.get(proteinID);
 
