@@ -851,6 +851,7 @@ CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
             // then blank the current selection
             nglModelWrapper.getModel().setMarkedCrossLinks("selection", [], false, false);
         }
+        return false;
     });
 };
 

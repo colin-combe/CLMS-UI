@@ -263,11 +263,13 @@
 		};
 
         
-		var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
+		
 
         z = performance.now();
         console.log ("TIME t1", performance.now());
 
+        if (window.location.search) {
+            var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
         d3.json (url, function (error, json) {
             spinner.stop(); // stop spinner on request returning
             
@@ -278,6 +280,10 @@
 				console.error ("Error", error);
 			}
 		});
+        } else {
+            spinner.stop(); // stop spinner
+            success ({});
+        }
 
     //]]>
     </script>
