@@ -87,7 +87,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             searchMissedCleavages: "Search Max. Missed Cleavages",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorItensity", "expMissedCleavages", "searchMissedCleavages",]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorItensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd"]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
@@ -123,6 +123,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var massZeroPadder = d3.format(".6f");
         var scientific = d3.format(".4e");
         var findIndexofNthUpperCaseLetter = function (str, n) { // n is 1-indexed here
+            str = str || "";
             var i = -1;
             while (n > 0 && i < str.length) {
                 i++;
@@ -210,10 +211,10 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return scientific(d.precursor_intensity);
             },
             elutionStart: function(d) {
-                return d.elution_time_start;
+                return massZeroPadder(d.elution_time_start);
             },
             elutionEnd: function(d) {
-                return d.elution_time_end;
+                return massZeroPadder(d.elution_time_end);
             },
             expMissedCleavages: function(d) {
                 return d.experimentalMissedCleavageCount();

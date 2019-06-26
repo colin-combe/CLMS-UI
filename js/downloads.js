@@ -312,8 +312,9 @@ function getSSL() {
         }
         var sslSeqLinkIndex = findIndexofNthUpperCaseLetter(seq, linkPos);
         return seq.slice(0, sslSeqLinkIndex + 1) + "[+1.008]" + seq.slice(sslSeqLinkIndex + 1, seq.length);
-    }
+    };
     var findIndexofNthUpperCaseLetter = function(str, n) { // n is 1-indexed here
+        str = str || "";
         var i = -1;
         while (n > 0 && i < str.length) {
             i++;
