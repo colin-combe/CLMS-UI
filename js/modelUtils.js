@@ -662,7 +662,8 @@ CLMSUI.modelUtils = {
                         matchedCrossLink.setMeta(entry.key, val.toString());
                     }
                 });
-            });
+            })
+        ;
 
         var registry = clmsModel.get("crossLinkMetaRegistry") || d3.set();
         columns.forEach(function(column) {
