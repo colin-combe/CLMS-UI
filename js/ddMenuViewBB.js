@@ -146,10 +146,10 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
         });
         */
 
-        choices.enter().append("li").each(function(d) {
+        var items = choices.enter().append("li").each(function(d) {
             var ind = d3.select(this);
             if (d.name) {
-                ind.text(d.name);
+                ind.append("span").text(d.name);
             } else if (d.id) {
                 var targetSel = d3.select("#" + CLMSUI.utils.makeLegalDomID(d.id));
                 if (!targetSel.empty()) {
@@ -181,12 +181,16 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
                     ind.attr("title", d.tooltip || d.title);
                 }
             }
-        }, this)
+        }, this);
+        
+        items
             .filter(function(d) {
                 return d.sectionBegin;
             })
             .insert("span", ":first-child").attr("class", "ddSectionHeader").text(self.options.sectionHeader)
         ;
+        
+        
 
         choices.classed("sectionEnd", function(d) {
             return d.sectionEnd;
