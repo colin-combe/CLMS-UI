@@ -350,7 +350,7 @@ CLMSUI.init.views = function() {
         },
         {
             id: "listChkBxPlaceholder",
-            label: "List / HeatMap",
+            label: "List",
             eventName: "listShow",
             tooltip: "Sortable list of cross-links, can convert to heatmap",
             sectionEnd: true
@@ -489,16 +489,6 @@ CLMSUI.init.views = function() {
             eventName: "userAnnotationsMetaShow",
             tooltip: "Load User Annotations from a local CSV file. See 'Expected CSV Format' within for syntax"
         },
-        {
-            name: "GO Gene Annotation File",
-            eventName: "gafMetaShow",
-            tooltip: "Load Gene Ontology data from a local Gene Annotation File (.gaf) file."
-        },
-        // {
-        //     name: "SkyLine quantitation",
-        //     eventName: "skylineMetaShow",
-        //     tooltip: "Load crosslink quantitation data from SkyLine output."
-        // },
     ];
     loadButtonData.forEach(function(bdata) {
         bdata.func = function() {
