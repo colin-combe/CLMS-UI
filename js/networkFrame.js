@@ -735,35 +735,41 @@ CLMSUI.init.viewsEssential = function(options) {
             myOptions: {
                 title: "Export",
                 menu: [{
-                        name: "Filtered Matches as CSV",
+                        name: "Filtered Matches",
                         func: downloadMatches,
-                        tooltip: "Produces a CSV File of Filtered Matches data"
+                        tooltip: "Produces a CSV File of Filtered Matches data",
+                        categoryTitle: "As a CSV File",
+                        sectionBegin: true
                     },
                     {
-                        name: "Filtered Cross-Links as CSV",
+                        name: "Filtered Cross-Links",
                         func: downloadLinks,
                         tooltip: "Produces a CSV File of Filtered Cross-Link data"
                     },
                     {
-                        name: "Filtered PPI as CSV",
+                        name: "Filtered PPI",
                         func: downloadPPIs,
                         tooltip: "Produces a CSV File of Filtered Protein-Protein Interaction data"
                     },
                     {
-                        name: "Filtered Matches as SSL",
-                        func: downloadSSL,
-                        tooltip: "Produces an SSL file for quantitation in SkyLine"
-                    },
-                    {
-                        name: "Filtered Residues as CSV",
+                        name: "Filtered Residues",
                         func: downloadResidueCount,
                         tooltip: "Produces a CSV File of Count of Filtered Residues ",
+                    },
+                    {
+                        name: "Filtered Matches ",
+                        func: downloadSSL,
+                        tooltip: "Produces an SSL file for quantitation in SkyLine",
+                        categoryTitle: "As an SSL File",
+                        sectionBegin: true,
                         sectionEnd: true
                     },
                     {
                         name: "Protein Accession list",
                         func: downloadProteinAccessions,
                         tooltip: "Produces a list of visible proteins' accession numbers",
+                        categoryTitle: "As a Plain Text File",
+                        sectionBegin: true,
                         sectionEnd: true
                     },
                     {
@@ -771,10 +777,16 @@ CLMSUI.init.viewsEssential = function(options) {
                         func: function() {
                             CLMSUI.vent.trigger("shareURL", true);
                         },
-                        tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility"
+                        tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility",
+                        categoryTitle: "As a URL",
+                        sectionBegin: true,
+                        
                     },
                 ],
                 tooltipModel: compModel.get("tooltipModel"),
+                sectionHeader: function(d) {
+                    return (d.categoryTitle ? d.categoryTitle.replace(/_/g, " ") : "");
+                },
             }
         })
         .wholeMenuEnabled(!_.isEmpty(compModel.get("clmsModel").get("matches")))
