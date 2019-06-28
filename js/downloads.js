@@ -258,7 +258,7 @@ function getMatchesCSV() {
 function getSSL() {
     var csv = 'file\tscan\tcharge\tsequence\tscore-type\tscore\tId\tProtein1\tSeqPos1\tPepPos1\tPepSeq1\tLinkPos1\tProtein2\tSeqPos2\tPepPos2\tPepSeq2\tLinkPos2\tCharge\tExpMz\tExpMass\tCalcMz\tCalcMass\tMassError\tAutoValidated\tValidated\tSearch\tRawFileName\tPeakListFileName\tScanNumber\tScanIndex\tCrossLinkerModMass\tFragmentTolerance\tIonTypes\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
-    var mass6dp = d3.format(".6f");
+    //var mass6dp = d3.format(".6f");
 
     var deltaMassRegex = /DELTAMASS:(.*)/
     var massRegex = /MASS:(.*)/
@@ -278,9 +278,9 @@ function getSSL() {
             }
 
             if (delta > 0) {
-                delta = "[+" + mass6dp(delta) + "]";
+                delta = "[+" + (delta) + "]";
             } else {
-                delta = "[" + mass6dp(delta) + "]";
+                delta = "[" + (delta) + "]";
             }
 
             modificationDeltasMap.set(sym, delta);
@@ -344,7 +344,7 @@ function getSSL() {
             var pep1sslSeq = makeSslPepSeq(peptide1.seq_mods, match.linkPos1);
             var pep2sslSeq = makeSslPepSeq(peptide2.seq_mods, match.linkPos2);
             var crosslinkerModMass = match.crossLinkerModMass();
-            var sequence = pep1sslSeq + "K[+" + mass6dp(crosslinkerModMass - 112.099857) + "]" + pep2sslSeq;
+            var sequence = pep1sslSeq + "K[+" + (crosslinkerModMass - 112.099857) + "]" + pep2sslSeq;
 
             var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
             var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
