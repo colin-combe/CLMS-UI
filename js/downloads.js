@@ -344,8 +344,15 @@ function getSSL() {
             var pep1sslSeq = makeSslPepSeq(peptide1.seq_mods, match.linkPos1);
             var pep2sslSeq = makeSslPepSeq(peptide2.seq_mods, match.linkPos2);
             var crosslinkerModMass = match.crossLinkerModMass();
-            var sequence = pep1sslSeq + "K[+" + (crosslinkerModMass - 112.099857) + "]" + pep2sslSeq;
-
+            //var sequence = pep1sslSeq + "K[+" + (crosslinkerModMass - 112.099857) + "]" + pep2sslSeq;
+	    var joiningAAModMass = (crosslinkerModMass - 112.099857);
+            var sequence = pep1sslSeq;
+            if (joiningAAModMass > 0) {
+                sequence = sequence + "K[+" + joiningAAModMass + "]" + pep2sslSeq;
+            } else {
+                sequence = sequence + "K[" + joiningAAModMass + "]" + pep2sslSeq;
+            }
+            
             var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
             var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
             var lp1 = CLMSUI.utils.fullPosConcat(match, 0);
