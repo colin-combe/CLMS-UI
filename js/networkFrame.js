@@ -751,18 +751,16 @@ CLMSUI.init.viewsEssential = function(options) {
                         tooltip: "Produces a CSV File of Count of Filtered Residues ",
                     },
                     {
+                        name: "Protein Accession list",
+                        func: downloadProteinAccessions,
+                        tooltip: "Produces a single row CSV File of visible Proteins' Accession numbers",
+                        sectionEnd: true
+                    },
+                    {
                         name: "Filtered Matches ",
                         func: downloadSSL,
                         tooltip: "Produces an SSL file for quantitation in SkyLine",
                         categoryTitle: "As an SSL File",
-                        sectionBegin: true,
-                        sectionEnd: true
-                    },
-                    {
-                        name: "Protein Accession list",
-                        func: downloadProteinAccessions,
-                        tooltip: "Produces a list of visible proteins' accession numbers",
-                        categoryTitle: "As a Plain Text File",
                         sectionBegin: true,
                         sectionEnd: true
                     },
@@ -774,7 +772,6 @@ CLMSUI.init.viewsEssential = function(options) {
                         tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility",
                         categoryTitle: "As a URL",
                         sectionBegin: true,
-                        
                     },
                 ],
                 tooltipModel: compModel.get("tooltipModel"),
