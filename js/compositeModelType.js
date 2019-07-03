@@ -535,19 +535,23 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     },
 
     getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
-        // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
-        distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
-        protAlignCollection = protAlignCollection || this.get("alignColl");
-        options = options || {
-            average: false
-        };
-        options.allowInterModelDistances = options.allowInterModel || (this.get("stageModel") ? this.get("stageModel").get("allowInterModelDistances") : false);
-        if (options.calcDecoyProteinDistances) {
-            options.realFromPid = xlink.fromProtein.is_decoy ? xlink.fromProtein.targetProteinID : undefined;
-            options.realToPid = xlink.toProtein.is_decoy ? xlink.toProtein.targetProteinID : undefined;
-        }
+        if (xlink.toProtein){
+            // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
+            distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
+            protAlignCollection = protAlignCollection || this.get("alignColl");
+            options = options || {
+                average: false
+            };
+            options.allowInterModelDistances = options.allowInterModel || (this.get("stageModel") ? this.get("stageModel").get("allowInterModelDistances") : false);
+            if (options.calcDecoyProteinDistances) {
+                options.realFromPid = xlink.fromProtein.is_decoy ? xlink.fromProtein.targetProteinID : undefined;
+                options.realToPid = xlink.toProtein.is_decoy ? xlink.toProtein.targetProteinID : undefined;
+            }
 
-        return distancesObj ? distancesObj.getXLinkDistance(xlink, protAlignCollection, options) : undefined;
+            return distancesObj ? distancesObj.getXLinkDistance(xlink, protAlignCollection, options) : undefined;
+        } else {
+            return;
+        }
     },
 
     // set includeUndefineds to true to preserve indexing of returned distances to input crosslinks
