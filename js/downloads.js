@@ -219,7 +219,7 @@ function getMatchesCSV() {
         var linkType;
         if (match.isAmbig()) {
             linkType = "Ambig.";
-        } else if (clmsModel.get("participants").get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || clmsModel.get("participants").get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___") {
+        } else if (clmsModel.get("participants").get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || (match.matchedPeptides[1] && clmsModel.get("participants").get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___")) {
             linkType = "__AMBIG__";
         } else if (match.crossLinks[0].isSelfLink()) {
             linkType = "Self";
