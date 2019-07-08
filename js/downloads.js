@@ -219,7 +219,7 @@ function getMatchesCSV() {
         var linkType;
         if (match.isAmbig()) {
             linkType = "Ambig.";
-        } else if (clmsModel.get("participants").get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || clmsModel.get("participants").get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___") {
+        } else if (clmsModel.get("participants").get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || (match.matchedPeptides[1] && clmsModel.get("participants").get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___")) {
             linkType = "__AMBIG__";
         } else if (match.crossLinks[0].isSelfLink()) {
             linkType = "Self";
@@ -344,7 +344,14 @@ function getSSL() {
             var pep1sslSeq = makeSslPepSeq(peptide1.seq_mods, match.linkPos1);
             var pep2sslSeq = makeSslPepSeq(peptide2.seq_mods, match.linkPos2);
             var crosslinkerModMass = match.crossLinkerModMass();
-            var sequence = pep1sslSeq + "K[+" + (crosslinkerModMass - 112.099857) + "]" + pep2sslSeq;
+            //var sequence = pep1sslSeq + "K[+" + (crosslinkerModMass - 112.099857) + "]" + pep2sslSeq;
+	    var joiningAAModMass = (crosslinkerModMass - 112.099857);
+            var sequence = pep1sslSeq;
+            if (joiningAAModMass > 0) {
+                sequence = sequence + "K[+" + joiningAAModMass + "]" + pep2sslSeq;
+            } else {
+                sequence = sequence + "K[" + joiningAAModMass + "]" + pep2sslSeq;
+            }
 
             var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
             var pp2 = CLMSUI.utils.pepPosConcat(match, 1);

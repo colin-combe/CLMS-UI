@@ -75,7 +75,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         var pdbCodeSpan = box.append("span")
             .attr("class", "btn sectionDivider2 nopadLeft")
-            .text("or Enter a 4-character PDB ID")
+            .text("or Enter 4-character PDB IDs")
             //.append("div")
         ;
 
@@ -88,7 +88,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
                 maxlength: 100,
                 pattern: CLMSUI.utils.commonRegexes.multiPdbPattern,
                 size: 8,
-                title: "Enter a PDB ID here e.g. 1AO6",
+                title: "Enter PDB IDs here e.g. 1AO6 for one structure, 1YSX 1BKE to merge two",
                 //placeholder: "eg 1AO6"
             })
             .property("required", true)
