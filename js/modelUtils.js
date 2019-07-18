@@ -560,7 +560,7 @@ CLMSUI.modelUtils = {
         var searchMap = {};
         rawMatchArray = rawMatchArray || [];
         rawMatchArray.forEach(function(rawMatch) {
-            var prots = pepMap.get(rawMatch.pi/*[0]*/).prt; // pi now restored to single value, not array
+            var prots = pepMap.get(rawMatch.pi).prt;
             var searchToProts = searchMap[rawMatch.si];
             if (!searchToProts) {
                 var newSet = d3.set();
