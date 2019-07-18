@@ -693,6 +693,7 @@ CLMSUI.init.viewsEssential = function(options) {
         knownModificationsURL: false,//CLMSUI.xiAnnotRoot + "annotate/knownModifications",
         showCustomConfig: true,
         showQualityControl: "min",
+	      colorScheme: colorbrewer.PRGn[8],
     }
 
     xiSPEC.init(xiSPEC_options);
