@@ -82,7 +82,7 @@ CLMSUI.utils = {
 
         parentBar
             .append("i")
-            .attr("class", "fa fa-times-circle closeButton")
+            .attr("class", "fa fa-times-circle closeButton panelMenuButton")
             .attr ("title", "Hide View")
         ;
         
@@ -640,7 +640,8 @@ CLMSUI.utils = {
         var keyGroup = svgElem.selectAll("g.key").data([0]);
         keyGroup.enter()
             .append("g").attr("class", "key")
-            .append("text").attr("class", "keyTitle");
+            .append("text").attr("class", "keyTitle")
+        ;
 
         var colourAssign = model.get("linkColourAssignment");
         if (colourAssign) {
@@ -648,63 +649,66 @@ CLMSUI.utils = {
                 .attr("y", 12)
                 .text("Key: " + colourAssign.get("title"))
             ;
-            console.log ("colour", colourAssign);
 
+            var schemeType = colourAssign.get("type");
             var colScale = colourAssign.get("colScale");
-            var labels = colourAssign.get("labels");
             var domain = colScale.domain();
-            var pairUp = d3.zip(colScale.range(), labels.range());
-            var isLinear = colourAssign.get("type") === "linear";
+            var labelColourPairs = colourAssign.getLabelColourPairings();
+            var isLinear = schemeType === "linear";
             var linearHeight = 150;
             var normalScale = d3.scale.linear().domain(d3.extent(domain)).range([0, 100]);
             var heightScale = d3.scale.linear().domain(d3.extent(domain)).range([18, linearHeight + 18]);
 
-            if (colourAssign.get("type") === "threshold") {
-                pairUp.forEach(function(pair, i) {
-                    var d1 = i > 0 ? ">" + domain[i - 1] : undefined;
-                    var d2 = i < domain.length ? "<" + domain[i] : undefined;
-                    var dp = [d1, d2].filter(function(d) {
-                        return d !== undefined;
-                    });
-                    pair[1] += " (" + dp.join(" & ") + ")";
+            if (schemeType === "threshold") {
+                labelColourPairs.forEach(function(pair, i) {
+                    if (i < labelColourPairs.length - 1) {    // don't do for last category - which is unknown
+                        var d1 = i > 0 ? ">" + domain[i - 1] : undefined;
+                        var d2 = i < domain.length ? "<" + domain[i] : undefined;
+                        var dp = [d1, d2].filter(function(d) {
+                            return d !== undefined;
+                        });
+                        pair[0] += " (" + dp.join(" & ") + ")";
+                    }
                 });
             }
 
-            pairUp.forEach(function(pair, i) {
-                pair[2] = isLinear ? heightScale(domain[i]) : 3 + ((i + 1) * 15); // y-position of colour swatches and labels
+             // set y-position of colour swatches and labels
+            labelColourPairs.forEach(function(pair, i) {
+                pair[2] = isLinear ? (domain[i] === undefined ? _.last(heightScale.range()) + 15 : heightScale(domain[i])) : 3 + ((i + 1) * 15);
             });
-            
-            pairUp.push ([colourAssign.get("undefinedColour"), colourAssign.get("undefinedLabel"), _.last(pairUp)[2] + 15]);
 
-            var colourElems = keyGroup.selectAll("g.keyPoint").data(pairUp);
+            var colourElems = keyGroup.selectAll("g.keyPoint").data(colourAssign.get("fixed") ? [] : labelColourPairs);
             colourElems.exit().remove();
             var newElems = colourElems.enter().append("g")
                 .attr("class", "keyPoint")
                 .attr("transform", function(d) {
                     return "translate(0," + d[2] + ")";
-                });
+                })
+            ;
             newElems.append("rect")
                 .attr("height", 4)
                 .attr("width", "1em")
                 .attr("x", 1)
                 .attr("y", 5)
-                .style("stroke", "none");
+                .style("stroke", "none")
+            ;
             newElems.append("text")
                 .attr("x", 19)
-                .attr("y", 12);
+                .attr("y", 12)
+            ;
             colourElems.select("rect")
                 .style("fill", function(d, i) {
-                    return d[0];
+                    return d[1];
                 })
                 // hide individual colour swatches if showing linear scale
-                .style("display", function(d) { return isLinear && d[1] !== colourAssign.get("undefinedLabel") ? "none" : null; })
+                .style("display", function(d) { return isLinear && d[0] !== colourAssign.get("undefinedLabel") ? "none" : null; })
             ;
             colourElems.select("text").text(function(d, i) {
-                return d[1];
+                return d[0];
             });
 
 
-            if (isLinear) {
+            if (isLinear && !colourAssign.get("fixed")) {
                 // Make gradient and fill a rect with it
                 var gradID = "grad" + Math.ceil(Math.random() * 100000);
 
@@ -725,13 +729,13 @@ CLMSUI.utils = {
                         return Math.round(normalScale(d)) + "%";
                     })
                     .attr("stop-color", function(d, i) {
-                        return colScale.range()[i];
+                        return labelColourPairs[i][1];
                     })
                 ;
 
                 svgElem.selectAll("rect.gradientScale").remove();
 
-                svgElem.append("rect")
+                keyGroup.append("rect")
                     .attr("class", "gradientScale")
                     .attr("x", 1)
                     .attr("y", heightScale.range()[0] + 5)
@@ -942,7 +946,7 @@ CLMSUI.utils = {
         link.exit().remove();
         link.enter().append("g")
             .attr("class", "dlink")
-            .append("path");;
+            .append("path");
         link.select("path").attr("d", function(d) {
             return "M" + d.source.y + " " + d.source.x + " V " + d.target.x + " H " + d.target.y;
         });
@@ -976,8 +980,17 @@ CLMSUI.utils = {
         node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
         */
     },
-
-
+    
+    isModernWeb: function () {
+        var modernWeb;
+        try {
+            modernWeb = !!new Blob();
+        } catch (e) {
+            modernWeb = false;
+        }
+        return modernWeb;
+    },
+    
     BaseFrameView: Backbone.View.extend({
 
         events: {
@@ -989,6 +1002,7 @@ CLMSUI.utils = {
             "click .closeButton": "hideView",
             "click .hideToolbarButton": "hideToolbarArea",
             "click .takeImageButton": "takeImage",
+            "click .maximiseButton": "minMaxPanel",
             "click": "bringToTop",
         },
 
@@ -997,6 +1011,7 @@ CLMSUI.utils = {
             // window level options that don't depend on type of view
             var globalOptions = {
                 canBringToTop: true,
+                canMaximise: true,
                 background: null,
                 canHideToolbarArea: false,
                 canTakeImage: false,
@@ -1012,15 +1027,21 @@ CLMSUI.utils = {
 
             // Set up some html scaffolding in d3
             CLMSUI.utils.addDynDivScaffolding(mainDivSel);
+            if (this.options.canMaximise) {
+                mainDivSel.select(".dynDiv_moveParentDiv").append("i")
+                    .attr("class", "fa fa-expand maximiseButton panelMenuButton")
+                    .attr("title", "Maximise / Restore Panel Size")
+                ;
+            }
             if (this.options.canHideToolbarArea) {
                 mainDivSel.select(".dynDiv_moveParentDiv").append("i")
-                    .attr("class", "fa fa-tv hideToolbarButton")
+                    .attr("class", "fa fa-wrench hideToolbarButton panelMenuButton")
                     .attr("title", "Hide/Show the View Toolbar")
                 ;
             }
             if (this.options.canTakeImage) {
                 mainDivSel.select(".dynDiv_moveParentDiv").append("i")
-                    .attr("class", "fa fa-photo takeImageButton")
+                    .attr("class", "fa fa-photo takeImageButton panelMenuButton")
                     .attr("title", "Download Image")
                 ;
             }
@@ -1253,6 +1274,28 @@ CLMSUI.utils = {
             }
             return this;
         },
+        
+        minMaxPanel: function () {
+            var panel = d3.select(this.el);
+            var maxed = panel.classed("maxSize");
+            panel.classed ("maxSize", !maxed);
+            if (maxed) {
+                panel.style("bottom", null).style("right", null);
+                d3.entries(this.prevBounds).forEach (function (propEntry) {
+                    panel.style (propEntry.key, propEntry.value);    
+                });
+            } else {
+                var collectThese = ["top", "left", "width", "height"];
+                this.prevBounds = {};
+                collectThese.forEach (function (prop) { this.prevBounds[prop] = panel.style(prop); }, this);
+                panel.style("bottom", "65px").style("top", "75px").style("left",0).style("right", 0).style("width", "auto").style("height", "auto");
+            }
+            
+            panel.selectAll(".maximiseButton").classed("fa-expand", maxed).classed("fa-compress", !maxed);
+            this.relayout({dragEnd: true});
+            
+            return this;
+        },
 
         // find z-indexes of all visible, movable divs, and make the current one a higher z-index
         // then a bit of maths to reset the lowest z-index so they don't run off to infinity
@@ -1334,20 +1377,20 @@ CLMSUI.utils = {
         makeChartTitle: function(counts, colourScheme, titleElem, matchLevel) {
             var labels = colourScheme.isCategorical() ? colourScheme.get("labels").range() : [];
             var commaed = d3.format(",");
-            var total = d3.sum(counts);
+            var totalStr = commaed(d3.sum(counts));
             var itemStr = matchLevel ? " Matches" : " Cross-Links";
             var pairs = _.zip (labels, counts);
             var linkCountStr = counts.map(function(count, i) {
                 return commaed(count) + " " + (matchLevel ? "in " : "") + (labels[i] || colourScheme.get("undefinedLabel"));
             }, this);
             
-            var titleText = this.identifier + ": " + commaed(total) + itemStr + " - " + linkCountStr.join(", ");
+            var titleText = this.identifier + ": " + totalStr + itemStr + " - " + linkCountStr.join(", ");
             titleElem.text(titleText);
             
             var self = this;
             titleElem.on("mouseenter", function(d) {
                 self.model.get("tooltipModel")
-                    .set("header", self.identifier+", "+total+itemStr)
+                    .set("header", self.identifier+": "+totalStr+itemStr)
                     .set("contents", linkCountStr)
                     .set("location", {
                         pageX: d3.event.pageX,

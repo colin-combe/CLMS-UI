@@ -47,9 +47,10 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var tableDataPropOrder = [
             "id", "ambiguity", "protein1", /*"pos1",*/ "pepPos1", "pepSeq1raw", "linkPos1",
             "protein2", /*"pos2",*/ "pepPos2", "pepSeq2raw", "linkPos2", "score",
-            "autovalidated", "validated", "group", "runName", "scanNumber",
+            "autovalidated", "validated", "group", "searchId", "runName", "scanNumber",
             "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
-            "precursorIntensity", "elutionStart", "elutionEnd",
+            "precursorIntensity", "elutionStart", "elutionEnd", "expMissedCleavages",
+            "searchMissedCleavages",
         ];
 
         this.headerLabels = {
@@ -69,6 +70,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             autovalidated: "Auto",
             validated: "Manual",
             group: "Group",
+            searchId: "Search Id",
             runName: "Run Name",
             scanNumber: "Scan Number",
             precursorCharge: "Charge (Z)",
@@ -77,12 +79,15 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             calcMZ: "Calc M/Z",
             calcMass: "Calc Mass",
             massError: "Mass Error (ppm)",
+            missingPeaks: "Missing Peaks",
             precursorIntensity: "Intensity",
             elutionStart: "Elut. Start",
             elutionEnd: "Elut. End",
+            expMissedCleavages: "Experimental Max. Missed Cleavages",
+            searchMissedCleavages: "Search Max. Missed Cleavages",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "precursorItensity", ]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorItensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd"]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
@@ -126,6 +131,21 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var twoZeroPadder = d3.format(".2f");
         var massZeroPadder = d3.format(".6f");
         var scientific = d3.format(".4e");
+        var findIndexofNthUpperCaseLetter = function (str, n) { // n is 1-indexed here
+            str = str || "";
+            var i = -1;
+            while (n > 0 && i < str.length) {
+                i++;
+                var c = str[i];
+                if (c >= "A" && c <= "Z") n--;
+            }
+            return i === str.length ? undefined : i;
+        };
+        var emphasiseLinkedResidue = function (str, linkPos) {
+            var i = findIndexofNthUpperCaseLetter (str, linkPos);
+            return i !== undefined ? str.substr(0,i) + "<span class='linkedResidue'>" + str[i] + "</span>" + str.substr(i+1) : str;
+            //return i !== undefined ? str.substr(0,i+1) + "&#829;" + str.substr(i+1) : str;
+        };
         this.cellFuncs = {
             id: function(d) {
                 return d.id;
@@ -146,6 +166,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             group: function(d) {
                 return d.group();
             },
+            searchId: function(d) {
+                return d.searchId;
+            },
             pos1: function(d) {
                 return CLMSUI.utils.fullPosConcat(d, 0);
             },
@@ -159,11 +182,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return CLMSUI.utils.pepPosConcat(d, 1);
             },
             pepSeq1raw: function(d) {
-                return d.matchedPeptides[0].seq_mods;
+                var seqMods = d.matchedPeptides[0].seq_mods;
+                return emphasiseLinkedResidue (seqMods, d.linkPos1);
             },
             pepSeq2raw: function(d) {
                 var dmp1 = d.matchedPeptides[1];
-                return dmp1 ? dmp1.seq_mods : "";
+                return dmp1 ? emphasiseLinkedResidue (dmp1 ? dmp1.seq_mods : "", d.linkPos2) : "";
             },
             linkPos1: function(d) {
                 return d.linkPos1;
@@ -189,14 +213,23 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             massError: function(d) {
                 return massZeroPadder(d.massError());
             },
+            missingPeaks: function(d) {
+                return massZeroPadder(d.missingPeaks());
+            },
             precursorIntensity: function(d) {
                 return scientific(d.precursor_intensity);
             },
             elutionStart: function(d) {
-                return d.elution_time_start;
+                return massZeroPadder(d.elution_time_start);
             },
             elutionEnd: function(d) {
-                return d.elution_time_end;
+                return massZeroPadder(d.elution_time_end);
+            },
+            expMissedCleavages: function(d) {
+                return d.experimentalMissedCleavageCount();
+            },
+            searchMissedCleavages: function(d) {
+                return d.searchMissedCleavageCount();
             },
         };
 
@@ -436,7 +469,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                         ambigSet.add(mid);
                     }
                 }
-            })
+            });
         });
 
         return repeatedAmbigCount;
@@ -583,7 +616,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 */
                 var d3this = d3.select(this);
                 if (self.numberColumns.has(d)) {
-                    d3this.html(deemphasiseFraction(getText.call(this, d)))
+                    d3this.html(deemphasiseFraction(getText.call(this, d)));
+                } else if (self.monospacedColumns.has(d)) {
+                    d3this.html(getText);
                 } else {
                     d3this.text(getText);
                 }

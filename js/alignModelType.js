@@ -30,6 +30,7 @@
                 score: fullResult.res[0],
                 bitScore: fullResult.bitScore,
                 eScore: fullResult.eScore,
+                avgBitScore: fullResult.avgBitScore,
                 label: this.get("compID"),
             };
 
@@ -140,7 +141,7 @@
         },
 
 
-        getAlignedIndex: function(resIndex, toSearchSeq, keepNegativeValue) {
+        getAlignedIndex: function (seqIndex, toSearchSeq, keepNegativeValue) {
             // seqLength attribution NOT wrong way round.
             // we use seqLength to determine whether a negative (no direct match) index is somewhere within the matched-to sequence or outside of it altogether
             // e.g. pairing sequences, ref = ABCDEFGHI, nonRef = CDFG
@@ -149,8 +150,8 @@
             // when say going from 'E' in ref to nonref (fromSearch, cfr to ctr) , value for cfr index is -2, which is bigger than -4 (neg length of ctr) so value is within
             // when say going from 'H' in ref to nonref (fromSearch, cfr to ctr) , value for cfr index is -5, which is smaller than/equal to -4 (neg length of ctr) so value is outside
             var seqLength = this.get("compAlignment")[toSearchSeq ? "convertFromRef" : "convertToRef"].length;
-            var alignPos = toSearchSeq ? this.mapToSearch(resIndex) : this.mapFromSearch(resIndex);
-            //console.log (resIndex, "->", alignPos, "toSearch: ", toSearchSeq, seqLength);
+            var alignPos = toSearchSeq ? this.mapToSearch (seqIndex) : this.mapFromSearch (seqIndex);
+            //console.log (seqIndex, "->", alignPos, "toSearch: ", toSearchSeq, seqLength);
             // if alignPos == 0 then before seq, if alignpos <== -seqlen then after seq
             //console.log (pdbChainSeqId, "seqlen", seqLength);
             if (alignPos === 0 || alignPos <= -seqLength) { // returned alignment is outside (before or after) the alignment target
@@ -183,11 +184,11 @@
         model: CLMSUI.BackboneModelTypes.SeqModel,
 
         initialize: function() {
-            this.listenTo(this, "add", function(addedModel) {
+            this.listenTo(this, "add", function (newSequenceModel) {
                 //~ console.log ("new sequence added. align it.", arguments);
-                this.currentlyAddingModel = addedModel;
-                addedModel.align();
-                this.currentlyAddingModel = null;
+                //this.currentlyAddingModel = newSequenceModel;
+                newSequenceModel.align();
+                //this.currentlyAddingModel = null;
             });
             return this;
         }
@@ -263,10 +264,11 @@
                 var bioseqResults = settings.aligner.align(cSeq, settings.refSeq, settings.scoringSystem, !!localAlign, !!semiLocalAlign, alignWindowSize);
                 bioseqResults.bitScore = this.getBitScore(bioseqResults.res[0], settings.scoringSystem.matrix);
                 bioseqResults.eScore = this.alignmentSignificancy(bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length);
+                bioseqResults.avgBitScore = this.averageBitScorePerResidue (bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length);
+                //console.log (this.id, bioseqResults.bitScore, settings.totalRefSeqLength, cSeq.length, bioseqResults.eScore, bioseqResults.avgBitScore);
                 return bioseqResults;
             }, this);
 
-            //console.log ("fr", fullResults);
             return fullResults;
         },
 
@@ -281,6 +283,10 @@
         alignmentSignificancy: function(bitScore, dbLength, seqLength) {
             var exp = Math.pow(2, -bitScore);
             return (dbLength || 100) * seqLength * exp; // escore
+        },
+
+        averageBitScorePerResidue: function (bitScore, dbLength, seqLength) {
+            return bitScore / seqLength;    
         },
 
         getSettings: function() {
@@ -312,6 +318,10 @@
 
         getSequenceModel: function(seqName) {
             return this.get("seqCollection").get(seqName);
+        },
+
+        getSequenceModelsByPredicate: function (predicateFunc) {
+            return this.get("seqCollection").filter (function (m) { return predicateFunc (m); });
         },
 
         // These following routines assume that 'index' passed in is 1-indexed, and the return value wanted will be 1-indexed too
@@ -357,9 +367,9 @@
         },
 
 
-        getAlignedIndex: function(resIndex, toSearchSeq, sequenceID, keepNegativeValue) {
+        getAlignedIndex: function (seqIndex, toSearchSeq, sequenceID, keepNegativeValue) {
             var seqModel = this.getSequenceModel(sequenceID);
-            return seqModel.getAlignedIndex(resIndex, toSearchSeq, keepNegativeValue);
+            return seqModel.getAlignedIndex (seqIndex, toSearchSeq, keepNegativeValue);
         },
 
 
@@ -407,15 +417,17 @@
                 label: "No. of Aligned Sequences",
                 compFunc: function(m) {
                     return m.get("seqCollection").length;
-                }
+                },
+                reverse: true
             },
             {
                 label: "Total Alignment Score",
                 compFunc: function(m) {
                     return d3.sum(m.get("seqCollection").pluck("compAlignment").map(function(ca) {
                         return ca.score;
-                    }))
-                }
+                    }));
+                },
+                reverse: true
             }
         ],
 
@@ -450,6 +462,26 @@
             }));
         },
 
+        // Remove passed in sequenceModels from their parent collections (use in tandem with next function)
+        // Easier than going down the protAlignCollection -> protModel -> seqCollection -> seqModel route
+        removeSequences: function (sequenceModels) {
+            sequenceModels.forEach (function (seqMod) {
+                if (seqMod.collection) {
+                    seqMod.collection.remove (seqMod);
+                }
+            });
+            return this;
+        },
+        
+        // get sequenceModels by predicate function
+        getSequencesByPredicate: function (predicateFunc) {
+            var seqModels = [];
+            this.each (function (protAlignModel) {
+                seqModels.push.apply (seqModels, protAlignModel.getSequenceModelsByPredicate (predicateFunc));
+            });
+            return seqModels;
+        },
+        
         bulkAlignChangeFinished: function() {
             if (this.nonTrivialChange !== false) {
                 this.trigger("bulkAlignChange", true);
@@ -461,11 +493,11 @@
         // Moved here from NGLViewBB.js, convenience function to convert an index in a given align sequence in a given align model to the search sequence
         // (or vice versa)
         // TODO, need to check for decoys (protein has no alignment)
-        // conversion here works to and from the resindex local to a chain
+        // conversion here works to and from the seqIndex local to a chain
         // IMPORTANT: The following routine assumes that 'index' passed in is 1-indexed, and the return value wanted will be 1-indexed too
-        getAlignedIndex: function(resIndex, proteinID, toSearchSeq, sequenceID, keepNegativeValue) {
+        getAlignedIndex: function (seqIndex, proteinID, toSearchSeq, sequenceID, keepNegativeValue) {
             var protAlignModel = this.get(proteinID);
-            return protAlignModel ? protAlignModel.getAlignedIndex(resIndex, toSearchSeq, sequenceID, keepNegativeValue) : resIndex; // this will be 1-indexed or null
+            return protAlignModel ? protAlignModel.getAlignedIndex (seqIndex, toSearchSeq, sequenceID, keepNegativeValue) : seqIndex;   // this will be 1-indexed or null
         },
 
         getSearchRangeIndexOfMatches: function(proteinID, sequenceID) {

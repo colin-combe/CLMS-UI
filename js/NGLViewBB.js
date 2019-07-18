@@ -16,6 +16,9 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         return _.extend({}, parentEvents, {
             "click .centreButton": "centerView",
             "click .downloadButton": "downloadImage",
+            "click .savePDBButton": "savePDB",
+            "click .exportPymolButton": "exportPymol",
+            "click .exportHaddockButton": "exportHaddock",
             "click .distanceLabelCB": "toggleLabels",
             "click .selectedOnlyCB": "toggleNonSelectedLinks",
             "click .showResiduesCB": "toggleResidues",
@@ -74,6 +77,52 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         var toolbar = flexWrapperPanel.append("div").attr("class", "toolbar toolbarArea");
         CLMSUI.utils.makeBackboneButtons (toolbar, self.el.id, buttonData);
+        
+        // Generate Export/Save cross-link data dropdown
+        var saveExportButtonData = [{
+                class: "savePDBButton",
+                label: "PDB & CrossLinks",
+                id: "savePDB",
+                d3tooltip: "Saves a copy of the PDB with complete filtered cross-links"
+            },
+            {
+                class: "exportPymolButton",
+                label: "Pymol Command File",
+                id: "pymolExport",
+                d3tooltip: "Export a Pymol command script for recreating this pdb and complete filtered cross-links"
+            },
+            {
+                class: "exportHaddockButton",
+                label: "Haddock Distance Restraints File",
+                id: "haddockExport",
+                d3tooltip: "Export a Haddock command script containing the complete filtered inter-pdb(model) cross-links. Requires 'Show > Inter-Model Distances' to be set"
+            },
+        ];
+        saveExportButtonData
+            .forEach(function(d) {
+                d.type = d.type || "button";
+                d.value = d.value || d.label;
+            }, this)
+        ;
+        CLMSUI.utils.makeBackboneButtons(toolbar, self.el.id, saveExportButtonData);
+
+        // ...then moved to a dropdown menu
+        var optid = this.el.id + "Exports";
+        toolbar.append("p").attr("id", optid);
+        new CLMSUI.DropDownMenuViewBB({
+            el: "#" + optid,
+            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            myOptions: {
+                title: "Export ▼",
+                menu: saveExportButtonData.map(function(d) {
+                    d.id = self.el.id + d.id;
+                    d.tooltip = d.d3tooltip;
+                    return d;
+                }),
+                closeOnClick: true,
+                tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+            }
+        });
 
 
         // Assembly choice dropdown
@@ -105,7 +154,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                         self.options.defaultAssembly = d3.event.target.value;
                         self.xlRepr
                             .updateOptions(self.options, ["defaultAssembly"])
-                            .updateAssemblyType();
+                            .updateAssemblyType()
+                        ;
                         self.setAssemblyChains();
                     }
                 },
@@ -252,6 +302,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         NGL.ColormakerRegistry.add ("external", function () {
             this.lastResidueIndex = null;
             this.lastColour = null;
+            this.dontGrey = true;
             this.atomColor = function (atom) {
                 var arindex = atom.residueIndex;
                 if (this.lastResidueIndex === arindex) {    // saves recalculating, as colour is per residue
@@ -259,13 +310,13 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 }
                 this.lastResidueIndex = arindex;
                 
-                var residue = self.model.get("stageModel").getResidueByGlobalIndex (arindex);
+                var residue = self.model.get("stageModel").getResidueByNGLGlobalIndex (arindex);
                 
                 if (residue !== undefined) {
-                    var linkCount = self.xlRepr.crosslinkData.getFullLinkCountByResidue (residue);
-                    this.lastColour = (linkCount === 0 ? 0x5555ff : 0xaaaaaa);
+                    var linkCount = self.xlRepr ? self.xlRepr.crosslinkData.getHalfLinkCountByResidue (residue) : 0;
+                    this.lastColour = (linkCount > 0 ? 0x000077 : 0xcccccc);
                 } else {
-                    this.lastColour = 0xaaaaaa;
+                    this.lastColour = 0xcccccc;
                 }
                 //console.log ("rid", arindex, this.lastColour);
                 return this.lastColour;
@@ -296,26 +347,18 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var colourChangeFunc = function() {
             if (self.xlRepr) {
                 var value = d3.event.target.value;
-                var schemeObj = {
-                    colorScheme: value || "uniform",
-                    colorScale: undefined,
-                    colorValue: 0x808080
-                };
-                // made colorscale undefined to stop struc and residue repr's having different scales (sstruc has RdYlGn as default)                   
-
+                self.colourScheme = value;
                 var structure = self.model.get("stageModel").get("structureComp").structure;
-                var scheme = NGL.ColormakerRegistry.getScheme({
+                self.xlRepr.colorOptions.residueSubScheme = NGL.ColormakerRegistry.getScheme({
                     scheme: value || "uniform",
                     structure: structure
                 });
-                //console.log ("SUBSCHEME", scheme);
-                self.xlRepr.colorOptions.residueSubScheme = scheme;
+                //console.log ("SUBSCHEME", self.xlRepr.colorOptions.residueSubScheme);
                 
                 self.rerenderColourSchemes ([
                     {nglRep: self.xlRepr.resRepr, colourScheme: self.xlRepr.colorOptions.residueColourScheme, immediateUpdate: false},
                     {nglRep: self.xlRepr.sstrucRepr, colourScheme: self.xlRepr.colorOptions.residueColourScheme},
                 ]);
-                //console.log ("label rep", self.xlRepr.labelRepr);
             }
         };
 
@@ -341,6 +384,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         this.chartDiv.append("div").attr("class", "overlayInfo").html("No PDB File Loaded");
+        this.chartDiv.append("div").attr("class", "linkInfo").html("...");
 
         this.listenTo(this.model.get("filterModel"), "change", this.showFiltered); // any property changing in the filter model means rerendering this view
         this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", function () {
@@ -370,10 +414,16 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.xlRepr.dispose(); // remove old mouse handlers or they keep firing and cause errors
                 this.xlRepr = null;
             }
+            
+            var disableHaddock = function (stageModel) {
+                mainDivSel.select(".exportHaddockButton").property("disabled", !stageModel.get("allowInterModelDistances") || stageModel.get("structureComp").structure.modelStore.count == 1);
+            };
+            
             this
                 .listenTo (newStageModel, "change:linkList", function () {
                     if (this.xlRepr) {
                         this.xlRepr._handleDataChange();
+                        this.reportLinks();
                     }
                 })
                 .listenTo (newStageModel, "change:allowInterModelDistances", function (stageModel, value) {
@@ -382,6 +432,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     if (this.xlRepr) {
                         this.showFiltered();
                     }
+                    disableHaddock (newStageModel);     
                 })
                 .listenTo (newStageModel, "change:showShortestLinksOnly", function (stageModel, value) {
                     this.options.shortestLinksOnly = value;
@@ -405,6 +456,12 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .setAssemblyChains()
                     .repopulate();
             });
+            
+            // can't save pdb files with 100,000 or more atoms
+            d3.select(this.el).select(".savePDBButton").property("disabled", newStageModel.get("structureComp").structure.atomCount > 99999);
+            
+            // can't do haddocky stuff if only 1 model
+            disableHaddock (newStageModel);          
         });
 
         this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {
@@ -419,20 +476,34 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.showFiltered().centerView();
             }
         });
-
     },
 
     setAssemblyChains: function() {
         this.model.get("clmsModel").get("distancesObj").setAssemblyChains(this.model.get("stageModel").get("structureComp").structure, this.options.defaultAssembly);
         return this;
     },
+    
+    reportLinks: function () {
+        var fullLinkCount = this.xlRepr.crosslinkData.getFullLinkCount();
+        var halfLinkCount = this.xlRepr.crosslinkData.getHalfLinkCount();
+        var currentFilteredLinkCount = this.model.getFilteredCrossLinks().length;
+        var missingLinkCount = currentFilteredLinkCount - fullLinkCount - halfLinkCount;
+        var commaFormat = d3.format(",");
+        var linkText = "Currently showing " + commaFormat(fullLinkCount) + " in full "+
+            (halfLinkCount ? "and "+commaFormat(halfLinkCount)+" in part " : "" ) + 
+            "of " + commaFormat(currentFilteredLinkCount) + " filtered TT crosslinks"+
+            (missingLinkCount ? " ("+commaFormat(missingLinkCount)+" others outside of structure scope)" : "")
+        ;
+        this.chartDiv.select("div.linkInfo").html(linkText);
+        return this;
+    },
 
     repopulate: function() {
         var stageModel = this.model.get("stageModel");
         CLMSUI.utils.xilog("REPOPULATE", this.model, stageModel);
-        var pdbID = stageModel.get("pdbBaseSeqID");
-        var overText = "PDB File: " + (pdbID.length === 4 ?
-                "<A class='outsideLink' target='_blank' href='https://www.rcsb.org/pdb/explore.do?structureId=" + pdbID + "'>" + pdbID + "</A>" : pdbID) +
+        var sname = stageModel.getStructureName();
+        var overText = "PDB File: " + (sname.length === 4 ?
+                "<A class='outsideLink' target='_blank' href='https://www.rcsb.org/pdb/explore.do?structureId=" + sname + "'>" + sname + "</A>" : sname) +
             " - " + stageModel.get("structureComp").structure.title;
 
         var interactors = CLMSUI.modelUtils.filterOutDecoyInteractors (Array.from(this.model.get("clmsModel").get("participants").values()));
@@ -461,7 +532,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 defaultAssembly: this.options.defaultAssembly,
                 selectedColor: "yellow",
                 selectedLinksColor: "yellow",
-                sstrucColor: "gray",
+                sstrucColourScheme: this.colourScheme,
                 displayedLabelColor: "black",
                 displayedLabelVisible: this.options.labelVisible,
                 showAllProteins: this.options.showAllProteins,
@@ -562,6 +633,47 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         if (stageModel) {
             stageModel.get("structureComp").stage.autoView(1000);
         }
+        return this;
+    },
+    
+    savePDB: function () {
+        var stageModel = this.model.get("stageModel");
+        CLMSUI.NGLUtils.exportPDB (
+            stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(), 
+                ["PDB ID: "+stageModel.getStructureName(), 
+                "Exported by "+this.identifier+" and XiView", 
+                 "Xi Crosslinks in CONECT and LINK records", 
+                 "Search ID: "+CLMSUI.utils.searchesToString(), 
+                 "Filter: "+CLMSUI.utils.filterStateToString()
+                ]
+        );
+        return this;
+    },
+    
+    exportPymol: function () {
+        var stageModel = this.model.get("stageModel");
+        CLMSUI.NGLUtils.exportPymolCrossLinkSyntax (
+            stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(), 
+                ["PDB ID: "+stageModel.getStructureName(), 
+                "Exported by "+this.identifier+" and XiView", 
+                 "Search ID: "+CLMSUI.utils.searchesToString(), 
+                 "Filter: "+CLMSUI.utils.filterStateToString()
+                ]
+        );
+        return this;
+    },
+    
+    exportHaddock: function () {
+        var stageModel = this.model.get("stageModel");
+        CLMSUI.NGLUtils.exportHaddockCrossLinkSyntax (
+            stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(), 
+                ["PDB ID: "+stageModel.getStructureName(), 
+                "Exported by "+this.identifier+" and XiView", 
+                 "Search ID: "+CLMSUI.utils.searchesToString(), 
+                 "Filter: "+CLMSUI.utils.filterStateToString()
+                ],
+                {crossLinkerInfo: this.model.get("clmsModel").get("crosslinkerSpecificity"), crossLinks: this.model.get("clmsModel").get("crossLinks")}
+        );
         return this;
     },
 
@@ -694,10 +806,16 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         return CLMSUI.utils.objectStateToAbbvString(optionsPlus, fields, d3.set(), abbvMap);
     },
-
+    
+    pdbFilenameStateString: function () {
+        var stageModel = this.model.get("stageModel");
+        return CLMSUI.utils.makeLegalFileName (stageModel.getStructureName() + "-CrossLinks-"+CLMSUI.utils.searchesToString() + "-" + CLMSUI.utils.filterStateToString());
+    },
+    
     // Returns a useful filename given the view and filters current states
     filenameStateString: function() {
-        return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + this.identifier + "-" + this.optionsToString() + "-PDB=" + this.xlRepr.pdbBaseSeqID + "--" + CLMSUI.utils.filterStateToString());
+        var stageModel = this.model.get("stageModel");
+        return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + this.identifier + "-" + this.optionsToString() + "-PDB=" + stageModel.getStructureName() + "--" + CLMSUI.utils.filterStateToString());
     },
 });
 
@@ -706,17 +824,15 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
 
     var defaults = {
+        sstrucColourScheme: "uniform",
         chainRep: "cartoon",
-        sstrucColor: "wheat",
         displayedLabelColor: "black",
         selectedLabelColor: "black",
         highlightedLabelColor: "black",
         displayedLabelVisible: false,
         selectedLabelVisible: true,
         highlightedLabelVisible: true,
-        labelSize: 3.0,
-        displayedResiduesColor: params.displayedColor || "lightgrey",
-        displayedLinksColor: params.displayedColor || "lightblue",
+        labelSize: 6.0,
         selectedResiduesColor: params.selectedColor || "lightgreen",
         selectedLinksColor: "lightgreen",
         highlightedLinksColor: params.highlightedColor || "orange",
@@ -735,6 +851,7 @@ CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
             // then blank the current selection
             nglModelWrapper.getModel().setMarkedCrossLinks("selection", [], false, false);
         }
+        return false;
     });
 };
 
@@ -748,11 +865,10 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         this.chainMap = nglModelWrapper.get("chainMap");
         this.structureComp = nglModelWrapper.get("structureComp");
         this.crosslinkData = nglModelWrapper;
-        this.pdbBaseSeqID = nglModelWrapper.get("pdbBaseSeqID");
 
         this.colorOptions = {};
         this
-            ._initColorSchemes()
+            ._initColourSchemes()
             ._initStructureRepr()
             ._initLinkRepr()
             ._initLabelRepr()
@@ -776,7 +892,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var chainSelector = this.defaultDisplayedProteins(true); // true means the selection isn't enforced, just returned
 
         this.sstrucRepr = this.structureComp.addRepresentation(newType, {
-            //color: this.sstrucColor,
             colorScheme: this.colorOptions.residueColourScheme,
             colorScale: null,
             name: "sstruc",
@@ -798,9 +913,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.resRepr = comp.addRepresentation("spacefill", {
             sele: resSele,
-            //color: this.displayedResiduesColor,
             colorScheme: this.colorOptions.residueColourScheme,
-            //colorScale: ["#44f", "#444"],
             radiusScale: 0.6,
             name: "res"
         });
@@ -828,7 +941,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         this.linkRepr = comp.addRepresentation("distance", {
             atomPair: xlPair,
-            //colorValue: this.displayedLinksColor,
             colorScheme: this.colorOptions.linkColourScheme,
             labelSize: this.options.labelSize,
             labelColor: this.options.displayedLabelColor,
@@ -893,11 +1005,12 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             });
         });
         //CLMSUI.utils.xilog ("Chain Index to Protein Map", chainIndexToProteinMap);
+        //console.log ("PIM", chainIndexToProteinMap);
         comp.structure.eachChain(function(chainProxy) {
-            //console.log ("chain", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description);
             var description = chainProxy.entity ? chainProxy.entity.description : "";
             var pid = chainIndexToProteinMap.get(chainProxy.index);
-            if (pid && CLMSUI.modelUtils.isViableChain(chainProxy)) {
+            //console.log ("chain label", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description, pid);
+            if (pid && CLMSUI.NGLUtils.isViableChain(chainProxy)) {
                 var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
                 customText[chainProxy.atomOffset] = (verboseSetting === "None" ? "" : (pname + ":" + chainProxy.chainname + "(" + chainProxy.index + ")" + (verboseSetting === "Verbose" ? " " + description : "")));
@@ -931,14 +1044,14 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         return this;
     },
 
-    _initColorSchemes: function() {
+    _initColourSchemes: function() {
         var self = this;
 
         var linkColourScheme = function() {
             var colCache = {};
             //var first = true;
             this.bondColor = function(b) {
-                var linkObj = self.crosslinkData.getFullLinkByGlobalIndex (b.atom1.residueIndex, b.atom2.residueIndex) || self.crosslinkData.getFullLinkByGlobalIndex (b.atom2.residueIndex, b.atom1.residueIndex);
+                var linkObj = self.crosslinkData.getFullLinkByNGLResIndices (b.atom1.residueIndex, b.atom2.residueIndex) || self.crosslinkData.getFullLinkByNGLResIndices (b.atom2.residueIndex, b.atom1.residueIndex);
                 var origLinkID = linkObj.origId;
                 var model = self.crosslinkData.getModel();
                 var link = model.get("clmsModel").get("crossLinks").get(origLinkID);
@@ -960,6 +1073,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                  //console.log ("SUBCOL 2", self.colorOptions.residueSubScheme);
                 var subScheme = self.colorOptions.residueSubScheme;
                 var c = subScheme.atomColor ? subScheme.atomColor (a) : self.colorOptions.residueSubScheme.value;
+                if (subScheme.dontGrey) {
+                    return c;
+                }
                 var notGrey = 1 - this.greyness;
                 var greyComp = 176 * this.greyness;
 
@@ -971,7 +1087,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             };
         };
 
-        this.colorOptions.residueSubScheme = NGL.ColormakerRegistry.getScheme ({colorScheme: "uniform"});
+        var structure = this.structureComp.structure;
+        this.colorOptions.residueSubScheme = NGL.ColormakerRegistry.getScheme ({scheme: this.options.sstrucColourScheme, structure: structure});
         this.colorOptions.residueColourScheme = NGL.ColormakerRegistry.addScheme(residueColourScheme, "custom");
         this.colorOptions.linkColourScheme = NGL.ColormakerRegistry.addScheme(linkColourScheme, "xlink");
 
@@ -1033,15 +1150,15 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             if (atom !== undefined && link3d === undefined) {
                 //console.log (atom.atomname);
                 CLMSUI.utils.xilog("picked atom", atom, atom.residueIndex, atom.resno, atom.chainIndex);
-                var residue = crosslinkData.getResidueByGlobalIndex (atom.residueIndex);
+                var residue = crosslinkData.getResidueByNGLGlobalIndex (atom.residueIndex);
                 if (residue) {
                     // this is to find the index of the residue in searchindex (crosslink) terms
-                    // thought I could rely on residue.resindex + chain.residueOffset but nooooo.....
-                    var proteinId = CLMSUI.modelUtils.getProteinFromChainIndex(crosslinkData.get("chainMap"), residue.chainIndex);
-                    var alignId = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, atom.chainname, atom.chainIndex);
-                    // align from 3d to search index. resindex is 0-indexed so +1 before querying
+                    // thought I could rely on residue.seqIndex + chain.residueOffset but nooooo.....
+                    var proteinId = CLMSUI.NGLUtils.getProteinFromChainIndex(crosslinkData.get("chainMap"), residue.chainIndex);
+                    var alignId = CLMSUI.NGLUtils.make3DAlignID (crosslinkData.getStructureName(), atom.chainname, atom.chainIndex);
+                    // align from 3d to search index. seqIndex is 0-indexed so +1 before querying
                     //CLMSUI.utils.xilog ("alignid", alignId, proteinId);
-                    var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex(residue.resindex + 1, proteinId, true, alignId);
+                    var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex(residue.seqIndex + 1, proteinId, true, alignId);
 
                     pdtrans.links = crosslinkData.getFullLinksByResidueID (residue.residueId);
                     var origFullLinks = crosslinkData.getOriginalCrossLinks (pdtrans.links);
@@ -1071,8 +1188,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
                 CLMSUI.utils.xilog("picked bond", link3d, link3d.index, link3d.atom1.resno, link3d.atom2.resno, link3d.atomIndex1, link3d.atomIndex2);
 
-                var residueA = crosslinkData.getResidueByGlobalIndex (link3d.atom1.residueIndex);
-                var residueB = crosslinkData.getResidueByGlobalIndex (link3d.atom2.residueIndex);
+                var residueA = crosslinkData.getResidueByNGLGlobalIndex (link3d.atom1.residueIndex);
+                var residueB = crosslinkData.getResidueByNGLGlobalIndex (link3d.atom2.residueIndex);
                 CLMSUI.utils.xilog("res", link3d.atom1.residueIndex, link3d.atom2.residueIndex);
                 if (pickType === "selection") {
                     var selectionSelection = this.crosslinkData.getSelectionFromResidueList([residueA, residueB]);
@@ -1127,6 +1244,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 {nglRep: this.resRepr, colourScheme: this.colorOptions.residueColourScheme, immediateUpdate: false},
             ]);
         }
+        
+        
     },
 
     defaultDisplayedProteins: function(getSelectionOnly) {

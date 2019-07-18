@@ -71,3 +71,8 @@ button {
 .xispec_subViewContent-plot {
 	min-height: 1px;	/* fix for firefox and ie11, otherwise quality plots bounds push over into alternatives table */
 }
+
+
+div.validationControls{
+    display: block;
+}

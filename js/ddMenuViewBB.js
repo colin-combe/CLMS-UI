@@ -146,10 +146,10 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
         });
         */
 
-        choices.enter().append("li").each(function(d) {
+        var items = choices.enter().append("li").each(function(d) {
             var ind = d3.select(this);
             if (d.name) {
-                ind.text(d.name);
+                ind.append("span").text(d.name);
             } else if (d.id) {
                 var targetSel = d3.select("#" + CLMSUI.utils.makeLegalDomID(d.id));
                 if (!targetSel.empty()) {
@@ -181,12 +181,16 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
                     ind.attr("title", d.tooltip || d.title);
                 }
             }
-        }, this)
+        }, this);
+        
+        items
             .filter(function(d) {
                 return d.sectionBegin;
             })
             .insert("span", ":first-child").attr("class", "ddSectionHeader").text(self.options.sectionHeader)
         ;
+        
+        
 
         choices.classed("sectionEnd", function(d) {
             return d.sectionEnd;
@@ -415,7 +419,8 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
     },
 
     downloadKey: function() {
-        var tempSVG = d3.select(this.el).append("svg").attr("class", "temp").style("text-transform", "capitalize");
+        var tempSVG = d3.select(this.el).append("svg").attr("class", "tempKey").style("text-transform", "capitalize");
+        var self = this;
         CLMSUI.utils.updateAnnotationColourKey(
             this.collection.where({
                 shown: true
@@ -423,7 +428,7 @@ CLMSUI.AnnotationDropDownMenuViewBB = CLMSUI.DropDownMenuViewBB.extend({
             tempSVG, 
             {
                 colour: function(d) {
-                    return this.collection.getColour(d.category, d.type);
+                    return self.collection.getColour(d.category, d.type);
                 },
                 label: function(d) {
                     return (d.category ? d.category.replace(/_/g, " ") + ": " : "") + d.type;

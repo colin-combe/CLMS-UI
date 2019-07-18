@@ -76,8 +76,7 @@ var allDataLoaded = _.after(3, function() {
                     var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);
                     annotationType
                         .set("source", "Uniprot")
-                        .set("typeAlignmentID", "Canonical")
-                    ;
+                        .set("typeAlignmentID", "Canonical");
                     uniprotFeatureTypes.set(key, annotationType);
                 }
             }
@@ -141,13 +140,24 @@ CLMSUI.init.models = function(options) {
     // following listeners require compositeModelInst etc to be set up in modelsEssential() so placed afterwards
 
     // this listener adds new sequences obtained from pdb files to existing alignment sequence models
-    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst, "3dsync", function(sequences) {
+    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst, "3dsync", function(sequences, removeThese) {
         if (!_.isEmpty(sequences)) { // if sequences passed and it has a non-zero length...
+            console.log("3dsync", arguments);
+            // remove before add so if someone decides to reload the same file/code (why, but possible) we don't end up removing what we've just added
+            if (removeThese && removeThese.length) {
+                removeThese.forEach(function(structureName) {
+                    var seqModels = this.getSequencesByPredicate(function(seq) {
+                        return structureName + ":" === seq.get("id").substring(0, structureName.length + 1);
+                    });
+                    this.removeSequences(seqModels);
+                }, this);
+            }
             sequences.forEach(function(entry) {
                 this.addSeq(entry.id, entry.name, entry.data, entry.otherAlignSettings);
             }, this);
             // this triggers an event to say loads has changed in the alignment collection
             // more efficient to listen to that then redraw/recalc for every seq addition
+
             this.bulkAlignChangeFinished();
 
             console.log("3D sequences poked to collection", this);
@@ -237,13 +247,15 @@ CLMSUI.init.modelsEssential = function(options) {
         linears: clmsModelInst.get("linearsPresent"),
         //matchScoreCutoff: [undefined, undefined],
         //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined, Math.ceil(clmsModelInst.get("maxScore")) || undefined],
-        matchScoreCutoff: scoreExtentInstance.slice()
+        matchScoreCutoff: scoreExtentInstance.slice(),
+        searchGroups: CLMSUI.modelUtils.getSearchGroups(clmsModelInst),
     };
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
     filterSettings = _.extend(filterSettings, urlFilterSettings); // overwrite default settings with url settings
     console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
-        scoreExtent: scoreExtentInstance
+        scoreExtent: scoreExtentInstance,
+        possibleSearchGroups: CLMSUI.modelUtils.getSearchGroups(clmsModelInst),
     });
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel();
@@ -279,7 +291,7 @@ CLMSUI.init.views = function() {
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel", "goTermsPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -359,20 +371,35 @@ CLMSUI.init.views = function() {
         },
         {
             id: "keyChkBxPlaceholder",
-            label: "Legend",
+            label: "Legend & Colours",
             eventName: "keyShow",
-            tooltip: "Explains and allows changing of current colour scheme"
+            tooltip: "Explains and allows changing of current colour scheme",
+            sectionEnd: false
+        },
+        {
+            id: "goTermsChkBxPlaceholder",
+            label: "GO Terms",
+            eventName: "goTermsShow",
+            tooltip: "Browse Gene Ontology terms"
         },
     ];
     checkBoxData.forEach(function(cbdata) {
-        var options = $.extend ({labelFirst: false}, cbdata);
-        var cbView = new CLMSUI.utils.checkBoxView ({myOptions: options});
+        var options = $.extend({
+            labelFirst: false
+        }, cbdata);
+        var cbView = new CLMSUI.utils.checkBoxView({
+            myOptions: options
+        });
         $("#viewDropdownPlaceholder").append(cbView.$el);
     }, this);
 
     // Add them to a drop-down menu (this rips them away from where they currently are - document)
     var maybeViews = ["#nglChkBxPlaceholder" /*, "#distoChkBxPlaceholder"*/ ];
-    var mostViews = checkBoxData.map(function(d) { return "#"+d.id;}).filter(function(id) { return id !== "#keyChkBxPlaceholder" && id !== "#nglChkBxPlaceholder";});
+    var mostViews = checkBoxData.map(function(d) {
+        return "#" + d.id;
+    }).filter(function(id) {
+        return id !== "#keyChkBxPlaceholder" && id !== "#nglChkBxPlaceholder";
+    });
     new CLMSUI.DropDownMenuViewBB({
             el: "#viewDropdownPlaceholder",
             model: compModel.get("clmsModel"),
@@ -390,15 +417,13 @@ CLMSUI.init.views = function() {
         })
         .listenTo(compModel.get("clmsModel"), "change:matches", function () {
             this.enableItemsByID (mostViews, true);
-        })
-    ;
+        });
 
 
     // Generate protein selection drop down
     d3.select("body").append("input")
         .attr("type", "text")
-        .attr("id", "proteinSelectionFilter")
-    ;
+        .attr("id", "proteinSelectionFilter");
     new CLMSUI.DropDownMenuViewBB({
         el: "#proteinSelectionDropdownPlaceholder",
         model: compModel.get("clmsModel"),
@@ -429,6 +454,12 @@ CLMSUI.init.views = function() {
                     context: compModel,
                     label: "Protein Selection by Description",
                     tooltip: "Select proteins whose descriptions include input text"
+                    },
+                    {
+                        name: "Group",
+                        func: compModel.groupSelectedProteins,
+                        context: compModel,
+                        tooltip: "Put selected proteins in a group"
                 }
             ],
             tooltipModel: compModel.get("tooltipModel")
@@ -437,8 +468,7 @@ CLMSUI.init.views = function() {
         .wholeMenuEnabled (matchesFound)
         .listenTo(compModel.get("clmsModel"), "change:matches", function () {
             this.wholeMenuEnabled (true);
-        })
-    ;
+        });
 
     // Generate buttons for load dropdown
     var loadButtonData = [{
@@ -465,11 +495,6 @@ CLMSUI.init.views = function() {
             name: "User Annotations",
             eventName: "userAnnotationsMetaShow",
             tooltip: "Load User Annotations from a local CSV file. See 'Expected CSV Format' within for syntax"
-        },
-        {
-            name: "GO Gene Annotation File",
-            eventName: "gafMetaShow",
-            tooltip: "Load Gene Ontology data from a local Gene Annotation File (.gaf) file."
         },
     ];
     loadButtonData.forEach(function(bdata) {
@@ -588,8 +613,7 @@ CLMSUI.init.viewsEssential = function(options) {
                 domainEnd: newCutoff[1]
             });
             //console.log ("cutoff changed");
-        })
-    ;
+        });
 
 
     // World of code smells vol.1
@@ -666,7 +690,7 @@ CLMSUI.init.viewsEssential = function(options) {
         targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
-        knownModificationsURL: false, //CLMSUI.xiAnnotRoot + "annotate/knownModifications",
+        knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
         showCustomConfig: true,
         showQualityControl: "min",
     }
@@ -712,19 +736,39 @@ CLMSUI.init.viewsEssential = function(options) {
         myOptions: {
             title: "Export",
             menu: [{
-                    name: "Filtered Cross-Links as CSV",
+                        name: "Filtered Matches",
+                        func: downloadMatches,
+                        tooltip: "Produces a CSV File of Filtered Matches data",
+                        categoryTitle: "As a CSV File",
+                        sectionBegin: true
+                    },
+                    {
+                        name: "Filtered Cross-Links",
                     func: downloadLinks,
                     tooltip: "Produces a CSV File of Filtered Cross-Link data"
                 },
                 {
-                    name: "Filtered Matches as CSV",
-                    func: downloadMatches,
-                    tooltip: "Produces a CSV File of Filtered Matches data"
+                        name: "Filtered PPI",
+                        func: downloadPPIs,
+                        tooltip: "Produces a CSV File of Filtered Protein-Protein Interaction data"
                 },
                 {
-                    name: "Filtered Residues as CSV",
+                        name: "Filtered Residues",
                     func: downloadResidueCount,
                     tooltip: "Produces a CSV File of Count of Filtered Residues ",
+                    },
+                    {
+                        name: "Protein Accession list",
+                        func: downloadProteinAccessions,
+                        tooltip: "Produces a single row CSV File of visible Proteins' Accession numbers",
+                        sectionEnd: true
+                    },
+                    {
+                        name: "Filtered Matches ",
+                        func: downloadSSL,
+                        tooltip: "Produces an SSL file for quantitation in SkyLine",
+                        categoryTitle: "As an SSL File",
+                        sectionBegin: true,
                     sectionEnd: true
                 },
                 {
@@ -732,17 +776,21 @@ CLMSUI.init.viewsEssential = function(options) {
                     func: function() {
                         CLMSUI.vent.trigger("shareURL", true);
                     },
-                    tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility"
+                        tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility",
+                        categoryTitle: "As a URL",
+                        sectionBegin: true,
                 },
             ],
                 tooltipModel: compModel.get("tooltipModel"),
+                sectionHeader: function(d) {
+                    return (d.categoryTitle ? d.categoryTitle.replace(/_/g, " ") : "");
+                },
         }
         })
         .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
         .listenTo(compModel.get("clmsModel"), "change:matches", function () {
             this.wholeMenuEnabled (true);
-        })
-    ;
+        });
 
     // Generate help drop down
     new CLMSUI.DropDownMenuViewBB({
@@ -841,8 +889,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
         .listenTo(compModel.get("clmsModel"), "change:matches", function () {
             this.wholeMenuEnabled (true);
-        })
-    ;
+        });
 
 
     new CLMSUI.utils.ColourCollectionOptionViewBB({
@@ -954,6 +1001,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#gafAnnotationsMetaLoadPanel",
         model: compModel,
         displayEventName: "gafMetaShow",
+    });
+
+    new CLMSUI.GoTermsViewBB({
+        el: "#goTermsPanel",
+        model: compModel,
+        displayEventName: "goTermsShow",
     });
 
     new CLMSUI.ProteinInfoViewBB({

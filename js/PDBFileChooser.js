@@ -75,7 +75,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         var pdbCodeSpan = box.append("span")
             .attr("class", "btn sectionDivider2 nopadLeft")
-            .text("or Enter a 4-character PDB ID")
+            .text("or Enter 4-character PDB IDs")
             //.append("div")
         ;
 
@@ -83,10 +83,12 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             .attr({
                 type: "text",
                 class: "inputPDBCode",
-                maxlength: 4,   // 24,
-                pattern: CLMSUI.utils.commonRegexes.pdbPattern, // .multiPdbPattern,
-                size: 6,
-                title: "Enter a PDB ID here e.g. 1AO6",
+                //maxlength: 4,
+                //pattern: CLMSUI.utils.commonRegexes.pdbPattern,
+                maxlength: 100,
+                pattern: CLMSUI.utils.commonRegexes.multiPdbPattern,
+                size: 8,
+                title: "Enter PDB IDs here e.g. 1AO6 for one structure, 1YSX 1BKE to merge two",
                 //placeholder: "eg 1AO6"
             })
             .property("required", true)
@@ -154,14 +156,20 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
         });
 
-        this.listenTo (this.model, "3dsync", function(sequences) {
-            var count = _.isEmpty(sequences) ? 0 : sequences.length;
+        this.listenTo (this.model, "3dsync", function(newSequences) {
+            var count = _.isEmpty(newSequences) ? 0 : newSequences.length;
             var success = count > 0;
             this.setCompletedEffect();
-
-            var msg = sequences.failureReason ? "" : "Completed Loading " + sanitise(sequences.pdbid) + ".<br>";
+            var nameArr = _.pluck(newSequences, "name");
+            // list pdb's these sequences derive from
+            //console.log ("seq", newSequences);
+            var pdbString = nameArr ? 
+                d3.set (nameArr.map(function(name) { return name.substr(0, _./*last*/indexOf (name, ":")); })).values().join(", ") : "?"
+            ;
+            
+            var msg = newSequences.failureReason ? "" : "Completed Loading " + sanitise(pdbString) + ".<br>";
             msg += success ? "✓ Success! " + count + " sequence" + (count > 1 ? "s" : "") + " mapped between this search and the PDB file." :
-                sanitise((sequences.failureReason || "No sequence matches found between this search and the PDB file") +
+                sanitise((newSequences.failureReason || "No sequence matches found between this search and the PDB file") +
                     ". Please check the PDB file or code is correct.");
             this.setStatusText(msg, success);
         });
@@ -273,13 +281,14 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         this.setWaitingEffect();
         var self = this;
         var fileObj = evt.target.files[0];
-
+        evt.target.value = null;    // reset value so same file can be chosen twice in succession
+        
         CLMSUI.modelUtils.loadUserFile(fileObj, function(pdbFileContents) {
             var blob = new Blob([pdbFileContents], {
                 type: 'application/text'
             });
             var fileExtension = fileObj.name.substr(fileObj.name.lastIndexOf('.') + 1);
-            CLMSUI.modelUtils.repopulateNGL({
+            CLMSUI.NGLUtils.repopulateNGL({
                 pdbFileContents: blob,
                 params: {
                     ext: fileExtension,
@@ -303,7 +312,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
     loadPDBCode: function() {
         var pdbCode = d3.select(this.el).select(".inputPDBCode").property("value");
         this.setWaitingEffect();
-        CLMSUI.modelUtils.repopulateNGL({
+        CLMSUI.NGLUtils.repopulateNGL({
             pdbCode: pdbCode,
             params: {
                 cAlphaOnly: this.cAlphaOnly,

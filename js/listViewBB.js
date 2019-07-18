@@ -108,6 +108,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                 type: "button",
                 id: "download3"
             },
+            /*              
             {
                 class: "toggleClusterControls",
                 label: "Toggle Statistics Controls",
@@ -121,6 +122,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                 id: "heatmap",
                 tooltip: "Shows table as heatmap"
             },
+            */
             {
                 class: "selectAllRows",
                 label: "Select All Rows",

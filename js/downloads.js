@@ -16,31 +16,39 @@
 //  You should have received a copy of the GNU General Public License
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
-function downloadFilename(type) {
-    return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + type + "--" + CLMSUI.utils.filterStateToString()) + ".csv";
+function downloadFilename(type, suffix) {
+    suffix = suffix || "csv";
+    return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + type + "--" + CLMSUI.utils.filterStateToString()) + "." + suffix;
 }
 
 function downloadMatches() {
     download(getMatchesCSV(), 'text/csv', downloadFilename("matches"));
 }
 
+function downloadSSL() {
+    download(getSSL(), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
+}
+
 function downloadLinks() {
     download(getLinksCSV(), 'text/csv', downloadFilename("links"));
+}
+
+function downloadPPIs() {
+    download(getPPIsCSV(), 'text/csv', downloadFilename("PPIs"));
 }
 
 function downloadResidueCount() {
     download(getResidueCount(), 'text/csv', downloadFilename("residueCount"));
 }
 
+function downloadProteinAccessions() {
+    download(getProteinAccessions(), 'text/csv', downloadFilename("proteinAccessions"));
+}
+
 function download(content, contentType, fileName) {
     //var b64svg = window.btoa(content);
 
-    var modernWeb;
-    try {
-      modernWeb = !!new Blob();
-    } catch (e) {
-      modernWeb = false;
-    }
+    var modernWeb = CLMSUI.utils.isModernWeb();
 
     //console.log ("svg filename", fileName, modernWeb);
 
@@ -104,8 +112,7 @@ function download(content, contentType, fileName) {
                     else if (charcode < 0x800) {
                         array.push(0xc0 | (charcode >> 6),
                                   0x80 | (charcode & 0x3f));
-                    }
-                    else if (charcode < 0xd800 || charcode >= 0xe000) {
+                    } else if (charcode < 0xd800 || charcode >= 0xe000) {
                         array.push(0xe0 | (charcode >> 12),
                                   0x80 | ((charcode>>6) & 0x3f),
                                   0x80 | (charcode & 0x3f));
@@ -116,8 +123,8 @@ function download(content, contentType, fileName) {
                         // UTF-16 encodes 0x10000-0x10FFFF by
                         // subtracting 0x10000 and splitting the
                         // 20 bits of 0x0-0xFFFFF into two halves
-                        charcode = 0x10000 + (((charcode & 0x3ff)<<10)
-                                  | (binary.charCodeAt(i) & 0x3ff));
+                        charcode = 0x10000 + (((charcode & 0x3ff) << 10) |
+                            (binary.charCodeAt(i) & 0x3ff));
                         array.push(0xf0 | (charcode >>18),
                                   0x80 | ((charcode>>12) & 0x3f),
                                   0x80 | ((charcode>>6) & 0x3f),
@@ -237,17 +244,11 @@ function getMatchesCSV() {
             var linkType;
             if (match.isAmbig()){
                 linkType = "Ambig.";
-            }
-            else if (clmsModel.get("participants").get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || clmsModel.get("participants").get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___"){
+        } else if (clmsModel.get("participants").get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || (match.matchedPeptides[1] && clmsModel.get("participants").get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___")) {
                 linkType = "__AMBIG__";
-            }
-            // else if (match.heavyIsAmbig()){
-            //     linkType = "ShouldBe_Ambig.";
-            // }
-            else if (match.crossLinks[0].isSelfLink()) {
+        } else if (match.crossLinks[0].isSelfLink()) {
                 linkType = "Self";
-            }
-            else  {
+        } else {
                 linkType = "Between";
             }
 
@@ -262,7 +263,7 @@ function getMatchesCSV() {
             } else if (decoy1 || decoy2) {
                 decoyType = "TD";
             } else {
-                decoyType = "TT"
+            decoyType = "TT";
             }
             
         var data = [
@@ -279,9 +280,155 @@ function getMatchesCSV() {
     return csv;
 }
 
+function getSSL() {
+    var csv = 'file\tscan\tcharge\tsequence\tscore-type\tscore\tId\tProtein1\tSeqPos1\tPepPos1\tPepSeq1\tLinkPos1\tProtein2\tSeqPos2\tPepPos2\tPepSeq2\tLinkPos2\tCharge\tExpMz\tExpMass\tCalcMz\tCalcMass\tMassError\tAutoValidated\tValidated\tSearch\tRawFileName\tPeakListFileName\tScanNumber\tScanIndex\tCrossLinkerModMass\tFragmentTolerance\tIonTypes\r\n';
+    var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+    //var mass6dp = d3.format(".6f");
+
+    var deltaMassRegex = /DELTAMASS:(.*)/
+    var massRegex = /MASS:(.*)/
+    var modifiedRegex = /MODIFIED:(.*);/
+    var modificationDeltasMap = new Map();
+    for (var search of clmsModel.get("searches").values()) {
+        for (var mod of search.modifications) {
+            var sym = mod.symbol;
+            var delta;
+            var desc = mod.description;
+            var deltaMatch = +deltaMassRegex.exec(desc);
+            if (deltaMatch) {
+                delta = deltaMatch[1];
+            } else {
+                var modified = modifiedRegex.exec(desc)[1]
+                delta = massRegex.exec(desc)[1] - CLMSUI.modelUtils.amino1toMass[modified];
+            }
+
+            if (delta > 0) {
+                delta = "[+" + delta + "]";
+            } else {
+                delta = "[" + delta + "]";
+            }
+
+            modificationDeltasMap.set(sym, delta);
+
+        }
+    }
+
+    console.log("modDeltas", modificationDeltasMap);
+
+
+
+    var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks("all");
+    var matchMap = d3.map();
+
+    // do it like this so ambiguous matches (belonging to >1 crosslink) aren't repeated
+    crossLinks.forEach(function(crossLink) {
+        crossLink.filteredMatches_pp.forEach(function(match) {
+            matchMap.set(match.match.id, match.match);
+        })
+    });
+
+    var notUpperCase = /[^A-Z]/g;
+    var makeSslPepSeq = function(seq, linkPos) {
+        notUpperCase.lastIndex = 0;
+        if (notUpperCase.test(seq)) {
+            for (var modInfo of modificationDeltasMap.entries()) {
+                seq = seq.replace(new RegExp(modInfo[0], 'g'), modInfo[1]);
+            }
+        }
+        var sslSeqLinkIndex = findIndexofNthUpperCaseLetter(seq, linkPos);
+        return seq.slice(0, sslSeqLinkIndex + 1) + "[+1.008]" + seq.slice(sslSeqLinkIndex + 1, seq.length);
+    };
+    var findIndexofNthUpperCaseLetter = function(str, n) { // n is 1-indexed here
+        str = str || "";
+        var i = -1;
+        while (n > 0 && i < str.length) {
+            i++;
+            var c = str[i];
+            if (c >= "A" && c <= "Z") n--;
+        }
+        return i === str.length ? undefined : i;
+    };
+
+    matchMap.values().forEach(function(match) {
+        var peptide1 = match.matchedPeptides[0];
+        var peptide2 = match.matchedPeptides[1];
+
+        var decoy1 = clmsModel.get("participants").get(peptide1.prt[0]).is_decoy;
+        var decoy2 = peptide2 ? clmsModel.get("participants").get(peptide2.prt[0]).is_decoy : "";
+
+        var decoyType;
+        if (decoy1 && decoy2) {
+            decoyType = "DD";
+        } else if (decoy1 || decoy2) {
+            decoyType = "TD";
+        } else {
+            decoyType = "TT";
+        }
+
+        if (decoyType == "TT") {
+            var pep1sslSeq = makeSslPepSeq(peptide1.seq_mods, match.linkPos1);
+            var pep2sslSeq = makeSslPepSeq(peptide2.seq_mods, match.linkPos2);
+            var crosslinkerModMass = match.crossLinkerModMass();
+            //var sequence = pep1sslSeq + "K[+" + (crosslinkerModMass - 112.099857) + "]" + pep2sslSeq;
+	    var joiningAAModMass = (crosslinkerModMass - 112.099857);
+            var sequence = pep1sslSeq;
+            if (joiningAAModMass > 0) {
+                sequence = sequence + "K[+" + joiningAAModMass + "]" + pep2sslSeq;
+            } else {
+                sequence = sequence + "K[" + joiningAAModMass + "]" + pep2sslSeq;
+            }
+
+            var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
+            var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
+            var lp1 = CLMSUI.utils.fullPosConcat(match, 0);
+            var lp2 = CLMSUI.utils.fullPosConcat(match, 1);
+
+            var data = [
+                match.peakListFileName(),
+                match.scanNumber,
+                match.precursorCharge,
+                sequence,
+                "UNKNOWN",
+                match.score(),
+                match.id,
+                CLMSUI.utils.proteinConcat(match, 0, clmsModel),
+                lp1,
+                pp1,
+                peptide1.seq_mods,
+                match.linkPos1,
+                (peptide1 ? CLMSUI.utils.proteinConcat(match, 1, clmsModel) : ""),
+                lp2,
+                pp2,
+                (peptide2 ? peptide2.seq_mods : ""),
+                match.linkPos2,
+                match.precursorCharge,
+                match.expMZ(),
+                match.expMass(),
+                match.calcMZ(),
+                match.calcMass(),
+                match.massError(),
+                match.autovalidated,
+                match.validated,
+                match.searchId,
+                match.runName(),
+                match.peakListFileName(),
+                match.scanNumber,
+                match.scanIndex,
+                match.crossLinkerModMass(),
+                match.fragmentToleranceString(),
+                match.ionTypesString()
+            ];
+            csv += data.join('\t') + '\r\n';
+        }
+    });
+
+    //console.log ("MCSV", count, matchMap.values().length);
+    return csv;
+}
+
 
 function getLinksCSV() {
-    var validatedTypes = ["A", "B", "C", "?", "R"];
+    var validatedTypes = ["A", "B", "C", "?", "R"]; //todo - what is this for - cc
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
 
     var headerArray = ["Protein1", "SeqPos1", "LinkedRes1", "Protein2", "SeqPos2", "LinkedRes2", "Highest Score", "Match Count", "AutoValidated", "Validated", "Link FDR", "3D Distance", "From Chain", "To Chain", "PDB SeqPos 1", "PDB SeqPos 2"];
@@ -361,6 +508,101 @@ function getLinksCSV() {
     return csv;
 }
 
+function getPPIsCSV() {
+    var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+
+    var headerArray = ["Protein1", "Protein2", "Unique Distance Restraints"];
+    // var searchIDs = Array.from(clmsModel.get("searches").keys());
+    // searchIDs.forEach(function(sid) {
+    //     headerArray.push("Search_" + sid);
+    // });
+    // console.log("searchIds", searchIDs);
+
+    // var metaColumns = (clmsModel.get("crossLinkMetaRegistry") || d3.set()).values();
+    // headerArray = headerArray.concat(metaColumns);
+
+    var headerRow = '"' + headerArray.join('","') + '"';
+    var rows = [headerRow];
+
+    var crosslinks = CLMSUI.compositeModelInst.getFilteredCrossLinks("all");
+
+    var ppiMap = new Map();
+
+    for (let crosslink of crosslinks) {
+        // its ok, fromProtein and toProtein are already alphabetically ordered
+        var ppiId = crosslink.fromProtein.id;
+        if (!crosslink.isLinearLink()) {
+            ppiId = ppiId + "-" + crosslink.toProtein.id;
+        }
+        var ppi = ppiMap.get(ppiId);
+        if (!ppi) {
+            ppi = [];
+            ppiMap.set(ppiId, ppi);
+        }
+        ppi.push(crosslink);
+    }
+
+    for (let ppi of ppiMap.values()) {
+        var aCrosslink = ppi[0];
+        var linear = aCrosslink.isLinearLink();
+        rows.push([mostReadableId(aCrosslink.fromProtein), (linear ? "" : mostReadableId(aCrosslink.toProtein)), ppi.length].join(","))
+    }
+
+    /*    var ppiMap = crossLinks.map(function(crossLink, i) {
+            var row = [];
+            var linear = crossLink.isLinearLink();
+            var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
+            row.push(
+                mostReadableId(crossLink.fromProtein), crossLink.fromResidue, crossLink.fromProtein.sequence[crossLink.fromResidue - 1],
+                (linear ? "" : mostReadableId(crossLink.toProtein)), crossLink.toResidue, !linear && crossLink.toResidue ? crossLink.toProtein.sequence[crossLink.toResidue - 1] : ""
+            );
+
+            var highestScore = null;
+            var searchesFound = new Set();
+            var filteredMatchCount = filteredMatchesAndPepPos.length; // me n lutz fix
+            var linkAutovalidated = false;
+            var validationStats = [];
+            for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
+                var match = filteredMatchesAndPepPos[fm_pp].match;
+                if (highestScore == null || match.score() > highestScore) {
+                    highestScore = match.score().toFixed(4);
+                }
+                if (match.autovalidated === true) {
+                    linkAutovalidated = true;
+                }
+                validationStats.push(match.validated);
+                searchesFound.add(match.searchId);
+            }
+            row.push(highestScore, filteredMatchCount, linkAutovalidated, validationStats.toString(), crossLink.getMeta("fdr"));
+
+            // Distance info
+            var pDist = physicalDistances[i];
+            if (pDist && pDist.distance) {
+                var chain = pDist.chainInfo;
+                row.push(distance2dp(pDist.distance), chain.from, chain.to, chain.fromRes + 1, chain.toRes + 1); // +1 to return to 1-INDEXED
+            } else {
+                row.push("", "", "", "", "");
+            }
+
+            // // Add presence in searches
+            // for (var s = 0; s < searchIDs.length; s++) {
+            //     row.push(searchesFound.has(searchIDs[s]) ? "X" : "");
+            // }
+            //
+            // // Add metadata information
+            // for (var m = 0; m < metaColumns.length; m++) {
+            //     var mval = crossLink.getMeta(metaColumns[m]);
+            //     row.push(mval === undefined ? "" : mval);
+            // }
+
+            return '"' + row.join('","') + '"';
+        }, this);
+
+    */
+    var csv = rows.join("\r\n") + '\r\n';
+    return csv;
+}
+
 function getResidueCount() {
     var csv = '"Residue(s)","Occurences(in_unique_links)"\r\n';
     //~ var matches = xlv.matches;//.values();
@@ -398,4 +640,15 @@ function getResidueCount() {
         }
     }
     return csv;
+}
+
+function getProteinAccessions() {
+    var accs = [];
+    var proteins = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
+    for (var p of proteins) {
+        if (!p.hidden) {
+            accs.push(p.accession);
+        }
+    }
+    return accs.join(",");
 }

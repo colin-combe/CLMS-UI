@@ -115,11 +115,11 @@ CLMSUI.ProteinMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.exten
             loadedEventName: "proteinMetadataUpdated",
             parseMsgTemplate: "Parsed <%= attrCount %> MetaData Attributes across <%= itemCount %> Identified Proteins",
             expectedFormat: {
-                header: "Accession,{MetaData1 Name}*,{MetaData2 Name} etc",
-                data: "{Protein Accession Number},{number or string},{number or string}",
+                header: "Accession or ProteinID,{MetaData1 Name}*,{MetaData2 Name} etc",
+                data: "SwissProtID1{sp|Accession|Name},{number or string},{number or string}",
                 example: [{"csv file": ["Accession", "Name", "Value"]},
-                    {csv: ["P02768-A,Human Protein,0.79"]},
-                    {csv: ["G3RE98,Gorilla Protein,0.58"]},
+                    {csv: ["sp|P02768-A|ALBU_HUMAN,Human Protein,0.79"]},
+                    {csv: ["sp|G3RE98|ALBU_GORILLA,Gorilla Protein,0.58"]},
                 ],
                 notes: "*If a MetaData column name is 'Name' it will change displayed protein names. <BR> If a MetaData column name is 'Group' it will be used to group proteins. "
             }
@@ -144,8 +144,8 @@ CLMSUI.LinkMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
             loadedEventName: "linkMetadataUpdated",
             parseMsgTemplate: "Parsed <%= attrCount %> MetaData Attributes across <%= itemCount %> Identified Cross-Links",
             expectedFormat: {
-                header: "LinkID, or all of Protein 1,SeqPos 1,Protein 2,SeqPos 2, then {MetaData1 Name},{MetaData2 Name} etc",
-                rows: "{ProteinID}_{SeqPos1}-{ProteinID}_{SeqPos2}, or {Accession|Name|ProteinID},{SeqPos1},{Accession|Name|ProteinID},{SeqPos2}, then {number or #color} etc",
+                header: "Protein 1,SeqPos 1,Protein 2,SeqPos 2, then {MetaData1 Name},{MetaData2 Name} etc",
+                rows: "SwissProtID{sp|Accession|Name},{SeqPos1},SwissProtID2{sp|Accession|Name},{SeqPos2}, then {number or #color} etc",
                 example: [{"csv file": ["Protein 1", "SeqPos 1", "Protein 2", "SeqPos 2", "Quantitation", "Fixed Colour"]},
                     {csv: ["sp|P02768-A|ALBU_HUMAN", "107", "sp|P02768-A|ALBU_HUMAN", "466", "57.07", "#FF8800"]},
                     { csv: ["sp|P02768-A|ALBU_HUMAN", "126", "sp|P02768-A|ALBU_HUMAN", "426", "52.04", "#FFaa00"]}
@@ -174,7 +174,7 @@ CLMSUI.UserAnnotationsMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooser
             parseMsgTemplate: "Parsed <%= attrCount %> Annotation Types across <%= itemCount %> Annotations",
             expectedFormat: {
                 header: "ProteinId, AnnotName, StartRes, EndRes, Color",
-                rows: "{Accession|Name|ProteinID}, {string}, {number}, {number}, then {#colour or colourName}",
+                rows: "SwissProtID{sp|Accession|Name}, {string}, {number}, {number}, then {#colour or colourName}",
                 example: [
                     {"csv file": ["ProteinId", "AnnotName", "StartRes", "EndRes", "Color"]},
                     {csv: ["sp|P02768-A|ALBU_HUMAN", "Dimerization domain", "55", "144", "#e78ac3"]},
@@ -195,10 +195,18 @@ CLMSUI.UserAnnotationsMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooser
 });
 
 CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
-
+    events: function() {
+        var parentEvents = CLMSUI.AbstractMetaDataFileChooserBB.prototype.events;
+        if (_.isFunction(parentEvents)) {
+            parentEvents = parentEvents();
+        }
+        return _.extend({}, parentEvents, {
+            "click .loadEcoliButton": "loadEcoliGaf",
+        });
+    },
     initialize: function(viewOptions) {
         var myDefaults = {
-            buttonText: "Select Gene Ontology .gaf File",
+            buttonText: "Select Gene Annotation File",
             loadedEventName: "gafAnnotationsUpdated",
             parseMsgTemplate: "Parsed <%= attrCount %> Annotation Types across <%= itemCount %> Annotations",
             expectedFormat: {
@@ -211,14 +219,45 @@ CLMSUI.GafMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
             }
         };
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
+
         CLMSUI.UserAnnotationsMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);
+
+        // this.el is the dom element this should be getting added to, replaces targetDiv
+        var mainDivSel = d3.select(this.el);
+
+         var wrapperPanel = mainDivSel.select(".panelInner");
+        //     .attr("class", "panelInner");
+        //
+        // var toolbar = wrapperPanel.append("div").attr("class", "toolbar");
+
+        wrapperPanel//.append("label")
+          //  .attr("class", "btn btn-1 btn-1a")
+            .append("button")
+            .attr("class", "btn btn-1 btn-1a loadEcoliButton")
+            .append("span")
+            .text("Load Ecoli .gaf")
+            ;
+
+      },
+
+    loadEcoliGaf: function(evt) {
+        var url = "./ecocyc.gaf";
+        self = this;
+        d3.text(url, function(error, txt) {
+            if (error) {
+                console.log("error", error, "for", url);
+            } else {
+                CLMSUI.modelUtils.updateGafAnnotationsMetadata(txt, self.model.get("clmsModel"));
+                self.hideView();
+          }
+        });
     },
 
     onLoadFunction: function(fileContents) {
         CLMSUI.modelUtils.updateGafAnnotationsMetadata(fileContents, this.model.get("clmsModel"));
     },
 
-    identifier: "GAF File Chooser",
+    identifier: "Gene Annotation File Chooser",
 });
 
 CLMSUI.MetaLoaderViewRegistry = [CLMSUI.ProteinMetaDataFileChooserBB, CLMSUI.LinkMetaDataFileChooserBB, CLMSUI.UserAnnotationsMetaDataFileChooserBB, CLMSUI.GafMetaDataFileChooserBB];

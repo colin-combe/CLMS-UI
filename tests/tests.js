@@ -14,6 +14,28 @@ function callback (model) {
 		assert.deepEqual(clmsModel.get("crossLinks").size, expectedLinks, "Expected "+JSON.stringify(expectedLinks)+" crosslinks, Passed!");
 		assert.deepEqual(clmsModel.get("matches").length, expectedMatches, "Expected "+JSON.stringify(expectedMatches)+" matches, Passed!");
 	});
+    
+    QUnit.test("Decoy Protein Matching", function (assert) {
+        console.log ("CLMS", clmsModel);
+        
+        var decoys = [
+            {id: "10001001", name: "REV", accession: "REV_P02768-A", is_decoy: true},
+            {id: "10001002", name: "RAN", accession: "RAN_P02768-A", is_decoy: true},
+        ];
+        decoys.forEach (function (decoy) { clmsModel.get("participants").set (decoy.id, decoy); });
+        
+        clmsModel.initDecoyLookup();
+		var actual = CLMS.arrayFromMapValues (clmsModel.get("participants")).map (function (p) { return {id: p.id, targetProteinID: p.targetProteinID}; });
+        var expected = [{id: "2000171", targetProteinID: "2000171"}];
+        decoys.forEach (function (decoy) {
+            expected.push ({id: decoy.id, targetProteinID: "2000171"});
+        });
+        
+        decoys.forEach (function (decoy) { clmsModel.get("participants").delete (decoy.id); });
+        
+		assert.deepEqual(actual, expected, "Expected "+JSON.stringify(expected)+" decoy to real protein match, Passed!");
+	});
+    
 	
 	QUnit.module ("Filtering");
 	QUnit.test("Filter testing", function (assert) {
@@ -221,21 +243,24 @@ function callback (model) {
 	
 	QUnit.test ("Sequence generation from PDB chains", function (assert) {
 		var expected = [
-			{chainName: "A", chainIndex: 0, modelIndex: 0, residueOffset: 0, data: dseq1AO6},
-			{chainName: "B", chainIndex: 1, modelIndex: 0, residueOffset: 578, data: dseq1AO6},
+			{chainName: "A", chainIndex: 0, modelIndex: 0, residueOffset: 0, data: dseq1AO6, structureID: "1ao6"},
+			{chainName: "B", chainIndex: 1, modelIndex: 0, residueOffset: 578, data: dseq1AO6, structureID: "1ao6"},
 		];
 		
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-		var actual = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stageModel.get("structureComp").stage);
+		var actual = CLMSUI.NGLUtils.getChainSequencesFromNGLStage (stageModel.get("structureComp").stage);
 		assert.deepEqual (actual, expected, "Expected "+JSON.stringify(expected)+" when generating sequences from `1AO6`");
 	});
 	
 	
 	QUnit.test ("Matrix pairings", function (assert) {
 		var testMatrix = {    // E-values per search sequence per pdb id
-			"1AO6": [0.01, 0.001, 1e-35],
-			"1AO7": [1e-30, 1e-15, 1e-30],
-			"1AO8": [1e-40, 1e-50, 1e-10],
+			//"1AO6": [0.01, 0.001, 1e-35],
+			//"1AO7": [1e-30, 1e-15, 1e-30],
+			//"1AO8": [1e-40, 1e-50, 1e-10],
+            "1AO6": [0.1, 0.1, 8],
+			"1AO7": [0.001, 5, 0.001],
+			"1AO8": [5, 6, 0.1],
 		};
 		var testSeqs = [{data: "ABCD"}, {data: "EFGH"}, {data: "IJKL"}];
 		var expectedValue = [
@@ -252,7 +277,7 @@ function callback (model) {
 	
 	QUnit.test ("Align test", function (assert) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-		var chainSequences = CLMSUI.modelUtils.getChainSequencesFromNGLModel (stageModel.get("structureComp").stage);
+		var chainSequences = CLMSUI.NGLUtils.getChainSequencesFromNGLStage (stageModel.get("structureComp").stage);
 		var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
 		var protAlignModel = alignCollection.get ("2000171");
         var actualValue = protAlignModel.alignWithoutStoring (
@@ -308,7 +333,7 @@ function callback (model) {
 		
 		var expectedValue = "(( /0 AND (( :A AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) ) OR ( :B AND (107 OR 125 OR 131 OR 161-162 OR 190 OR 415 OR 425 OR 466 OR 497) )) ) ) AND .CA";
 		var data = [
-			{resindex:410, residueId:0, resno:415, chainIndex:0, structureId:null},{resindex:492, residueId:1, resno:497, chainIndex:0, structureId:null},{resindex:492, residueId:2, resno:497, chainIndex:1, structureId:null},{resindex:410, residueId:3, resno:415, chainIndex:1, structureId:null},{resindex:185, residueId:4, resno:190, chainIndex:0, structureId:null},{resindex:420, residueId:5, resno:425, chainIndex:0, structureId:null},{resindex:420, residueId:6, resno:425, chainIndex:1, structureId:null},{resindex:185, residueId:7, resno:190, chainIndex:1, structureId:null},{resindex:120, residueId:8, resno:125, chainIndex:0, structureId:null},{resindex:156, residueId:9, resno:161, chainIndex:0, structureId:null},{resindex:156, residueId:10, resno:161, chainIndex:1, structureId:null},{resindex:120, residueId:11, resno:125, chainIndex:1, structureId:null},{resindex:126, residueId:12, resno:131, chainIndex:0, structureId:null},{resindex:157, residueId:13, resno:162, chainIndex:0, structureId:null},{resindex:157, residueId:14, resno:162, chainIndex:1, structureId:null},{resindex:126, residueId:15, resno:131, chainIndex:1, structureId:null},{resindex:102, residueId:16, resno:107, chainIndex:0, structureId:null},{resindex:461, residueId:17, resno:466, chainIndex:0, structureId:null},{resindex:461, residueId:18, resno:466, chainIndex:1, structureId:null},{resindex:102, residueId:19, resno:107, chainIndex:1, structureId:null}
+			{seqIndex:410, residueId:0, resno:415, chainIndex:0, structureId:null},{seqIndex:492, residueId:1, resno:497, chainIndex:0, structureId:null},{seqIndex:492, residueId:2, resno:497, chainIndex:1, structureId:null},{seqIndex:410, residueId:3, resno:415, chainIndex:1, structureId:null},{seqIndex:185, residueId:4, resno:190, chainIndex:0, structureId:null},{seqIndex:420, residueId:5, resno:425, chainIndex:0, structureId:null},{seqIndex:420, residueId:6, resno:425, chainIndex:1, structureId:null},{seqIndex:185, residueId:7, resno:190, chainIndex:1, structureId:null},{seqIndex:120, residueId:8, resno:125, chainIndex:0, structureId:null},{seqIndex:156, residueId:9, resno:161, chainIndex:0, structureId:null},{seqIndex:156, residueId:10, resno:161, chainIndex:1, structureId:null},{seqIndex:120, residueId:11, resno:125, chainIndex:1, structureId:null},{seqIndex:126, residueId:12, resno:131, chainIndex:0, structureId:null},{seqIndex:157, residueId:13, resno:162, chainIndex:0, structureId:null},{seqIndex:157, residueId:14, resno:162, chainIndex:1, structureId:null},{seqIndex:126, residueId:15, resno:131, chainIndex:1, structureId:null},{seqIndex:102, residueId:16, resno:107, chainIndex:0, structureId:null},{seqIndex:461, residueId:17, resno:466, chainIndex:0, structureId:null},{seqIndex:461, residueId:18, resno:466, chainIndex:1, structureId:null},{seqIndex:102, residueId:19, resno:107, chainIndex:1, structureId:null}
 		];
 		
 		var expectedValue2 = "(( /0 AND (( 415:A ) OR ( 497:B )) ) ) AND .CA";
@@ -384,7 +409,7 @@ function callback (model) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
 		var chainProxy = stageModel.get("structureComp").structure.getChainProxy();
 		chainProxy.index = 0;
-		var actualMapping = CLMSUI.modelUtils.getRangedCAlphaResidueSelectionForChain (chainProxy);
+		var actualMapping = CLMSUI.NGLUtils.getRangedCAlphaResidueSelectionForChain (chainProxy);
 		
 		assert.deepEqual (actualMapping, expectedMapping, "Expected "+expectedMapping+" NGL Selection String generated, Passed!");
 	});
@@ -443,8 +468,8 @@ function callback (model) {
 		var stageModel = CLMSUI.compositeModelInst.get("stageModel");
         var cproxy = stageModel.get("structureComp").structure.getChainProxy();
         var atomIndexA = stageModel.getAtomIndex (0, 0); // residue 0-indexed here
-        var resObj = {resno: 5, resindex: 0, chainIndex: 0};
-        var atomIndexB = stageModel.getAtomIndexFromResidueObj (resObj, cproxy, new NGL.Selection()); // residue is NGL resno (5 resno = 0 resindex)
+        var resObj = {resno: 5, seqIndex: 0, chainIndex: 0};
+        var atomIndexB = stageModel.getAtomIndexFromResidueObj (resObj, cproxy, new NGL.Selection()); // residue is NGL resno (5 resno = 0 seqIndex)
 			
 		assert.deepEqual (atomIndexA, atomIndexB, "Expected "+atomIndexA+" index in both methods (A chain 415 residue), Passed!");
 	});
@@ -462,8 +487,8 @@ function callback (model) {
 
 		crossLinks.forEach (function (crossLink) {
 			var chainIndex = crossLink.residueA.chainIndex + "-" + crossLink.residueB.chainIndex;
-			list1.push (matrices1[chainIndex].distanceMatrix[crossLink.residueA.resindex][crossLink.residueB.resindex]);
-			list2.push (matrices2[chainIndex].distanceMatrix[crossLink.residueA.resindex][crossLink.residueB.resindex]);
+			list1.push (matrices1[chainIndex].distanceMatrix[crossLink.residueA.seqIndex][crossLink.residueB.seqIndex]);
+			list2.push (matrices2[chainIndex].distanceMatrix[crossLink.residueA.seqIndex][crossLink.residueB.seqIndex]);
 		});
         
         list1 = list1.map (function (v) { return v.toFixed (2); });
@@ -484,10 +509,10 @@ function callback (model) {
         var atoms = stageModel.getAllResidueCoordsForChain(0);
 
 		crossLinks.forEach (function (crossLink) {
-            var resIndexA = crossLink.residueA.resindex;
-            var resIndexB = crossLink.residueB.resindex;
-			list1.push (matrices1["0-0"].distanceMatrix[resIndexA][resIndexB]);
-            var distanceSquared = CLMSUI.modelUtils.getDistanceSquared (atoms[resIndexA], atoms[resIndexB]);
+            var seqIndexA = crossLink.residueA.seqIndex;
+            var seqIndexB = crossLink.residueB.seqIndex;
+			list1.push (matrices1["0-0"].distanceMatrix[seqIndexA][seqIndexB]);
+            var distanceSquared = CLMSUI.modelUtils.getDistanceSquared (atoms[seqIndexA], atoms[seqIndexB]);
 			list2.push (Math.sqrt (distanceSquared));
 		});
         
@@ -521,7 +546,7 @@ function callback (model) {
         }
         
         var octreeIgnoreFunc = function (point1, point2) {
-            return CLMSUI.modelUtils.not3DHomomultimeric ({confirmedHomomultimer: true}, point1.chainIndex, point2.chainIndex);
+            return CLMSUI.NGLUtils.not3DHomomultimeric ({confirmedHomomultimer: true}, point1.chainIndex, point2.chainIndex);
         };
         
         var cdist = CLMSUI.utils.toNearest ((0.25 * 0.25) + (0.4 * 0.4) + (0.4 * 0.4), 0.25);
@@ -539,7 +564,71 @@ function callback (model) {
 
 		var actual = CLMSUI.modelUtils.getMinimumDistance (pointsA, pointsB, octAccessorObj, 200, octreeIgnoreFunc);
         actual.forEach (function (indRes) { indRes[2] = CLMSUI.utils.toNearest (indRes[2], 0.25); });
-        console.log ("results", actual);
+		
+		assert.deepEqual (actual, expected, "Expected "+expected.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
+	});
+    
+    
+    QUnit.test ("Octree test with negative match function 2", function (assert) {
+       var octAccessorObj = {
+            id: function (d) { return d; },
+            x: function (d) { return d.coords[0]; },
+            y: function (d) { return d.coords[1]; },
+            z: function (d) { return d.coords[2]; },
+        };
+		
+        var pointsA = [
+            {atomIndex: 11889,
+            chainIndex: 10,
+            coords: [-145.10899353027344, 78.43499755859375, 10.786999702453613],
+            modelIndex: 0,
+            seqIndex: 208},
+            {atomIndex: 88267,
+            chainIndex: 45,
+            coords: [-54.07099914550781, 253.4219970703125, -149.92100524902344],
+            modelIndex: 0,
+            seqIndex: 208},
+            {atomIndex: 164645,
+            chainIndex: 80,
+            coords: [65.1240005493164, 100.05500030517578, -38.1879997253418],
+            modelIndex: 0,
+            seqIndex: 208},
+            {atomIndex: 241023,
+            chainIndex: 115,
+            coords: [8.039999961853027, 239.88600158691406, 57.78200149536133],
+            modelIndex: 0,
+            seqIndex: 208},
+            {atomIndex: 317401,
+            chainIndex: 150,
+            coords: [157.01600646972656, 229.23500061035156, -101.27899932861328],
+            modelIndex: 0,
+            seqIndex: 208},
+            {atomIndex: 393779,
+            chainIndex: 185,
+            coords: [-1.2970000505447388, 98.26599884033203, 171.0780029296875],
+            modelIndex: 0,
+            seqIndex: 208}
+        ];
+
+        var pointsB = pointsA.slice();
+        
+        var octreeIgnoreFunc = function (point1, point2) {
+            return CLMSUI.NGLUtils.not3DHomomultimeric ({confirmedHomomultimer: true}, point1.chainIndex, point2.chainIndex);
+        };
+        
+        var cdist = CLMSUI.utils.toNearest ((0.25 * 0.25) + (0.4 * 0.4) + (0.4 * 0.4), 0.25);
+        var odddist = CLMSUI.utils.toNearest ((2.25 * 2.25) + (0.4 * 0.4) + (1.6 * 1.6), 0.25);
+        var expected = [
+            [pointsB[0], undefined, NaN],
+            [pointsB[1], undefined, NaN],
+            [pointsB[2], pointsA[4], 29112],
+            [pointsB[3], pointsA[2], 32021.5],
+            [pointsB[4], pointsA[2], 29112],
+            [pointsB[5], pointsA[3], 32979.5],
+        ];
+
+		var actual = CLMSUI.modelUtils.getMinimumDistance (pointsA, pointsB, octAccessorObj, 200, octreeIgnoreFunc);
+        actual.forEach (function (indRes) { indRes[2] = CLMSUI.utils.toNearest (indRes[2], 0.25); });
 		
 		assert.deepEqual (actual, expected, "Expected "+expected.join(", ")+" distance (2 d.p.) for both link-only and all distance matrix link distances, Passed!");
 	});
@@ -564,7 +653,7 @@ function callback (model) {
 		var expected = {ntermList: [], ctermList: []};	// because pdb for 1ao6 is within the larger sequence so neither cterm nor nterm match
 		
 		var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
-		var alignID = CLMSUI.modelUtils.make3DAlignID ("1AO6", "A", 0);
+		var alignID = CLMSUI.NGLUtils.make3DAlignID ("1AO6", "A", 0);
         var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("2000171", alignID);
 		$.extend (seqRange, {alignID: alignID, chainIndex: 0, protID: "2000171"});
 		var seqMap = d3.map ();
@@ -599,7 +688,7 @@ function callback (model) {
 		var linkableResidues = residueSets["wrong mass SDA "].linkables;
 		
 		var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
-		var alignID = CLMSUI.modelUtils.make3DAlignID ("1AO6", "A", 0);
+		var alignID = CLMSUI.NGLUtils.make3DAlignID ("1AO6", "A", 0);
         var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("2000171", alignID);
 		var actualFilteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[1], false);	// 1 is KSTY
 		actualFilteredSubSeqIndices = actualFilteredSubSeqIndices.slice(-10);	// last 10
@@ -616,7 +705,7 @@ function callback (model) {
 	QUnit.test ("Calc Filtered Residue Points from Cross-linker Specificity", function (assert) {
 		var expectedValue = [535, 536, 540, 552, 555, 559, 561, 568, 569, 574];	// last 10 KSTY
 		expectedValue = expectedValue.map (function (v) {
-			return {chainIndex: 1, protID: "2000171", resIndex: v+1, searchIndex: v+5}	// resindex 1-indexed, sdearchIndex 4 on from that, last 10 residues will be chain 1
+			return {chainIndex: 1, protID: "2000171", seqIndex: v+1, searchIndex: v+5}	// seqIndex 1-indexed, sdearchIndex 4 on from that, last 10 residues will be chain 1
 		});
 		
 		var searchArray = CLMS.arrayFromMapValues (clmsModel.get("searches"));
@@ -870,7 +959,7 @@ function callback (model) {
 	QUnit.test ("Crosslink count per protein pairing", function (assert) {
 		var crossLinks = CLMS.arrayFromMapValues (clmsModel.get("crossLinks"));
 		var expectedCrossLinkIDs = crossLinks.map (function (crossLink) { return crossLink.id; });
-		var expectedValue = {"2000171-2000171" : {crossLinks: expectedCrossLinkIDs, fromProtein: "2000171", toProtein: "2000171", label: "ALBU HUMAN - ALBU HUMAN"}};
+		var expectedValue = {"2000171-2000171" : {crossLinks: expectedCrossLinkIDs, fromProtein: "2000171", toProtein: "2000171", label: "ALBU - ALBU"}};
 		var actualValue = CLMSUI.modelUtils.crosslinkCountPerProteinPairing (crossLinks);	
 		d3.values(actualValue).forEach (function (pairing) {	// do this as otherwise stringify will kick off about circular structures, so just match ids
 			pairing.fromProtein = pairing.fromProtein.id;
@@ -1070,8 +1159,8 @@ function callback (model) {
 		});
 		
 		var fileContents = "Protein 1,SeqPos 1,Protein 2,SeqPos 2,cat,dog\n"
-			+"ALBU_HUMAN,415,ALBU_HUMAN,497,2,4\n"
-			+"ALBU_HUMAN,190,ALBU_HUMAN,425,3,5\n"
+			+"ALBU,415,ALBU,497,2,4\n"
+			+"ALBU,190,ALBU,425,3,5\n"
 		;
 		CLMSUI.modelUtils.updateLinkMetadata (fileContents, clmsModel);	
 	});
@@ -1149,12 +1238,12 @@ function callback (model) {
             .resetFilter()
             .set ({AUTO: false})
         ;
-		var expectedValue = "\"Protein1\",\"SeqPos1\",\"LinkedRes1\",\"Protein2\",\"SeqPos2\",\"LinkedRes2\",\"Highest Score\",\"Match Count\",\"AutoValidated\",\"Validated\",\"Link FDR\",\"3D Distance\",\"From Chain\",\"To Chain\",\"PDB SeqPos 1\",\"PDB SeqPos 2\",\"Search_10003\",\"cat\",\"dog\"\r\n\"sp|P02768-A|ALBU_HUMAN\",\"415\",\"V\",\"sp|P02768-A|ALBU_HUMAN\",\"497\",\"Y\",\"19.0000\",\"2\",\"true\",\"B,B\",\"\",\"8.79\",\"B\",\"B\",\"411\",\"493\",\"X\",\"2\",\"4\"\r\n\"sp|P02768-A|ALBU_HUMAN\",\"190\",\"K\",\"sp|P02768-A|ALBU_HUMAN\",\"425\",\"E\",\"17.3400\",\"4\",\"true\",\"A,C,A,A\",\"\",\"12.07\",\"B\",\"B\",\"186\",\"421\",\"X\",\"3\",\"5\"\r\n\"sp|P02768-A|ALBU_HUMAN\",\"125\",\"T\",\"sp|P02768-A|ALBU_HUMAN\",\"161\",\"Y\",\"17.3200\",\"1\",\"true\",\"C\",\"\",\"15.26\",\"A\",\"A\",\"121\",\"157\",\"X\",\"\",\"\"\r\n\"sp|P02768-A|ALBU_HUMAN\",\"131\",\"E\",\"sp|P02768-A|ALBU_HUMAN\",\"162\",\"K\",\"17.0300\",\"1\",\"true\",\"?\",\"\",\"8.30\",\"A\",\"A\",\"127\",\"158\",\"X\",\"\",\"\"\r\n\"sp|P02768-A|ALBU_HUMAN\",\"107\",\"D\",\"sp|P02768-A|ALBU_HUMAN\",\"466\",\"K\",\"13.9400\",\"1\",\"true\",\"B\",\"\",\"8.37\",\"B\",\"B\",\"103\",\"462\",\"X\",\"\",\"\"\r\n";
+		var expectedValue = "\"Protein1\",\"SeqPos1\",\"LinkedRes1\",\"Protein2\",\"SeqPos2\",\"LinkedRes2\",\"Highest Score\",\"Match Count\",\"AutoValidated\",\"Validated\",\"Link FDR\",\"3D Distance\",\"From Chain\",\"To Chain\",\"PDB SeqPos 1\",\"PDB SeqPos 2\",\"Search_10003\",\"cat\",\"dog\"\r\n\"sp|P02768-A|ALBU\",\"415\",\"V\",\"sp|P02768-A|ALBU\",\"497\",\"Y\",\"19.0000\",\"2\",\"true\",\"B,B\",\"\",\"8.79\",\"B\",\"B\",\"411\",\"493\",\"X\",\"2\",\"4\"\r\n\"sp|P02768-A|ALBU\",\"190\",\"K\",\"sp|P02768-A|ALBU\",\"425\",\"E\",\"17.3400\",\"4\",\"true\",\"A,C,A,A\",\"\",\"12.07\",\"B\",\"B\",\"186\",\"421\",\"X\",\"3\",\"5\"\r\n\"sp|P02768-A|ALBU\",\"125\",\"T\",\"sp|P02768-A|ALBU\",\"161\",\"Y\",\"17.3200\",\"1\",\"true\",\"C\",\"\",\"15.26\",\"A\",\"A\",\"121\",\"157\",\"X\",\"\",\"\"\r\n\"sp|P02768-A|ALBU\",\"131\",\"E\",\"sp|P02768-A|ALBU\",\"162\",\"K\",\"17.0300\",\"1\",\"true\",\"?\",\"\",\"8.30\",\"A\",\"A\",\"127\",\"158\",\"X\",\"\",\"\"\r\n\"sp|P02768-A|ALBU\",\"107\",\"D\",\"sp|P02768-A|ALBU\",\"466\",\"K\",\"13.9400\",\"1\",\"true\",\"B\",\"\",\"8.37\",\"B\",\"B\",\"103\",\"462\",\"X\",\"\",\"\"\r\n";
         
         // add the metadata from the other test, so it's always the same columns/values (i.e. test order doesn't change outcome of this test)
         var fileContents = "Protein 1,SeqPos 1,Protein 2,SeqPos 2,cat,dog\n"
-			+"ALBU_HUMAN,415,ALBU_HUMAN,497,2,4\n"
-			+"ALBU_HUMAN,190,ALBU_HUMAN,425,3,5\n"
+			+"ALBU,415,ALBU,497,2,4\n"
+			+"ALBU,190,ALBU,425,3,5\n"
 		;
 		CLMSUI.modelUtils.updateLinkMetadata (fileContents, clmsModel);	
         
@@ -1171,7 +1260,7 @@ function callback (model) {
             .resetFilter()
             .set ({AUTO: false})
         ;
-		var expectedValue = 	"\"Id\",\"Protein1\",\"SeqPos1\",\"PepPos1\",\"PepSeq1\",\"LinkPos1\",\"Protein2\",\"SeqPos2\",\"PepPos2\",\"PepSeq2\",\"LinkPos2\",\"Score\",\"Charge\",\"ExpMz\",\"ExpMass\",\"CalcMz\",\"CalcMass\",\"MassError\",\"AutoValidated\",\"Validated\",\"Search\",\"RawFileName\",\"PeakListFileName\",\"ScanNumber\",\"ScanIndex\",\"CrossLinkerModMass\",\"FragmentTolerance\",\"IonTypes\",\"Decoy1\",\"Decoy2\",\"3D Distance\",\"From Chain\",\"To Chain\",\"PDB SeqPos 1\",\"PDB SeqPos 2\"\r\n\"625824830\",\"ALBU_HUMAN\",\"425\",\"415\",\"VPQVSTPTLVEVSR\",\"11\",\"ALBU_HUMAN\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"15.42\",\"5\",\"623.13706032591\",\"3110.6489192951553\",\"623.136349226899\",\"3110.6453638001\",\"1.1430088099583773\",\"true\",\"C\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"23756\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\"\r\n\"625825062\",\"ALBU_HUMAN\",\"425\",\"414\",\"KVPQVSTPTLVEVSR\",\"12\",\"ALBU_HUMAN\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"14.8\",\"5\",\"648.75679602991\",\"3238.747597815155\",\"648.755341826899\",\"3238.7403268001\",\"2.245013283436167\",\"true\",\"A\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"21558\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\"\r\n\"625825067\",\"ALBU_HUMAN\",\"425\",\"414\",\"KVPQVSTPTLVEVSR\",\"12\",\"ALBU_HUMAN\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"15.19\",\"5\",\"648.75676475862\",\"3238.747441458705\",\"648.755341826899\",\"3238.7403268001\",\"2.196736350321131\",\"true\",\"A\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"22016\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\"\r\n\"625825068\",\"ALBU_HUMAN\",\"425\",\"414\",\"KVPQVSTPTLVEVSR\",\"12\",\"ALBU_HUMAN\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"17.34\",\"4\",\"810.69382619827\",\"3238.746198925564\",\"810.692358166904\",\"3238.7403268001\",\"1.8130893099008054\",\"true\",\"A\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"21877\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\"\r\n\"625826126\",\"ALBU_HUMAN\",\"497\",\"485\",\"RPCcmFSALEVDETYVPK\",\"13\",\"ALBU_HUMAN\",\"415\",\"414\",\"KVPQVSTPTLVEVSR\",\"2\",\"10.59\",\"3\",\"1211.3077209543\",\"3630.901333462263\",\"1211.3060024002457\",\"3630.8961778001\",\"1.4199420503630487\",\"true\",\"B\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"32246\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.79\",\"B\",\"B\",\"410\",\"492\"\r\n\"625826136\",\"ALBU_HUMAN\",\"497\",\"485\",\"RPCcmFSALEVDETYVPK\",\"13\",\"ALBU_HUMAN\",\"415\",\"414\",\"KVPQVSTPTLVEVSR\",\"2\",\"19\",\"4\",\"908.73262202769\",\"3630.901382243244\",\"908.731320916904\",\"3630.8961778001\",\"1.4333770202208327\",\"true\",\"B\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"32195\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.79\",\"B\",\"B\",\"410\",\"492\"\r\n\"625827037\",\"ALBU_HUMAN\",\"466\",\"446\",\"MoxPCcmAEDYLSVVLNQLCcmVLHEKTPVSDR\",\"21\",\"ALBU_HUMAN\",\"107\",\"107\",\"DDNPNLPR\",\"1\",\"13.94\",\"5\",\"843.01100363988\",\"4210.018635865004\",\"843.009827426899\",\"4210.0127548001\",\"1.3969232985363071\",\"true\",\"B\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"50388\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.37\",\"B\",\"B\",\"102\",\"461\"\r\n\"625827168\",\"ALBU_HUMAN\",\"125\",\"115\",\"LVRPEVDVMCcmTAFHDNEETFLK\",\"11\",\"ALBU_HUMAN\",\"161\",\"161\",\"YKAAFTECcmCcmQAADK\",\"1\",\"17.32\",\"6\",\"733.17742554659\",\"4393.020894478266\",\"733.1765762668957\",\"4393.0157988001\",\"1.1599498839643183\",\"true\",\"C\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"33444\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"15.26\",\"A\",\"A\",\"120\",\"156\"\r\n\"625828211\",\"ALBU_HUMAN\",\"131\",\"115\",\"LVRPEVDVMCcmTAFHDNEETFLK\",\"17\",\"ALBU_HUMAN\",\"162\",\"161\",\"YKAAFTECcmCcmQAADK\",\"2\",\"17.03\",\"6\",\"733.17716390522\",\"4393.019324630046\",\"733.1765762668957\",\"4393.0157988001\",\"0.8025989678416844\",\"true\",\"?\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"35032\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.30\",\"A\",\"A\",\"126\",\"157\"\r\n";
+		var expectedValue = 	"\"Id\",\"Protein1\",\"SeqPos1\",\"PepPos1\",\"PepSeq1\",\"LinkPos1\",\"Protein2\",\"SeqPos2\",\"PepPos2\",\"PepSeq2\",\"LinkPos2\",\"Score\",\"Charge\",\"ExpMz\",\"ExpMass\",\"CalcMz\",\"CalcMass\",\"MassError\",\"AutoValidated\",\"Validated\",\"Search\",\"RawFileName\",\"PeakListFileName\",\"ScanNumber\",\"ScanIndex\",\"CrossLinkerModMass\",\"FragmentTolerance\",\"IonTypes\",\"Decoy1\",\"Decoy2\",\"3D Distance\",\"From Chain\",\"To Chain\",\"PDB SeqPos 1\",\"PDB SeqPos 2\",\"LinkType\",\"DecoyType\"\r\n\"625824830\",\"ALBU\",\"425\",\"415\",\"VPQVSTPTLVEVSR\",\"11\",\"ALBU\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"15.42\",\"5\",\"623.13706032591\",\"3110.6489192951553\",\"623.136349226899\",\"3110.6453638001\",\"1.141161179106242\",\"true\",\"C\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"23756\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\",\"Self\",\"TT\"\r\n\"625825062\",\"ALBU\",\"425\",\"414\",\"KVPQVSTPTLVEVSR\",\"12\",\"ALBU\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"14.8\",\"5\",\"648.75679602991\",\"3238.747597815155\",\"648.755341826899\",\"3238.7403268001\",\"2.2415276102587516\",\"true\",\"A\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"21558\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\",\"Self\",\"TT\"\r\n\"625825067\",\"ALBU\",\"425\",\"414\",\"KVPQVSTPTLVEVSR\",\"12\",\"ALBU\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"15.19\",\"5\",\"648.75676475862\",\"3238.747441458705\",\"648.755341826899\",\"3238.7403268001\",\"2.193325633318231\",\"true\",\"A\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"22016\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\",\"Self\",\"TT\"\r\n\"625825068\",\"ALBU\",\"425\",\"414\",\"KVPQVSTPTLVEVSR\",\"12\",\"ALBU\",\"190\",\"182\",\"LDELRDEGKASSAK\",\"9\",\"17.34\",\"4\",\"810.69382619827\",\"3238.746198925564\",\"810.692358166904\",\"3238.7403268001\",\"1.8108365660876746\",\"true\",\"A\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"21877\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"12.07\",\"B\",\"B\",\"185\",\"420\",\"Self\",\"TT\"\r\n\"625826126\",\"ALBU\",\"497\",\"485\",\"RPCcmFSALEVDETYVPK\",\"13\",\"ALBU\",\"415\",\"414\",\"KVPQVSTPTLVEVSR\",\"2\",\"10.59\",\"3\",\"1211.3077209543\",\"3630.901333462263\",\"1211.3060024002457\",\"3630.8961778001\",\"1.4187612799510967\",\"true\",\"B\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"32246\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.79\",\"B\",\"B\",\"410\",\"492\",\"Self\",\"TT\"\r\n\"625826136\",\"ALBU\",\"497\",\"485\",\"RPCcmFSALEVDETYVPK\",\"13\",\"ALBU\",\"415\",\"414\",\"KVPQVSTPTLVEVSR\",\"2\",\"19\",\"4\",\"908.73262202769\",\"3630.901382243244\",\"908.731320916904\",\"3630.8961778001\",\"1.4317882041347127\",\"true\",\"B\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"32195\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.79\",\"B\",\"B\",\"410\",\"492\",\"Self\",\"TT\"\r\n\"625827037\",\"ALBU\",\"466\",\"446\",\"MoxPCcmAEDYLSVVLNQLCcmVLHEKTPVSDR\",\"21\",\"ALBU\",\"107\",\"107\",\"DDNPNLPR\",\"1\",\"13.94\",\"5\",\"843.01100363988\",\"4210.018635865004\",\"843.009827426899\",\"4210.0127548001\",\"1.3952541745553082\",\"true\",\"B\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"50388\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.37\",\"B\",\"B\",\"102\",\"461\",\"Self\",\"TT\"\r\n\"625827168\",\"ALBU\",\"125\",\"115\",\"LVRPEVDVMCcmTAFHDNEETFLK\",\"11\",\"ALBU\",\"161\",\"161\",\"YKAAFTECcmCcmQAADK\",\"1\",\"17.32\",\"6\",\"733.17742554659\",\"4393.020894478266\",\"733.1765762668957\",\"4393.0157988001\",\"1.158356283873163\",\"true\",\"C\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"33444\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"15.26\",\"A\",\"A\",\"120\",\"156\",\"Self\",\"TT\"\r\n\"625828211\",\"ALBU\",\"131\",\"115\",\"LVRPEVDVMCcmTAFHDNEETFLK\",\"17\",\"ALBU\",\"162\",\"161\",\"YKAAFTECcmCcmQAADK\",\"2\",\"17.03\",\"6\",\"733.17716390522\",\"4393.019324630046\",\"733.1765762668957\",\"4393.0157988001\",\"0.8014963152490925\",\"true\",\"?\",\"10003\",\"E151023_07_Lumos_CS_AB_IN_190_HCD_HSA_SDA_3\",\"\",\"35032\",\"0\",\"82.0413162600906\",\"20 ppm\",\"b;y;peptide;\",\"false\",\"false\",\"8.30\",\"A\",\"A\",\"126\",\"157\",\"Self\",\"TT\"\r\n";
         
 		var actualValue = getMatchesCSV();
 		
@@ -1191,7 +1280,7 @@ function testSetupNew (cbfunc) {
 			});
 		
 			var stage = new NGL.Stage ("ngl", {tooltip: false});
-			CLMSUI.modelUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, bbmodel: CLMSUI.compositeModelInst});
+			CLMSUI.NGLUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, bbmodel: CLMSUI.compositeModelInst});
 			console.log ("here");
 		});
 		

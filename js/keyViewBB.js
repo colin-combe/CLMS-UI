@@ -288,16 +288,13 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Update colour key section
         var colourAssign = this.model.get("linkColourAssignment");
         if (colourAssign) {
-            var colScale = colourAssign.get("colScale");
-
-            var labels = colourAssign.get("labels").range().concat(colourAssign.get("undefinedLabel"));
-            var colScaleRange = colScale.range().concat(colourAssign.get("undefinedColour"));
+            var labelColourPairings = colourAssign.getLabelColourPairings ();
             
-            colourSection[0].rows = labels.map(function(val, i) {
-                var rgbCol = colScaleRange[i];
+            colourSection[0].rows = labelColourPairings.map(function(val, i) {
+                var rgbCol = val[1];
                 var rgbHex = d3.rgb(rgbCol).toString();
-                var span = "<input type='color' value='" + rgbHex + "' title='Press to change colour for " + val + "'/>";
-                return [span, val, i];
+                var span = "<input type='color' value='" + rgbHex + "' title='Press to change colour for " + val[0] + "'/>";
+                return [span, val[0], i];
             });
 
             var updateSection = d3.select(this.el).selectAll("section").data(colourSection, function(d) {
@@ -324,9 +321,11 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
             cellSel
                 .enter()
                 .append("td")
-                .html(function(d) {
+            ;
+            cellSel.html(function(d) {
                     return d;
-                });
+                })
+            ;
 
             // hide / disable various pieces of the table if the color scheme is uneditable
             var isFixed = colourAssign.get("fixed");
@@ -357,7 +356,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.sliderSubView = new CLMSUI.ThreeColourSliderBB({
                         el: "#" + pid + "3cs",
                         model: colourAssign,
-                        unitText: " Å",
+                        unitText: " "+colourAssign.get("unit"),
                         title: colourAssign.get("title") + " Cutoffs",
                         orientation: "horizontal",
                         absolutePosition: false,

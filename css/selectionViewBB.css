@@ -70,6 +70,11 @@
     font-size: 1.1em;
 }
 
+.selectView span.linkedResidue {
+    color: #000;
+    font-weight: bold;
+}
+
 .selectView TD.maxWidth {
     max-width: 12em;
     overflow: hidden;
@@ -149,5 +154,10 @@
 
 .selectView .smallText {
 	font-size: 0.8em;
+    color: #a8a8a8;
+}
+
+.selectView tr:hover .smallText, .selectView TR.matchRow.highlighted .smallText, .selectView TR.spectrumShown2 .smallText {
+    color: inherit;
 }
 

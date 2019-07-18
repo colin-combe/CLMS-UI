@@ -19,7 +19,7 @@
 -->
 <?php
     session_start();
-    $cacheBuster = '?v='.microtime(true);
+    $cacheBuster = '';//?v='.microtime(true);
 ?>
 
 <!DOCTYPE html>
@@ -90,6 +90,7 @@
         <link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
 		<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
 		<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
+		<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
         <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
@@ -136,6 +137,7 @@
         <script type="text/javascript" src="./js/annotationTypeModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/compositeModelType.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/modelUtils.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/NGLUtils.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/fdr.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/distancesObj.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js<?php echo $cacheBuster ?>"></script>
@@ -167,6 +169,8 @@
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/goTermsViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
@@ -244,13 +248,11 @@
         ?>
 
 		var spinner = new Spinner({scale: 5}).spin (d3.select("#main").node());
+        var z;
 
-		var success = function (text) {
-			spinner.stop(); // stop spinner on request returning
-
+		var success = function (json) {
 			try {
-				var json = {};
-				if (text) { json = JSON.parse (text);}
+                console.log ("TIME t2", performance.now(), json.times);
 
 				CLMSUI.init.models (json);
 				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
@@ -265,18 +267,33 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 			} catch (err) {
-				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+text.substring (0, 150)+"</p>");
-				console.error ("Error", err, text.substring (0, 1000));
+				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
+				console.error ("Error");
 			}
 		};
 
-		var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
+        
+		
 
-		d3.text (url, function (error, text) {
+        z = performance.now();
+        console.log ("TIME t1", performance.now());
+
+        if (window.location.search) {
+		var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
+        d3.json (url, function (error, json) {
+            spinner.stop(); // stop spinner on request returning
+
 			if (!error) {
-				success (text);
+				success (json);
+			} else {
+                CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
+				console.error ("Error", error);
 			}
 		});
+        } else {
+            spinner.stop(); // stop spinner
+            success ({});
+        }
 
     //]]>
     </script>

@@ -1,28 +1,28 @@
 var CLMSUI = CLMSUI || {};
 
-CLMSUI.DistancesObj = function (matrices, chainMap, pdbBaseSeqID, residueCoords) {
+CLMSUI.DistancesObj = function (matrices, chainMap, structureName, residueCoords) {
     this.matrices = matrices;
     this.chainMap = chainMap;
-    this.pdbBaseSeqID = pdbBaseSeqID;
+    this.structureName = structureName;
     this.residueCoords = residueCoords;
-    this.setAllowedChainNameSet();
+    this.setAllowedChainNameSet (undefined, true);
 };
 
 CLMSUI.DistancesObj.prototype = {
 
     constructor: CLMSUI.DistancesObj,
 
-    leewayFunc: function(a, b) {
+    tieBreaker: function (link1resA, link1resB, link2resA, link2resB) {
         var d;
-        var mitotalDiff = (a.residueA.modelIndex + a.residueB.modelIndex) - (b.residueA.modelIndex + b.residueB.modelIndex);
+        var mitotalDiff = (link1resA.modelIndex + link1resB.modelIndex) - (link2resA.modelIndex + link2resB.modelIndex);
         if (mitotalDiff) {
             d = mitotalDiff;
         } else {
-            var citotalDiff = (a.residueA.chainIndex + a.residueB.chainIndex) - (b.residueA.chainIndex + b.residueB.chainIndex);
+            var citotalDiff = (link1resA.chainIndex + link1resB.chainIndex) - (link2resA.chainIndex + link2resB.chainIndex);
             if (citotalDiff) {
                 d = citotalDiff;
             } else {
-                var minDiff = Math.min(a.residueA.chainIndex, a.residueB.chainIndex) - Math.min(b.residueA.chainIndex, b.residueB.chainIndex);
+                var minDiff = Math.min(link1resA.chainIndex, link1resB.chainIndex) - Math.min(link2resA.chainIndex, link2resB.chainIndex);
                 if (minDiff) {
                     d = minDiff;
                 }
@@ -31,13 +31,13 @@ CLMSUI.DistancesObj.prototype = {
         return d;
     },
 
-    getShortestLinks: function(linkWrappers, angstromAccuracy) {
+    getShortestLinks: function (linkWrappers, angstromAccuracy) {
         angstromAccuracy = angstromAccuracy || 1;
         var self = this;
 
         linkWrappers.forEach (function (link) {
             var distance = this.getXLinkDistanceFromChainCoords (
-                this.matrices, link.residueA.resindex, link.residueB.resindex, link.residueA.chainIndex, link.residueB.chainIndex
+                this.matrices, link.residueA.seqIndex, link.residueB.seqIndex, link.residueA.chainIndex, link.residueB.chainIndex
             );
             link.distance = CLMSUI.utils.toNearest (distance, angstromAccuracy);
         }, this);
@@ -46,11 +46,12 @@ CLMSUI.DistancesObj.prototype = {
             .key(function(d) {
                 return d.origId;
             })
-            .sortValues(function(a, b) {
-                var d = a.distance - b.distance;
-                return (d < 0 ? -1 : (d > 0 ? 1 : self.leewayFunc (a, b)));
+            .sortValues(function(link1, link2) {
+                var d = link1.distance - link2.distance;
+                return (d < 0 ? -1 : (d > 0 ? 1 : self.tieBreaker (link1.residueA, link1.residueB, link2.residueA, link2.residueB)));
             })
-            .entries(linkWrappers);
+            .entries(linkWrappers)
+        ;
 
         var shortestLinks = nestedLinks.map(function(group) {
             return group.values[0];
@@ -88,7 +89,7 @@ CLMSUI.DistancesObj.prototype = {
         var totalDist = 0;
         var distCount = 0;
 
-        // only calc distance if resIndex1 and resIndex2 return non-negative values
+        // only calc distance if seqIndex1 and seqIndex2 return non-negative values
         // might miss a few distances where the alignments could be matched quite closely i.e. for link A->C residue C could be matched to D here ABCD srch -> AB-D pdb
         // but this way dodges a lot of zero length distances when alignments have big gaps in them i.e. ABCDEFGHIJKLMNOP srch -> A------------P pdb
         // what positions would E and J be, what is the length between E and J?
@@ -96,23 +97,23 @@ CLMSUI.DistancesObj.prototype = {
             for (var n = 0; n < chains1.length; n++) {
                 var chainIndex1 = chains1[n].index;
                 var chainName1 = chains1[n].name;
-                var alignId1 = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, chainName1, chainIndex1);
-                var resIndex1 = alignCollBB.getAlignedIndex(xlink.fromResidue, pid1, false, alignId1, true) - 1; // -1 for ZERO-INDEXED
+                var alignId1 = CLMSUI.NGLUtils.make3DAlignID(this.structureName, chainName1, chainIndex1);
+                var seqIndex1 = alignCollBB.getAlignedIndex(xlink.fromResidue, pid1, false, alignId1, true) - 1; // -1 for ZERO-INDEXED
                 var modelIndex1 = chains1[n].modelIndex;
 
-                if (resIndex1 >= 0) {
+                if (seqIndex1 >= 0) {
                     for (var m = 0; m < chains2.length; m++) {
                         var modelIndex2 = chains2[m].modelIndex;
                         if (modelIndex1 === modelIndex2 || options.allowInterModelDistances) {  // bar distances between models
                             var chainIndex2 = chains2[m].index;
                             var chainName2 = chains2[m].name;
-                            var alignId2 = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, chainName2, chainIndex2);
-                            var resIndex2 = alignCollBB.getAlignedIndex(xlink.toResidue, pid2, false, alignId2, true) - 1; // -1 for ZERO-INDEXED
-                            // align from 3d to search index. resindex is 0-indexed so -1 before querying
+                            var alignId2 = CLMSUI.NGLUtils.make3DAlignID(this.structureName, chainName2, chainIndex2);
+                            var seqIndex2 = alignCollBB.getAlignedIndex(xlink.toResidue, pid2, false, alignId2, true) - 1; // -1 for ZERO-INDEXED
+                            // align from 3d to search index. seqindex is 0-indexed so -1 before querying
                             //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
 
-                            if (resIndex2 >= 0 && CLMSUI.modelUtils.not3DHomomultimeric(xlink, chainIndex1, chainIndex2)) {
-                                var dist = this.getXLinkDistanceFromChainCoords (matrices, resIndex1, resIndex2, chainIndex1, chainIndex2);
+                            if (seqIndex2 >= 0 && CLMSUI.NGLUtils.not3DHomomultimeric(xlink, chainIndex1, chainIndex2)) {
+                                var dist = this.getXLinkDistanceFromChainCoords (matrices, seqIndex1, seqIndex2, chainIndex1, chainIndex2);
 
                                 if (dist !== undefined) {
                                     if (average) {
@@ -121,8 +122,8 @@ CLMSUI.DistancesObj.prototype = {
                                         if (returnChainInfo) {
                                             chainInfo.from.push(chainName1);
                                             chainInfo.to.push(chainName2);
-                                            chainInfo.fromRes.push(resIndex1);
-                                            chainInfo.toRes.push(resIndex2);
+                                            chainInfo.fromRes.push(seqIndex1);
+                                            chainInfo.toRes.push(seqIndex2);
                                         }
                                     } else if (minDist === undefined || dist < minDist) {
                                         //if (dist >= minDist && )
@@ -130,8 +131,8 @@ CLMSUI.DistancesObj.prototype = {
                                         if (returnChainInfo) {
                                             chainInfo.from = chainName1;
                                             chainInfo.to = chainName2;
-                                            chainInfo.fromRes = resIndex1;
-                                            chainInfo.toRes = resIndex2;
+                                            chainInfo.fromRes = seqIndex1;
+                                            chainInfo.toRes = seqIndex2;
                                         }
                                     }
                                 }
@@ -151,18 +152,18 @@ CLMSUI.DistancesObj.prototype = {
         } : distance;
     },
 
-    // resIndex1 and 2 are 0-based
-    getXLinkDistanceFromChainCoords: function(matrices, resIndex1, resIndex2, chainIndex1, chainIndex2) {
+    // seqIndex1 and 2 are 0-based
+    getXLinkDistanceFromChainCoords: function(matrices, seqIndex1, seqIndex2, chainIndex1, chainIndex2) {
         var dist;
         if (this.permittedChainIndicesSet.has(chainIndex1) && this.permittedChainIndicesSet.has(chainIndex2)) {
             var distanceMatrix = matrices[chainIndex1 + "-" + chainIndex2].distanceMatrix;
-            var minIndex = resIndex1; // < resIndex2 ? resIndex1 : resIndex2;
-            if (distanceMatrix[minIndex] && distanceMatrix[minIndex][resIndex2]) {
-                var maxIndex = resIndex2; // < resIndex1 ? resIndex1 : resIndex2;
+            var minIndex = seqIndex1; // < seqIndex2 ? seqIndex1 : seqIndex2;
+            if (distanceMatrix[minIndex] && distanceMatrix[minIndex][seqIndex2]) {
+                var maxIndex = seqIndex2; // < seqIndex1 ? seqIndex1 : seqIndex2;
                 dist = distanceMatrix[minIndex][maxIndex];
             } else {
                 var sm = CLMSUI.compositeModelInst.get("stageModel");
-                dist = sm ? sm.getSingleDistanceBetween2Residues(resIndex1, resIndex2, chainIndex1, chainIndex2) : 0;
+                dist = sm ? sm.getSingleDistanceBetween2Residues(seqIndex1, seqIndex2, chainIndex1, chainIndex2) : 0;
             }
         } else {
             dist = Number.POSITIVE_INFINITY;
@@ -254,7 +255,7 @@ CLMSUI.DistancesObj.prototype = {
                     return this.permittedChainIndicesSet.has(chain.index);
                 }, this) // remove chains that are currently distance barred
                 .map(function(chain) {
-                    var alignID = CLMSUI.modelUtils.make3DAlignID(this.pdbBaseSeqID, chain.name, chain.index);
+                    var alignID = CLMSUI.NGLUtils.make3DAlignID(this.structureName, chain.name, chain.index);
                     var range = alignCollBB.getSearchRangeIndexOfMatches(protID, alignID);
                     $.extend(range, {
                         chainIndex: chain.index,
@@ -292,7 +293,7 @@ CLMSUI.DistancesObj.prototype = {
                     if (searchIndex >= seqValue.first && searchIndex <= seqValue.last) {
                         alignedPos = {
                             searchIndex: searchIndex,
-                            resIndex: alignCollBB.getAlignedIndex(searchIndex, protKey, false, seqValue.alignID, false),
+                            seqIndex: alignCollBB.getAlignedIndex(searchIndex, protKey, false, seqValue.alignID, false),
                             chainIndex: seqValue.chainIndex,
                             protID: seqValue.protID,
                             resType: termTypes[i],
@@ -332,13 +333,13 @@ CLMSUI.DistancesObj.prototype = {
                     // That's the same criteria we apply to saying a crosslink occurs in a pdb in the first place
                     // Justification: mapping hits between aaaa----------aaa and bbb-------bbb will map to nearest residue and give lots of zero
                     // length distances when both cross-link residues are '-'
-                    var resIndex = alignCollBB.getAlignedIndex(searchIndex, protID, false, alignID, true); // will be 1-indexed
-                    if (resIndex >= 0) {
+                    var seqIndex = alignCollBB.getAlignedIndex(searchIndex, protID, false, alignID, true); // will be 1-indexed
+                    if (seqIndex >= 0) {
                         var datum = {
                             searchIndex: searchIndex,
                             chainIndex: distSeq.chainIndex,
                             protID: protID,
-                            resIndex: resIndex,
+                            seqIndex: seqIndex,
                         };
                         rmap[n].push(datum);
                     }
@@ -463,7 +464,7 @@ CLMSUI.DistancesObj.prototype = {
                 var res1 = rowMap[rri];
                 residueColumnIndices.forEach(function(rci) {
                     var res2 = columnMap[rci];
-                    var dist = self.getXLinkDistanceFromChainCoords(self.matrices, res1.resIndex - 1, res2.resIndex - 1, res1.chainIndex, res2.chainIndex);
+                    var dist = self.getXLinkDistanceFromChainCoords(self.matrices, res1.seqIndex - 1, res2.seqIndex - 1, res1.chainIndex, res2.chainIndex);
                     if (!isNaN(dist) && dist > 0) {
                         randDists.push(dist);
                     }
@@ -484,7 +485,7 @@ CLMSUI.DistancesObj.prototype = {
             });
         }
         var chainNameSet = d3.set(chainNames);
-        this.setAllowedChainNameSet(chainNameSet);
+        this.setAllowedChainNameSet (chainNameSet, false);
 
         return this;
     },
@@ -492,7 +493,7 @@ CLMSUI.DistancesObj.prototype = {
     // set of chain names that are allowed to be in distance calculations
     // needed as others are restricted by the assembly in the ngl model
     // If chainNameSet is undefined all chain names are permitted
-    setAllowedChainNameSet: function(chainNameSet) {
+    setAllowedChainNameSet: function(chainNameSet, isNewObj) {
         this.permittedChainIndicesSet = d3.set();
         d3.values(this.chainMap).map(function(valueArr) {
             valueArr.map(function(d) {
@@ -503,7 +504,10 @@ CLMSUI.DistancesObj.prototype = {
         }, this);
 
         console.log("PCIS", this.permittedChainIndicesSet);
-        CLMSUI.vent.trigger("PDBPermittedChainSetsUpdated", this.permittedChainIndicesSet);
+        if (!isNewObj) {
+            // if changing existing object fire an event, otherwise hold off. Fire an event once whole new distancesObj object is installed.
+            CLMSUI.vent.trigger("PDBPermittedChainSetsUpdated", this.permittedChainIndicesSet);
+        }
 
         return this;
     }

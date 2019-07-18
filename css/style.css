@@ -52,7 +52,8 @@ span, label {
     color: #091D42;
     background:white;
 }
-.fa-times-circle, .hideToolbarButton, .takeImageButton {
+
+.panelMenuButton {
     vertical-align:baseline;
     -webkit-transition: all .3s;
     -moz-transition: all .3s;
@@ -60,17 +61,14 @@ span, label {
     cursor:pointer;
     float:right;
     margin:2px;
-    margin-right:22px;
-}
-.hideToolbarButton, .takeImageButton {
     margin-right: 0.5em;
-}
-
-.fa-times-circle, .hideToolbarButton, .takeImageButton {
     color: white;
 }
+.fa-times-circle {
+    margin-right:22px;
+}
 
-.fa-times-circle:hover, .hideToolbarButton:hover, .takeImageButton:hover {
+.panelMenuButton:hover {
     color: #091D42;
     background:white;
 }
@@ -188,7 +186,7 @@ span, label {
     color:#091d42;
     position:fixed;
     pointer-events:all;
-    background: rgba(224,224,224,0.9);
+    background: rgba(224,224,224,1);
     box-shadow: 5px 5px 10px rgba(0,0,0,0.5);
     border: 1px solid #888;
 /*
@@ -848,4 +846,13 @@ image.sharpImage {
 .textFilters.chargeFilterControl {
     /* hide charge control here */
     display: none;
+}
+
+
+div#gafAnnotationsMetaLoadPanel > div > div.expectedFormatPanel {
+  display:none;
+}
+
+div.validationControls{
+  display: none;
 }

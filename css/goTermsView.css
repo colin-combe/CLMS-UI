@@ -1,0 +1,65 @@
+.goTermsView {
+    display: none;
+    left: 6em;
+    top: 6em;
+    width: 500px;
+    height: 500px;
+}
+
+ .goTermsView svg {
+    /* height: 100%;
+    width: 100%;
+    position: absolute; */
+    /* shape-rendering: crispedges; */
+}
+
+/* .node {
+    cursor: pointer;
+}
+
+.node circle {
+    fill: #000;
+    stroke-width: 1px;
+}
+
+.node text {
+    font: 12px sans-serif;
+    dominant-baseline: middle;
+    margin-left: 5px;
+}
+
+
+.bcNode {
+    fill: #eee;
+    stroke-width: 1px;
+}
+
+
+.goLink {
+    fill: none;
+    stroke: #aaa;
+    stroke-width: 1px;
+} */
+.node {
+  cursor: pointer;
+}
+
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 3px;
+}
+
+.node text {
+  font: 12px sans-serif;
+}
+
+.goLink {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 2px;
+}
+
+div.goTermsView > div > div.panelInner {
+  /* overflow: scroll; */
+}
