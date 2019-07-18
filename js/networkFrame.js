@@ -192,15 +192,15 @@ CLMSUI.init.modelsEssential = function(options) {
     var hasIncorrect = !_.isEmpty(options.incorrectSearchIDs);
     var hasNoMatches = _.isEmpty(options.rawMatches);
 
-    CLMSUI.utils.displayError (function() {
+    CLMSUI.utils.displayError(function() {
             return hasMissing || hasIncorrect || hasNoMatches;
         },
-    		(hasMissing ? "Cannot find Search ID"+(options.missingSearchIDs.length > 1 ? "s " : " ")+options.missingSearchIDs.join(", ")+".<br>" : "") +
-    		(hasIncorrect ? "Wrong ID Key for Search ID"+(options.incorrectSearchIDs.length > 1 ? "s " : " ")+options.incorrectSearchIDs.join(", ")+".<br>" : "") +
+        (hasMissing ? "Cannot find Search ID" + (options.missingSearchIDs.length > 1 ? "s " : " ") + options.missingSearchIDs.join(", ") + ".<br>" : "") +
+        (hasIncorrect ? "Wrong ID Key for Search ID" + (options.incorrectSearchIDs.length > 1 ? "s " : " ") + options.incorrectSearchIDs.join(", ") + ".<br>" : "") +
         (!hasMissing && !hasIncorrect && hasNoMatches ? "No cross-links detected for this search.<br>" : "") +
-            "<p>You can either go to the search history page <br>or you can upload CSV files via the LOAD menu.</p>"
-        );
-    */
+        "<p>You can either go to the search history page <br>or you can upload CSV files via the LOAD menu.</p>"
+    );
+*/
 
     // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     var clmsModelInst = new window.CLMS.model.SearchResultsModel();
@@ -233,7 +233,7 @@ CLMSUI.init.modelsEssential = function(options) {
 
     var scoreExtentInstance = CLMSUI.modelUtils.matchScoreRange(clmsModelInst.get("matches"), true);
     if (scoreExtentInstance[0]) {
-    scoreExtentInstance[0] = Math.min(0, scoreExtentInstance[0]); // make scoreExtent min zero, if existing min isn't negative
+        scoreExtentInstance[0] = Math.min(0, scoreExtentInstance[0]); // make scoreExtent min zero, if existing min isn't negative
     }
     var filterSettings = {
         decoys: clmsModelInst.get("decoysPresent"),
@@ -376,12 +376,12 @@ CLMSUI.init.views = function() {
             tooltip: "Explains and allows changing of current colour scheme",
             sectionEnd: false
         },
-        {
-            id: "goTermsChkBxPlaceholder",
-            label: "GO Terms",
-            eventName: "goTermsShow",
-            tooltip: "Browse Gene Ontology terms"
-        },
+        //{
+        //    id: "goTermsChkBxPlaceholder",
+        //    label: "GO Terms",
+        //    eventName: "goTermsShow",
+        //    tooltip: "Browse Gene Ontology terms"
+        //},
     ];
     checkBoxData.forEach(function(cbdata) {
         var options = $.extend({
@@ -425,49 +425,49 @@ CLMSUI.init.views = function() {
         .attr("type", "text")
         .attr("id", "proteinSelectionFilter");
     new CLMSUI.DropDownMenuViewBB({
-        el: "#proteinSelectionDropdownPlaceholder",
-        model: compModel.get("clmsModel"),
-        myOptions: {
-            title: "Protein-Selection",
-            menu: [{
-                    name: "Invert",
-                    func: compModel.invertSelectedProteins,
-                    context: compModel,
-                    tooltip: "Switch selected and unselected proteins"
-                },
-                {
-                    name: "Hide",
-                    func: compModel.hideSelectedProteins,
-                    context: compModel,
-                    tooltip: "Hide selected proteins"
-                },
-                {
-                    name: "+Neighbours",
-                    func: compModel.stepOutSelectedProteins,
-                    context: compModel,
-                    tooltip: "Select proteins which are cross-linked to already selected proteins"
-                },
-                {
-                    id: "proteinSelectionFilter",
-                    func: compModel.proteinSelectionTextFilter,
-                    closeOnClick: false,
-                    context: compModel,
-                    label: "Protein Selection by Description",
-                    tooltip: "Select proteins whose descriptions include input text"
+            el: "#proteinSelectionDropdownPlaceholder",
+            model: compModel.get("clmsModel"),
+            myOptions: {
+                title: "Protein-Selection",
+                menu: [{
+                        name: "Invert",
+                        func: compModel.invertSelectedProteins,
+                        context: compModel,
+                        tooltip: "Switch selected and unselected proteins"
                     },
                     {
-                        name: "Group",
-                        func: compModel.groupSelectedProteins,
+                        name: "Hide",
+                        func: compModel.hideSelectedProteins,
                         context: compModel,
-                        tooltip: "Put selected proteins in a group"
-                }
-            ],
-            tooltipModel: compModel.get("tooltipModel")
-        }
+                        tooltip: "Hide selected proteins"
+                    },
+                    {
+                        name: "+Neighbours",
+                        func: compModel.stepOutSelectedProteins,
+                        context: compModel,
+                        tooltip: "Select proteins which are cross-linked to already selected proteins"
+                    },
+                    {
+                        id: "proteinSelectionFilter",
+                        func: compModel.proteinSelectionTextFilter,
+                        closeOnClick: false,
+                        context: compModel,
+                        label: "Protein Selection by Description",
+                        tooltip: "Select proteins whose descriptions include input text"
+                    },
+                    //{
+                    //    name: "Group",
+                    //    func: compModel.groupSelectedProteins,
+                    //    context: compModel,
+                    //    tooltip: "Put selected proteins in a group"
+                    //}
+                ],
+                tooltipModel: compModel.get("tooltipModel")
+            }
         })
-        .wholeMenuEnabled (matchesFound)
-        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
-            this.wholeMenuEnabled (true);
+        .wholeMenuEnabled(matchesFound)
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() {
+            this.wholeMenuEnabled(true);
         });
 
     // Generate buttons for load dropdown
@@ -503,19 +503,19 @@ CLMSUI.init.views = function() {
         };
     });
     new CLMSUI.DropDownMenuViewBB({
-        el: "#loadDropdownPlaceholder",
-        model: compModel.get("clmsModel"),
-        myOptions: {
-            title: "Load",
-            menu: loadButtonData,
-            tooltipModel: compModel.get("tooltipModel"),
-        }
-        })// hide/disable view choices that depend on certain data being present until that data arrives
-        .enableItemsByIndex ([0, 2, 3], matchesFound)
-        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
-            this.enableItemsByIndex ([0, 2, 3], true);
+            el: "#loadDropdownPlaceholder",
+            model: compModel.get("clmsModel"),
+            myOptions: {
+                title: "Load",
+                menu: loadButtonData,
+                tooltipModel: compModel.get("tooltipModel"),
+            }
+        }) // hide/disable view choices that depend on certain data being present until that data arrives
+        .enableItemsByIndex([0, 2, 3], matchesFound)
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() {
+            this.enableItemsByIndex([0, 2, 3], true);
         })
-        .setVis (!matchesFound) // open as default if empty search
+        .setVis(!matchesFound) // open as default if empty search
     ;
 
     new CLMSUI.URLSearchBoxViewBB({
@@ -731,11 +731,11 @@ CLMSUI.init.viewsEssential = function(options) {
 
     // Generate data export drop down
     new CLMSUI.DropDownMenuViewBB({
-        el: "#expDropdownPlaceholder",
+            el: "#expDropdownPlaceholder",
             model: compModel.get("clmsModel"),
-        myOptions: {
-            title: "Export",
-            menu: [{
+            myOptions: {
+                title: "Export",
+                menu: [{
                         name: "Filtered Matches",
                         func: downloadMatches,
                         tooltip: "Produces a CSV File of Filtered Matches data",
@@ -744,18 +744,18 @@ CLMSUI.init.viewsEssential = function(options) {
                     },
                     {
                         name: "Filtered Cross-Links",
-                    func: downloadLinks,
-                    tooltip: "Produces a CSV File of Filtered Cross-Link data"
-                },
-                {
+                        func: downloadLinks,
+                        tooltip: "Produces a CSV File of Filtered Cross-Link data"
+                    },
+                    {
                         name: "Filtered PPI",
                         func: downloadPPIs,
                         tooltip: "Produces a CSV File of Filtered Protein-Protein Interaction data"
-                },
-                {
+                    },
+                    {
                         name: "Filtered Residues",
-                    func: downloadResidueCount,
-                    tooltip: "Produces a CSV File of Count of Filtered Residues ",
+                        func: downloadResidueCount,
+                        tooltip: "Produces a CSV File of Count of Filtered Residues ",
                     },
                     {
                         name: "Protein Accession list",
@@ -769,23 +769,23 @@ CLMSUI.init.viewsEssential = function(options) {
                         tooltip: "Produces an SSL file for quantitation in SkyLine",
                         categoryTitle: "As an SSL File",
                         sectionBegin: true,
-                    sectionEnd: true
-                },
-                {
-                    name: "Make Filtered XI URL",
-                    func: function() {
-                        CLMSUI.vent.trigger("shareURL", true);
+                        sectionEnd: true
                     },
+                    {
+                        name: "Make Filtered XI URL",
+                        func: function() {
+                            CLMSUI.vent.trigger("shareURL", true);
+                        },
                         tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility",
                         categoryTitle: "As a URL",
                         sectionBegin: true,
-                },
-            ],
+                    },
+                ],
                 tooltipModel: compModel.get("tooltipModel"),
                 sectionHeader: function(d) {
                     return (d.categoryTitle ? d.categoryTitle.replace(/_/g, " ") : "");
                 },
-        }
+            }
         })
         .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
         .listenTo(compModel.get("clmsModel"), "change:matches", function () {
@@ -871,24 +871,24 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
 
     // Make a drop down menu constructed from the annotations collection
     new CLMSUI.AnnotationDropDownMenuViewBB({
-        el: "#annotationsDropdownPlaceholder",
+            el: "#annotationsDropdownPlaceholder",
             collection: compModel.get("annotationTypes"),
-        myOptions: {
-            title: "Annotations",
-            closeOnClick: false,
-            groupByAttribute: "category",
-            labelByAttribute: "type",
-            toggleAttribute: "shown",
+            myOptions: {
+                title: "Annotations",
+                closeOnClick: false,
+                groupByAttribute: "category",
+                labelByAttribute: "type",
+                toggleAttribute: "shown",
                 tooltipModel: compModel.get("tooltipModel"),
-            sectionHeader: function(d) {
-                return (d.category ? d.category.replace(/_/g, " ") : "Uncategorised") +
-                    (d.source ? " (" + d.source + ")" : "");
-            },
-        }
+                sectionHeader: function(d) {
+                    return (d.category ? d.category.replace(/_/g, " ") : "Uncategorised") +
+                        (d.source ? " (" + d.source + ")" : "");
+                },
+            }
         })
-        .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
-        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
-            this.wholeMenuEnabled (true);
+        .wholeMenuEnabled(!_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() {
+            this.wholeMenuEnabled(true);
         });
 
 

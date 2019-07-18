@@ -123,12 +123,12 @@ div.textFilters, div.toggles, div.scoreSlider > div, div.navNumberFilterDiv {
 
 .filterResultGroup {
     position: absolute;
-    right: 0;
+    left: 0;
     bottom: 0;
     background: inherit;
     border-top: 1px solid #aaa;
-    /* border-right: 1px solid #aaa;
-    border-top-right-radius: 5px; */
+    border-right: 1px solid #aaa;
+    border-top-right-radius: 5px;
     line-height: 1.1em;
 }
 
@@ -140,16 +140,6 @@ div.filterControlGroup label.noBreak2 {
 	display: inline-block;
 }
 
-<<<<<<< HEAD
-.sideOn {
-    -ms-transform:rotate(270deg); /* IE 9 */
-    -moz-transform:rotate(270deg); /* Firefox */
-    -webkit-transform:rotate(270deg); /* Safari and Chrome */
-    -o-transform:rotate(270deg); /* Opera */
-    transform:rotate(270deg);
-    display: inline-block;
-    margin-top:20px;
-=======
 .tallButton {
 	height: 90%;
 	width: 1em;
@@ -185,7 +175,6 @@ div.filterControlGroup label.noBreak2 {
 	width: 20px;
 	background: #eee;
 	padding: 0.2em;
->>>>>>> a351a85769420f46edb57fdda875260668eb25e2
 }
 
 .filterControlGroup input:invalid {

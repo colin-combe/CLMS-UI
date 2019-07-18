@@ -454,7 +454,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 subSeries.isSubSeries = true;
                 seriesData.push(subSeries);
             });
-
+            
 
             //console.log ("seriesLengths", seriesLengths);
             var removeCatchAllCategory = (this.options.maxX !== undefined);
@@ -667,13 +667,14 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         var distObj = this.model.get("clmsModel").get("distancesObj");
         var rscope = this.options.randomScope;
         var randArr = distObj ? distObj.getSampleDistances(
-            d3.median([10000, linkCount * 100, 100000]),
-            d3.values(crosslinkerSpecificityMap), {
-                withinProtein: rscope === "Intra" || rscope === "Chain",
+                d3.median([10000, linkCount * 100, 100000]),
+                d3.values(crosslinkerSpecificityMap), {
+                    withinProtein: rscope === "Intra" || rscope === "Chain",
                     withinChain: rscope === "Chain",
                     withinModel: !this.model.get("stageModel").get("allowInterModelDistances"),
-            }
-        ) : [];
+                }
+            ) :
+            [];
         var thresholds = this.getBinThresholds([
             []
         ]);

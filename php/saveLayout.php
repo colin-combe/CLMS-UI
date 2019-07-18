@@ -20,7 +20,6 @@
 session_start();
 if (isset($_SESSION['session_name'])) {
     include('../../connectionString.php');
-
     $dbconn = pg_connect($connectionString)
             or die('Could not connect: ' . pg_last_error());
     // Prepare a query for execution

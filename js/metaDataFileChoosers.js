@@ -121,7 +121,7 @@ CLMSUI.ProteinMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.exten
                     {csv: ["sp|P02768-A|ALBU_HUMAN,Human Protein,0.79"]},
                     {csv: ["sp|G3RE98|ALBU_GORILLA,Gorilla Protein,0.58"]},
                 ],
-                notes: "*If a MetaData column name is 'Name' it will change displayed protein names. <BR> If a MetaData column name is 'Group' it will be used to group proteins. "
+                notes: "*If a MetaData column name is 'Name' it will change displayed protein names"
             }
         };
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);

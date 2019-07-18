@@ -19,11 +19,11 @@
 -->
 <?php
 session_start();
-$cacheBuster = '';//'?v='.microtime(true);
-// if (!$_SESSION['session_name']) {
-//     header("location:login.html");
-//     exit;
-// }
+$cacheBuster = '?v='.microtime(true);
+if (!$_SESSION['session_name']) {
+    header("location:login.html");
+    exit;
+}
 header('Content-type: text/html; charset=utf-8');
 ?>
 
@@ -59,7 +59,7 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="../vendor/css/reset.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/common.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>" />
-		<link rel="stylesheet" href="../vendor/css/c3.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="../vendor/css/c3.css<?php echo $cacheBuster ?>">
 
         <!-- Spectrum Viewer styles  -->
         <link rel="stylesheet" href="../spectrum/css/spectrum.css<?php echo $cacheBuster ?>">
@@ -146,7 +146,7 @@ header('Content-type: text/html; charset=utf-8');
             <div class="page-header">
                 <i class="fa fa-home fa-xi" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
                 <span class="headerLabel">
-                    <!-- <?php echo $_SESSION['session_name'] ?> -->
+                    <?php echo $_SESSION['session_name'] ?>
                 </span>
                 <p id="expDropdownPlaceholder"></p>
                 <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
@@ -158,9 +158,9 @@ header('Content-type: text/html; charset=utf-8');
                 <div id="bottomDiv"></div>
             </div>
 
-			<div class="controls">
-				<span id="filterPlaceholder"></span>
-			</div>
+            <div class="controls">
+                <span id="filterPlaceholder"></span>
+            </div>
         </div><!-- MAIN -->
 
 
@@ -168,36 +168,36 @@ header('Content-type: text/html; charset=utf-8');
         //<![CDATA[
 
         //~ var windowLoaded = function () {
-			var CLMSUI = CLMSUI || {};
-			<?php
-				if (isset($_SESSION['session_name'])) {
-					echo "CLMSUI.loggedIn = true;";
-				}
+            var CLMSUI = CLMSUI || {};
+            <?php
+                if (isset($_SESSION['session_name'])) {
+                    echo "CLMSUI.loggedIn = true;";
+                }
                 if (file_exists('../xiSpecConfig.php')) {
                     include('../xiSpecConfig.php');
                 }
-			?>
+            ?>
 
             var spinner = new Spinner({scale: 5}).spin (d3.select("#topDiv").node());
 
             var success = function (text) {
                 spinner.stop(); // stop spinner on request returning
-				var json = JSON.parse (text);
-				CLMSUI.init.modelsEssential(json);
+                var json = JSON.parse (text);
+                CLMSUI.init.modelsEssential(json);
 
-				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+                var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
                 document.title = "Validate " + CLMS.arrayFromMapKeys(searches).join();
-				Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
-						sizes: [60,40], minSize: [200,10],
-							onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-				} });
+                Split (["#topDiv", "#bottomDiv"], { direction: "vertical",
+                        sizes: [60,40], minSize: [200,10],
+                            onDragEnd: function () {CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+                } });
 
                 // need to make #spectrumSettingsWrapper before we can turn it into a backbone view later. mjg 27/11/17
                 d3.select("body").append("div")
                     .attr("id", "spectrumSettingsWrapper")
                     .attr("class", "dynDiv")
                 ;
-				CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv", spectrumToTop: false});
+                CLMSUI.init.viewsEssential({"specWrapperDiv":"#topDiv", spectrumToTop: false});
 
                 CLMSUI.vent.trigger ("spectrumShow", true);
 
@@ -208,19 +208,19 @@ header('Content-type: text/html; charset=utf-8');
                 // so we run it again here, doesn't do any harm
                 ByRei_dynDiv.init.main();
 
-				var resize = function(event) {
-					CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
-					var alts = d3.select("#alternatives");
-					var w = alts.node().parentNode.parentNode.getBoundingClientRect().width - 20;
-					alts.attr("style", "width:"+w+"px;"); //dont know why d3 style() aint working
-				};
+                var resize = function(event) {
+                    CLMSUI.vent.trigger ("resizeSpectrumSubViews", true);
+                    var alts = d3.select("#alternatives");
+                    var w = alts.node().parentNode.parentNode.getBoundingClientRect().width - 20;
+                    alts.attr("style", "width:"+w+"px;"); //dont know why d3 style() aint working
+                };
 
-				window.onresize = resize;
+                window.onresize = resize;
 
-				resize();
-			};
+                resize();
+            };
 
-			var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
+            var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
 
 
             d3.text (url, function (error, text) {

@@ -23,7 +23,8 @@ function makeIntArray(length, bitSize, fillValue) {
 
     var arr = (cani8 ?
         ((bitSize > 16) ? new Int32Array(length) :
-            (bitSize <= 8 ? new Int8Array(length) : new Int16Array(length))) : []);
+            (bitSize <= 8 ? new Int8Array(length) : new Int16Array(length))) :
+        []);
 
     if (!cani8 || (fillValue !== 0 && fillValue !== undefined)) {
         if (arr.fill) {
@@ -56,7 +57,7 @@ function makeAlphabetMap(str, defaultVal) {
 var bst_nt5 = makeAlphabetMap("ACGT", 4);
 
 
-/*
+/* 
     Ala     A       Alanine
     Arg     R       Arginine
     Asn     N       Asparagine
@@ -278,7 +279,7 @@ function bsa_align(is_local, is_semi_local, target, query, matrix, gapsc, w, tab
     var max_len = Math.max(qlen, t.length);
     w = w == null || w < 0 ? max_len : w;
     var len_diff = Math.abs(t.length - qlen); // MJG - think t.target was a mistake, replace with t.length
-    w = Math.max(w, len_diff); // mjg - dunno why this needs to be done, would just make w massive for small target and big query
+    w = Math.max(w, len_diff); // mjg - dunno why this needs to be done, would just make w massive for small target and big query  
     //console.log ("w", w, qlen, t.length, len_diff);
 
     // set gap score
@@ -557,18 +558,13 @@ function arrayMax(arr) {
     return max;
 }
 
-function align(query, target, myScores, isLocal, isSemiLocal, windowSize) {
+function align (query, target, myScores, isLocal, isSemiLocal, windowSize) {
     var target = target || 'ATAGCTAGCTAGCATAAGC';
-    var query = query || 'AGCTAcCGCAT';
+    var query  = query || 'AGCTAcCGCAT';
     var isLocal = isLocal || false;
-    var defaults = {
-        match: 1,
-        mis: -1,
-        gapOpen: -1,
-        gapExt: -1
-    };
+    var defaults = {match: 1, mis: -1, gapOpen: -1, gapExt: -1};
     var scores = myScores || {};
-    Object.keys(scores).forEach(function(key) {
+    Object.keys(scores).forEach (function (key) {
         defaults[key] = scores[key];
     });
     scores = defaults;
@@ -576,30 +572,22 @@ function align(query, target, myScores, isLocal, isSemiLocal, windowSize) {
     var matrix = scores.matrix || Blosum80Map;
 
     var rst;
-    var table = matrix ? makeAlphabetMap(matrix.alphabetInOrder) : aminos;
+    var table = matrix ? makeAlphabetMap (matrix.alphabetInOrder) : aminos;
     if (target === query) {
-        var maxValues = matrix.scoreMatrix.map(function(row) {
-            return arrayMax(row);
-        });
+        var maxValues = matrix.scoreMatrix.map (function (row) { return arrayMax (row); });
         var score = 0;
         for (var n = 0; n < target.length; n++) {
             score += maxValues[table[target.charCodeAt(n)]];
         }
-        rst = [score, 0, [target.length << 4]]; // completely equal
+        rst = [score, 0, [target.length << 4]];  // completely equal
     } else {
-        rst = bsa_align(isLocal, isSemiLocal, target, query, matrix.scoreMatrix || [scores.match, scores.mis], [scores.gapOpen, scores.gapExt], windowSize, table);
+        rst = bsa_align (isLocal, isSemiLocal, target, query, matrix.scoreMatrix || [scores.match,scores.mis], [scores.gapOpen,scores.gapExt], windowSize, table);
     }
     var cigarString = bsa_cigar2str(rst[2]);
-    var str = 'score=' + rst[0] + '; pos=' + rst[1] + '; cigar=' + cigarString + "\n";
-    var fmt = bsa_cigar2gaps(target, query, rst[1], rst[2]);
-    var indx = bsa_cigar2indexArrays(target, query, rst[1], rst[2]);
-    var alignment = {
-        res: rst,
-        fmt: fmt,
-        str: str,
-        indx: indx,
-        cigar: cigarString
-    };
+    var str = 'score='+rst[0]+'; pos='+rst[1]+'; cigar='+cigarString+"\n";
+    var fmt = bsa_cigar2gaps (target, query, rst[1], rst[2]);
+    var indx = bsa_cigar2indexArrays (target, query, rst[1], rst[2]);
+    var alignment = {res: rst, fmt: fmt, str: str, indx: indx, cigar: cigarString};
     //console.log ("ALIGNMENT", alignment);
     return alignment;
 }
@@ -624,9 +612,9 @@ function combine() {
         var ret = combine (process.argv.slice(2));
         console.log ("str", ret.str, "\nfmt", ret.fmt);
     }
-
-
-
+    
+    
+    
     if (process.argv[1] == __filename) {
       main();
     }

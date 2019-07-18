@@ -317,7 +317,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                             aggMatchedCount |= matchCount; // logically aggregate to aggMatchedCount
                         }
                         // If 1, both pepstrings matched first peptide. If 2, both pepstrings matched second peptide.
-                        // Can't be one pepstring matching both peptides and the other neither, as an individual zero matchcount would return false in the loop
+                        // Can't be one pepstring matching both peptides and the other neither, as an individual zero matchcount would return false in the loop 
                         // (so can't be 0 in total either)
                         // So 3 must be the case where both peptides contain the pepstrings, such that one or both pepstrings are present at alternate ends
                         return aggMatchedCount === 3;
@@ -325,8 +325,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     return true;
                 }
             },
-
-
+            
+            
             groupFilter: function (match) {
                 if (this.possibleSearchGroups.length > 1) {
                     var matchGroup = this.precalcedSearchToGroupMap.get (match.searchId);
@@ -383,7 +383,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
             generateUrlString: function() {
                 // make url parts from current filter attributes
-                var parts = CLMSUI.modelUtils.makeURLQueryString(this.attributes, "F");
+                var parts = CLMSUI.modelUtils.makeURLQueryString (this.attributes, "F");
 
                 // return parts of current url query string that aren't filter flags or values
                 var search = window.location.search.slice(1);
