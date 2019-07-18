@@ -134,7 +134,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         };
         var emphasiseLinkedResidue = function (str, linkPos) {
             var i = findIndexofNthUpperCaseLetter (str, linkPos);
-            return i !== undefined ? str.substr(0,i) + "<span class='linkedResidue'>" + str[i] + "</span>" + str.substr(i+1) : str;
+            return i !== undefined && i !== -1 ? str.substr(0,i) + "<span class='linkedResidue'>" + str[i] + "</span>" + str.substr(i+1) : str;
             //return i !== undefined ? str.substr(0,i+1) + "&#829;" + str.substr(i+1) : str;
         };
         this.cellFuncs = {
