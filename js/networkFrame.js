@@ -87,6 +87,8 @@ var allDataLoaded = _.after(3, function() {
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
 
+    CLMSUI.modelUtils.updateGOAnnotations(); //this makes an asynch call to read go.obo, TODO tidy it up, buildAsyncViews is getting called before go terms loaded
+
     CLMSUI.vent.trigger("buildAsyncViews");
     //CLMSUI.init.viewsThatNeedAsyncData();
 
@@ -1000,12 +1002,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#userAnnotationsMetaLoadPanel",
         model: compModel,
         displayEventName: "userAnnotationsMetaShow",
-    });
-
-    new CLMSUI.GafMetaDataFileChooserBB({
-        el: "#gafAnnotationsMetaLoadPanel",
-        model: compModel,
-        displayEventName: "gafMetaShow",
     });
 
     new CLMSUI.GoTermsViewBB({

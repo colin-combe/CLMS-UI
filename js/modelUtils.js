@@ -203,7 +203,8 @@ CLMSUI.modelUtils = {
                 ["Synonym", goTerm.synomym],
                 ["is_a", Array.from(goTerm.is_a.values()).join(", ")],
                 ["intersection_of", Array.from(goTerm.intersection_of.values()).join(", ")],
-                ["relationship", Array.from(goTerm.relationship.values()).join(", ")]
+                ["relationship", Array.from(goTerm.relationship.values()).join(", ")],
+                ["interactors", goTerm.interactors.size]
             ];
         },
     },
@@ -574,17 +575,17 @@ CLMSUI.modelUtils = {
         return searchMap;
     },
 
-    makeMultiKeyProteinMap: function (clmsModel) {
+    makeMultiKeyProteinMap: function(clmsModel) {
         var protMap = d3.map();
         clmsModel.get("participants").forEach(function(value, key) {
             protMap.set(value.accession, key);
             protMap.set(value.name, key);
             protMap.set(value.id, key);
-        }); 
+        });
         return protMap;
     },
-    
-    parseProteinID: function (protMap, pid) {
+
+    parseProteinID: function(protMap, pid) {
         var parts = pid.split("|");
         var pkey;
         parts.forEach(function(part) {
@@ -595,7 +596,7 @@ CLMSUI.modelUtils = {
 
     updateLinkMetadata: function(metaDataFileContents, clmsModel) {
         var crossLinks = clmsModel.get("crossLinks");
-        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
         var first = true;
         var columns = [];
         var columnTypes = {};
@@ -606,9 +607,9 @@ CLMSUI.modelUtils = {
             return d[ref + " " + n] || d[ref + n];
         }
 
-        function parseProteinID2 (i, d) {
+        function parseProteinID2(i, d) {
             var p = getValueN("Protein", i, d) || "";
-            return CLMSUI.modelUtils.parseProteinID (protMap, p);
+            return CLMSUI.modelUtils.parseProteinID(protMap, p);
         }
 
         var matchedCrossLinks = [];
@@ -618,8 +619,8 @@ CLMSUI.modelUtils = {
 
             // Maybe need to generate key from several columns
             if (!crossLink) {
-                var pkey1 = parseProteinID2 (1, d);
-                var pkey2 = parseProteinID2 (2, d);
+                var pkey1 = parseProteinID2(1, d);
+                var pkey2 = parseProteinID2(2, d);
                 linkID = pkey1 + "_" + getValueN("SeqPos", 1, d) + "-" + pkey2 + "_" + getValueN("SeqPos", 2, d);
                 crossLink = crossLinks.get(linkID);
             }
@@ -665,8 +666,7 @@ CLMSUI.modelUtils = {
                         matchedCrossLink.setMeta(entry.key, val.toString());
                     }
                 });
-            })
-        ;
+            });
 
         var registry = clmsModel.get("crossLinkMetaRegistry") || d3.set();
         columns.forEach(function(column) {
@@ -709,7 +709,7 @@ CLMSUI.modelUtils = {
         var dontStoreSet = d3.set(dontStoreArray);
         var matchedProteinCount = 0;
 
-        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
 
         d3.csv.parse(metaDataFileContents, function(d) {
             if (first) {
@@ -721,7 +721,7 @@ CLMSUI.modelUtils = {
             }
 
             var proteinIDValue = d.proteinID || d.ProteinID || d.Accession || d.accession;
-            var proteinID = protMap.get (CLMSUI.modelUtils.parseProteinID (protMap, proteinIDValue));
+            var proteinID = protMap.get(CLMSUI.modelUtils.parseProteinID(protMap, proteinIDValue));
             if (proteinID !== undefined) {
                 var protein = proteins.get(proteinID);
 
@@ -775,7 +775,7 @@ CLMSUI.modelUtils = {
         var first = true;
         var columns = [];
 
-        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
         var newAnnotations = [];
         var annotationMap = d3.map();
         var proteinSet = d3.set();
@@ -794,7 +794,7 @@ CLMSUI.modelUtils = {
                 dl[key.toLocaleLowerCase()] = d[key];
             });
 
-            var proteinID = protMap.get (CLMSUI.modelUtils.parseProteinID (protMap, dl.proteinid));
+            var proteinID = protMap.get(CLMSUI.modelUtils.parseProteinID(protMap, dl.proteinid));
             if (proteinID !== undefined) {
                 var protein = proteins.get(proteinID);
 
@@ -834,7 +834,7 @@ CLMSUI.modelUtils = {
     },
 
 
-    updateGafAnnotationsMetadata: function(gafFileContents, clmsModel) {
+    updateGOAnnotations: function() {
 
         var url = "./go.obo";
 
@@ -915,56 +915,19 @@ CLMSUI.modelUtils = {
                     checkTerm(t);
                 }
 
-                // function setNodeDepth(node, depth) {
-                //     if (depth > node.depth) {
-                //         node.depth = depth;
-                //     }
-                //     for (var c of node.children) {
-                //         setNodeDepth(c, depth + 1);
-                //     }
-                // }
-                //
-                // setNodeDepth(goTrees.biological_process, 0);
-                // setNodeDepth(goTrees.molecular_function, 0);
-                // setNodeDepth(goTrees.cellular_component, 0);
-
                 CLMSUI.compositeModelInst.set("goDags", goDags);
 
-                var proteins = clmsModel.get("participants");
-                var protMap = d3.map();
-                proteins.forEach(function(value, key) {
-                    protMap.set(value.accession, key);
-                });
-
-                var gafLines = gafFileContents.split('\n');
-                for (var g = 0; g < gafLines.length; g++) {
-                    line = gafLines[g];
-                    if (line.startsWith("!") == false) {
-                        var fields = line.split("\t");
-                        var goId = fields[4].replace(":", "");
-                        var goTerm = go.get(goId);
-                        if (goTerm) {
-                            var acc = fields[1];
-                            var proteinId = protMap.get(acc);
-                            if (proteinId) {
-                                var protein = proteins.get(proteinId);
-                                goTerm.interactors.add(protein);
-                                // if (!protein.go) {
-                                //     protein.go = new Set();
-                                // }
-                                // //console.log(">>"+goId);
-                                // protein.go.add(goId);
-                            }
-                        }
+                var proteins = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
+                for (var protein of proteins) {
+                  if (protein.uniprot) {
+                    for (var goId of protein.uniprot.go) {
+                      var goTerm = go.get(goId);
+                      if (goTerm) {
+                          goTerm.interactors.add(protein);
+                      }
                     }
+                  }
                 }
-
-                CLMSUI.vent.trigger("goAnnotationsUpdated", {
-                    // groups: groups
-                }, {
-                    source: "file"
-                });
-
             }
         });
     },

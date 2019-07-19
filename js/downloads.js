@@ -220,17 +220,14 @@ function getMatchesCSV() {
         if (match.isAmbig()) {
             linkType = "Ambig.";
         } else if (clmsModel.get("participants").get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || (match.matchedPeptides[1] && clmsModel.get("participants").get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___")) {
-            linkType = "__AMBIG__";
+            linkType = "Ambig.";//"__AMBIG__";
+        // } else if (/(KK)|(KR)|(RK)|(RR)/.exec(match.matchedPeptides[0].sequence) || /(KK)|(KR)|(RK)|(RR)/.exec(match.matchedPeptides[1].sequence)) {
+        //     linkType = "KK";
         } else if (match.crossLinks[0].isSelfLink()) {
             linkType = "Self";
         } else {
             linkType = "Between";
         }
-
-        // if (match.matchedPeptides[0].sequence.indexOf(match.matchedPeptides[1].sequence)  > -1
-        //     || match.matchedPeptides[1].sequence.indexOf(match.matchedPeptides[0].sequence) > -1) {
-        //     linkType = "Substring";
-        // }
 
         var decoyType;
         if (decoy1 && decoy2) {
