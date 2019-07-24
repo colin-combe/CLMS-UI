@@ -929,6 +929,7 @@ CLMSUI.modelUtils = {
                   }
                 }
             }
+            CLMSUI.vent.trigger("goAnnotationsUpdated");
         });
     },
 

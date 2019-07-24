@@ -87,7 +87,7 @@ var allDataLoaded = _.after(3, function() {
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
 
-    CLMSUI.modelUtils.updateGOAnnotations(); //this makes an asynch call to read go.obo, TODO tidy it up, buildAsyncViews is getting called before go terms loaded
+    CLMSUI.modelUtils.updateGOAnnotations(); //this makes an asynch call to read go.obo the triggers goAnnotationsUpdated
 
     CLMSUI.vent.trigger("buildAsyncViews");
     //CLMSUI.init.viewsThatNeedAsyncData();

@@ -78,9 +78,9 @@
         <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
+    		<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
+    		<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
+    		<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
@@ -94,14 +94,13 @@
         <script type="text/javascript" src="../vendor/js/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-		<script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
+		    <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
-		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
-		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
-		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
+    		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
+    		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
+    		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3-octree.js<?php echo $cacheBuster ?>"></script>
-        <!-- <script type="text/javascript" src="../vendor/js/zepto.js"></script> -->
-        <!-- <script type="text/javascript" src="../vendor/js/crossfilter.js"></script> -->
+        <script type="text/javascript" src="../vendor/js/sankey.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>
@@ -159,7 +158,7 @@
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/goTermsViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/old_goTermsViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->
@@ -264,8 +263,8 @@
 			}
 		};
 
-        
-		
+
+
 
         z = performance.now();
         console.log ("TIME t1", performance.now());
@@ -274,7 +273,7 @@
             var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
         d3.json (url, function (error, json) {
             spinner.stop(); // stop spinner on request returning
-            
+
 			if (!error) {
 				success (json);
 			} else {
