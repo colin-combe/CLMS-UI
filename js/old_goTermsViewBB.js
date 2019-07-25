@@ -82,7 +82,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
         //this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
         // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
-        this.sankey = d3.sankey();
+        this.sankey = d3.sankey().nodeWidth(15);
 
     },
 
@@ -167,22 +167,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var width = Math.max(0, cx - margin.left - margin.right);
         var height = Math.max(0, cy - margin.top - margin.bottom);
 
-        this.sankey.nodeWidth(15)
-            // .nodePadding(10)
-            .size([width, height]);
-
-
         this.sankey
             .nodes(this.energy.nodes)
             .links(this.energy.links)
+            .size([width, height])
             .layout(32);
 
-        var formatNumber = d3.format(",.0f"),
-            format = function(d) {
-                return formatNumber(d) + " TWh";
-            },
-            color = d3.scale.category20();
-
+        var color = d3.scale.category20();
 
         var path = this.sankey.link();
         var self = this;
@@ -260,18 +251,17 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         */
 
         var linkSel = self.backgroundGroup.selectAll(".goLink")
-            .data(energy.links, function(d) {
+            .data(energy.links.sort(function(a, b) {
+                return b.value - a.value;
+            }), function(d) {
                 return d.id;
             });
 
-        var link = linkSel.enter().append("path")
-            .sort(function(a, b) {
-                return b.dy - a.dy;
-            });
+        var link = linkSel.enter().append("path");
 
         link.append("title")
             .text(function(d) {
-                return d.source.name + " → " + d.target.name + "\n" + format(d.value);
+                return d.source.name + " → " + d.target.name + "\n" + d.value;
             });
 
         linkSel.exit().remove();
@@ -281,23 +271,35 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 return d.id;
             });
 
-        function dragmove(d) {
-            d3.select(this).attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
-            self.sankey.relayout();
-            link.attr("d", path);
-        }
-
         var node = nodeSel
             .enter().append("g")
-            .attr("class", "node");
+            .attr("class", "node")
         // .call(d3.behavior.drag()
         //     .origin(function(d) {
         //         return d;
         //     })
-        //     .on("dragstart", function() {
-        //         this.parentNode.appendChild(this);
-        //     })
         //     .on("drag", dragmove));
+        .on("click", function(d) {
+            self.model.setSelectedProteins([], false);
+            self.model.setSelectedProteins(Array.from(d.term.getInteractors().values()), true);
+        })
+        .on("mouseover", function(d) {
+            var term = d.term;
+            d3.select(this).select("circle").classed("highlightedProtein", true);
+            self.model.get("tooltipModel")
+                .set("header", "GO Term")
+                .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(term))
+                .set("location", {
+                    pageX: d3.event.pageX,
+                    pageY: d3.event.pageY
+                });
+            self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
+        })
+        .on("mouseout", function(d) {
+            d3.select(this).select("circle").classed("highlightedProtein", false);
+            self.model.get("tooltipModel").set("contents", null);
+            self.model.setHighlightedProteins([]);
+        });
 
         node.append("rect")
             .attr("width", self.sankey.nodeWidth())
@@ -309,13 +311,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             })
             .append("title")
             .text(function(d) {
-                return d.name + "\n" + format(d.value);
+                return d.name + "\n" + d.value;
             });
 
         node.append("text")
             .attr("x", -6)
             .attr("y", function(d) {
-                return d.dy / 2;
+                return Math.max(0, d.dy) / 2;
             })
             .attr("dy", ".35em")
             .attr("text-anchor", "end")
@@ -336,8 +338,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             return "translate(" + d.x + "," + d.y + ")";
         });
         nodeSel.selectAll("rect").attr("height", function(d) {
-            return d.dy;
+            return Math.max(1, d.dy);
         });
+
         linkSel.attr("d", path).attr("class", "goLink")
             .style("stroke-width", function(d) {
                 return Math.max(1, d.dy);
@@ -347,7 +350,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         function dragmove(d) {
             d3.select(this).attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
             self.sankey.relayout();
-            link.attr("d", path);
+            linkSel.attr("d", path);
         }
         //  }
 
