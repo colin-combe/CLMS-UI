@@ -8,6 +8,7 @@ CLMSUI.GoTerm = function() {
     this.interactors = new Set();
 
     this.is_aChildren = [];
+    this.is_aParents = [];
     this.part_ofChildren = [];
     this.height = 25;
     this.width = 50;

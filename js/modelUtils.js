@@ -879,7 +879,7 @@ CLMSUI.modelUtils = {
                                 var parentId = parent.split(" ")[0];
                                 var parentTerm = go.get(parentId);
                                 if (goTerm.namespace = parentTerm.namespace) {
-                                    // goTerm.is_aParents.push(parentTerm);
+                                    goTerm.is_aParents.push(parentTerm);
                                     checkTerm(parentTerm);
                                     parentTerm.is_aChildren.push(goTerm);
                                 }
