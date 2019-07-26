@@ -117,27 +117,21 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 } else {
                     parents = dagNode.is_aParents
                 }
-                for (var p of parents) { //getClosestVisibleParents().values()) {
-                    //recurseGroup(p);
-                    // if (p.getInteractors().size > 1) {
+                for (var p of parents) {
                     var fromId = p.id;
                     var toId = node.id;
                     var linkId = fromId + "_" + toId;
-                    // var link = linkSubsetMap.get(linkId);
-                    // if (!link) {
                     var link = {};
-                    link.source = sankeyNode(p); //.getRenderedParticipant();
+                    link.source = sankeyNode(p);
                     if (!link.source) {
                         console.log("!?!?");
                     }
-                    link.target = node; //.getRenderedParticipant();
+                    link.target = node;
                     link.value = dagNode.getInteractors(partOfHierarchy).size;
                     link.id = linkId;
                     linkSubsetMap.set(linkId, link);
-                    // }
-                    // }
                 }
-                // if (group.expanded) {
+
                 var children;
                 if (partOfHierarchy) {
                     children = dagNode.part_ofChildren;
@@ -149,7 +143,6 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                         sankeyNode(c);
                     }
                 }
-                // }
                 return node;
             } else {
                 return nodes.get(dagNode.id);
@@ -196,7 +189,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .nodes(this.energy.nodes)
             .links(this.energy.links)
             .size([width, height])
-            .layout(32);
+            .layout(1024);
 
         var color = d3.scale.category20();
 
@@ -323,47 +316,6 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     },
 
-
-    // Toggle children on click.
-    // click: function(d) {
-    //     d.expanded = !d.expanded;
-    //     this.render();
-    // },
-
-    /*
-            expandToShow: function(d) {
-                console.log("expanding:" + d.name, d)
-                if (d._children) {
-                    d.children = d._children;
-                    d._children = null;
-                }
-                if (d.parent) {
-                    // var group = this.groupMap.get(d.parent);
-                    // if (group) {
-                    this.expandToShow(d.parent);
-                } else {
-                    console.log("no parent?", d.name);
-                }
-                // }
-            },
-
-
-            selectTerm: function(d) {
-                var goId = d.id;
-                var proteins = this.model.get("clmsModel").get("participants");
-                for (var protein of proteins.values()) {
-                    if (protein.go && protein.go.has(goId)) {
-                        this.toSelect.add(protein);
-                    }
-                }
-                var children = d.children ? d.children : d._children;
-                if (children) {
-                    for (var child of children) {
-                        this.selectTerm(child);
-                    }
-                }
-            },
-        */
     relayout: function() {
         this.resize();
         return this;

@@ -204,7 +204,7 @@ CLMSUI.modelUtils = {
                 ["is_a", Array.from(goTerm.is_a.values()).join(", ")],
                 // ["intersection_of", Array.from(goTerm.intersection_of.values()).join(", ")],
                 // ["relationship", Array.from(goTerm.relationship.values()).join(", ")],
-                ["interactors", goTerm.interactors.size]
+                ["interactors", goTerm.getInteractors(false).size]
             ];
         },
     },
