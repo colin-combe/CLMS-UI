@@ -202,8 +202,8 @@ CLMSUI.modelUtils = {
                 ["Definition", goTerm.def],
                 ["Synonym", goTerm.synomym],
                 ["is_a", Array.from(goTerm.is_a.values()).join(", ")],
-                ["intersection_of", Array.from(goTerm.intersection_of.values()).join(", ")],
-                ["relationship", Array.from(goTerm.relationship.values()).join(", ")],
+                // ["intersection_of", Array.from(goTerm.intersection_of.values()).join(", ")],
+                // ["relationship", Array.from(goTerm.relationship.values()).join(", ")],
                 ["interactors", goTerm.interactors.size]
             ];
         },
@@ -847,36 +847,53 @@ CLMSUI.modelUtils = {
                 var term;
 
                 for (var l = 0; l < lines.length; l++) {
-                    var line = lines[l];
+                    //not having ':' in go ids, so valid html id later, maybe a mistake
+                    var line = lines[l].replace(/:/g, '');
+                    //line = line.replace(/:/g, '');
                     if (line.trim() != "") {
                         if (line.trim() == "[Term]" || line.trim() == "[Typedef]") {
-                            if (term) { //} && term.namespace == termType) {
+                            if (term) {
                                 go.set(term.id, term);
                             }
                             term = new CLMSUI.GoTerm();
                         } else if (term) {
-                            var parts = line.split(":");
-                            if (parts[0] == "is_a" || parts[0] == "part_of" || parts[0] == "intersection_of" || parts[0] == "relationship") {
-                                term[parts[0]].add(parts.slice(1, parts.length).join("").trim());
+                            var parts = line.split(" ");
+                            if (parts[0] == "is_a") {
+                                term[parts[0]].add(parts[1]);
+                            } else if (parts[0] == "intersection_of" || parts[0] == "relationship") {
+                                if (parts[1] == "part_of") {
+                                    // console.log(term.namespace, line);
+                                    term.part_of.add(parts[2]);
+                                }
                             } else {
-                                term[parts[0]] = parts.slice(1, parts.length).join("").trim();
+                                term[parts[0]] = parts.slice(1, parts.length).join(" ");
                             }
                         }
                     }
                 }
-                go.set(term.id, term);
+                go.set(term.id, term); // last one left over
+
                 console.log("go size:" + go.size)
                 CLMSUI.compositeModelInst.set("go", go);
 
                 var tempMap = new Map();
                 var goDags = {};
+                goDags.cell_parts = new CLMSUI.GoTerm();
+                goDags.cell_parts.name = "cell parts"
+                goDags.cell_parts.id = "cell parts"
+                goDags.process_parts = new CLMSUI.GoTerm();
+                goDags.process_parts.name = "process parts"
+                goDags.process_parts.id = "process parts"
+                goDags.function_parts = new CLMSUI.GoTerm();
+                goDags.function_parts.name = "function parts"
+                goDags.function_parts.id = "function parts"
 
                 function checkTerm(goTerm) {
                     if (!tempMap.has(goTerm.id)) {
                         if (goTerm.is_a.size > 0) {
                             var is_aValues = goTerm.is_a.values();
-                            for (var parent of is_aValues) {
-                                var parentId = parent.split(" ")[0];
+                            for (var parentId of is_aValues) {
+                                // var parentId = p.replace(':', '');
                                 var parentTerm = go.get(parentId);
                                 if (goTerm.namespace = parentTerm.namespace) {
                                     goTerm.is_aParents.push(parentTerm);
@@ -887,16 +904,29 @@ CLMSUI.modelUtils = {
                         }
                         if (goTerm.part_of.size > 0) {
                             var part_ofValues = goTerm.part_of.values();
-                            for (var parent of is_aValues) {
-                                var parentId = potentialParent.split(" ")[0];
+                            for (var parentId of part_ofValues) {
+                                // var parentId = p.split(" ")[0];
                                 var parentTerm = go.get(parentId);
                                 if (goTerm.namespace = parentTerm.namespace) {
-                                    // goTerm.part_ofParents.push(parentTerm);
+                                    goTerm.part_ofParents.push(parentTerm);
                                     checkTerm(parentTerm);
                                     parentTerm.part_ofChildren.push(goTerm);
                                 }
+                                if (parentTerm.part_of.size == 0) {
+                                    if (parentTerm.namespace == "cellular_component") {
+                                        goDags.cell_parts.part_ofChildren.push(goTerm);
+                                        // goTerm.part_ofParents.push(goDags.cell_parts);
+                                    } else if (parentTerm.namespace == "biological_process") {
+                                        goDags.process_parts.part_ofChildren.push(goTerm);
+                                        // goTerm.part_ofParents.push(goDags.process_parts);
+                                    } else if (parentTerm.namespace == "molecular_function") {
+                                        goDags.function_parts.part_ofChildren.push(goTerm);
+                                        // goTerm.part_ofParents.push(goDags.function_parts);
+                                    }
+                                }
                             }
-                        } else if (goTerm.id == "GO0008150") {
+                        }
+                        if (goTerm.id == "GO0008150") {
                             goDags.biological_process = goTerm;
                         } else if (goTerm.id == "GO0003674") {
                             goDags.molecular_function = goTerm;
@@ -919,14 +949,14 @@ CLMSUI.modelUtils = {
 
                 var proteins = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
                 for (var protein of proteins) {
-                  if (protein.uniprot) {
-                    for (var goId of protein.uniprot.go) {
-                      var goTerm = go.get(goId);
-                      if (goTerm) {
-                          goTerm.interactors.add(protein);
-                      }
+                    if (protein.uniprot) {
+                        for (var goId of protein.uniprot.go) {
+                            var goTerm = go.get(goId);
+                            if (goTerm) {
+                                goTerm.interactors.add(protein);
+                            }
+                        }
                     }
-                  }
                 }
             }
             CLMSUI.vent.trigger("goAnnotationsUpdated");

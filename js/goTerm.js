@@ -3,17 +3,18 @@ CLMSUI = CLMSUI || {};
 CLMSUI.GoTerm = function() {
   this.is_a = new Set();
   this.part_of = new Set();
-  this.intersection_of = new Set();
-    this.relationship = new Set();
+  // this.intersection_of = new Set();
+  //   this.relationship = new Set();
     this.interactors = new Set();
 
     this.is_aChildren = [];
     this.is_aParents = [];
     this.part_ofChildren = [];
-    this.height = 25;
-    this.width = 50;
-    this.expanded = false;
-    this.depth = 0;
+    this.part_ofParents = [];
+    // this.height = 25;
+    // this.width = 50;
+    // this.expanded = false;
+    // this.depth = 0;
 
     //TODO - this wastes a bit memory coz the property is not on the prototype, fix
     // Object.defineProperty(this, "width", {
@@ -29,12 +30,18 @@ CLMSUI.GoTerm = function() {
     // });
 }
 
-CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
+CLMSUI.GoTerm.prototype.getInteractors = function(partOfHierarchy, interactorSet) {
     if (!interactorSet) {
         interactorSet = new Set();
     }
-    for (var c of this.is_aChildren) {
-        c.getInteractors(interactorSet);
+    var children;
+    if (partOfHierarchy == true) {
+      children = this.part_ofChildren;
+    } else {
+      children = this.is_aChildren;
+    }
+    for (var c of children) {
+        c.getInteractors(partOfHierarchy, interactorSet);
     }
     for (var i of this.interactors.values()) {
         interactorSet.add(i);

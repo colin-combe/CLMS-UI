@@ -51,7 +51,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.update();
             });
 
-        var termSelectData = ["cellular_component", "cellular_component part_of", "biological_process is_a", "biological_process part_of", "molecular_function is_a", "molecular_function part_of"];
+        var termSelectData = ["cellular_component", "cell_parts", "biological_process", "process_parts", "molecular_function", "function_parts"];
 
         var options = this.termSelect.selectAll("option")
             .data(termSelectData)
@@ -92,7 +92,12 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .filter(function(d) {
                 return d3.select(this).property("selected");
             })
-            .datum();
+            .datum().trim();
+        var partOfHierarchy = termType.endsWith("parts");
+
+        // var termType = selectedTermType[0];
+        // var is_aOrPartOf = selectedTermType[1];
+
 
         var nodes = new Map();
         var linkSubsetMap = new Map();
@@ -106,29 +111,41 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     term: dagNode
                 };
                 nodes.set(node.id, node);
-                for (var p of dagNode.is_aParents) { //getClosestVisibleParents().values()) {
+                var parents;
+                if (partOfHierarchy) {
+                    parents = dagNode.part_ofParents;
+                } else {
+                    parents = dagNode.is_aParents
+                }
+                for (var p of parents) { //getClosestVisibleParents().values()) {
                     //recurseGroup(p);
-                    if (p.getInteractors().size > 0) {
-                        var fromId = p.id;
-                        var toId = node.id;
-                        var linkId = fromId + "_" + toId;
-                        // var link = linkSubsetMap.get(linkId);
-                        // if (!link) {
-                        var link = {};
-                        link.source = sankeyNode(p); //.getRenderedParticipant();
-                        if (!link.source) {
-                            console.log("!?!?");
-                        }
-                        link.target = node; //.getRenderedParticipant();
-                        link.value = dagNode.getInteractors().size;
-                        link.id = linkId;
-                        linkSubsetMap.set(linkId, link);
-                        // }
+                    // if (p.getInteractors().size > 1) {
+                    var fromId = p.id;
+                    var toId = node.id;
+                    var linkId = fromId + "_" + toId;
+                    // var link = linkSubsetMap.get(linkId);
+                    // if (!link) {
+                    var link = {};
+                    link.source = sankeyNode(p); //.getRenderedParticipant();
+                    if (!link.source) {
+                        console.log("!?!?");
                     }
+                    link.target = node; //.getRenderedParticipant();
+                    link.value = dagNode.getInteractors(partOfHierarchy).size;
+                    link.id = linkId;
+                    linkSubsetMap.set(linkId, link);
+                    // }
+                    // }
                 }
                 // if (group.expanded) {
-                for (var c of dagNode.is_aChildren) {
-                    if (c.getInteractors().size > 0) {
+                var children;
+                if (partOfHierarchy) {
+                    children = dagNode.part_ofChildren;
+                } else {
+                    children = dagNode.is_aChildren;
+                }
+                for (var c of children) {
+                    if (c.getInteractors(partOfHierarchy).size > 1) {
                         sankeyNode(c);
                     }
                 }
@@ -152,13 +169,20 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
         //  d3.json("energy.json", function(energy) {
         self.energy = data;
-        //self.render(this.root);
+        self.render();
         //});
         console.log("data", data);
     },
 
     render: function() {
-        //        if (this.sankey) {
+        // if (this.energy) {
+        var termType = d3.select("#goTermsPanelgoTermSelect").selectAll("option")
+            .filter(function(d) {
+                return d3.select(this).property("selected");
+            })
+            .datum().trim();
+        var partOfHierarchy = termType.endsWith("parts");
+
         console.log("RENDERING GO TERMS");
         var jqElem = $(this.svg.node());
         var cx = jqElem.width(); //this.svg.node().clientWidth;
@@ -167,6 +191,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var width = Math.max(0, cx - margin.left - margin.right);
         var height = Math.max(0, cy - margin.top - margin.bottom);
 
+        this.sankey = d3.sankey().nodeWidth(15);
         this.sankey
             .nodes(this.energy.nodes)
             .links(this.energy.links)
@@ -179,92 +204,29 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
 
         var energy = self.energy;
-        /*
-        // add in the links
-        var link = this.backgroundGroup.selectAll(".link")
-            .data(energy.links, function(d) {
-                return d.id || (d.id = ++self.i);
-            })
-            .enter().append("path")
-            .attr("class", "link")
-            .attr("d", path)
-            .style("stroke-width", function(d) {
-                return Math.max(1, d.dy);
-            })
-            .sort(function(a, b) {
-                return b.dy - a.dy;
-            });
 
-        // add the link titles
-        link.append("title")
-            .text(function(d) {
-                return d.source.name + " → " +
-                    d.target.name + "\n" + format(d.value);
-            });
-
-        // add in the nodes
-        var node = this.foregroundGroup.selectAll(".node")
-            .data(energy.nodes, function(d) {
-                return d.id || (d.id = ++self.i);
-            })
-            .enter().append("g")
-            .attr("class", "node")
-            .attr("transform", function(d) {
-                return "translate(" + d.x + "," + d.y + ")";
-            });
-
-        // add the rectangles for the nodes
-        node.append("rect")
-            .attr("height", function(d) {
-                return d.dy;
-            })
-            .attr("width", this.sankey.nodeWidth())
-            .style("fill", function(d) {
-                return d.color = color(d.name.replace(/ .*/
-        /*, ""));
-                    })
-                    .style("stroke", function(d) {
-                        return d3.rgb(d.color).darker(2);
-                    })
-                    .append("title")
-                    .text(function(d) {
-                        return d.name + "\n" + format(d.value);
-                    });
-
-                // add in the title for the nodes
-                node.append("text")
-                    .attr("x", -6)
-                    .attr("y", function(d) {
-                        return d.dy / 2;
-                    })
-                    .attr("dy", ".35em")
-                    .attr("text-anchor", "end")
-                    .attr("transform", null)
-                    .text(function(d) {
-                        return d.name;
-                    })
-                    .filter(function(d) {
-                        return d.x < width / 2;
-                    })
-                    .attr("x", 6 + this.sankey.nodeWidth())
-                    .attr("text-anchor", "start");
-        */
 
         var linkSel = self.backgroundGroup.selectAll(".goLink")
-            .data(energy.links.sort(function(a, b) {
-                return b.value - a.value;
-            }), function(d) {
+            .data(energy.links
+            //   .sort(function(a, b) {
+            //     return b.value - a.value;
+            // })
+            ,
+             function(d) {
                 return d.id;
-            });
+            }
+          );
 
-        var link = linkSel.enter().append("path");
+        var link = linkSel.enter().append("path").attr("d", path).attr("class", "goLink")
+            .style("stroke-width", function(d) {
+                return Math.max(1, (d.dy ? d.dy : 0));
+            });
 
         link.append("title")
             .text(function(d) {
                 return d.source.name + " → " + d.target.name + "\n" + d.value;
             });
 
-        linkSel.exit().remove();
 
         var nodeSel = this.foregroundGroup.selectAll(".node")
             .data(energy.nodes, function(d) {
@@ -274,35 +236,40 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var node = nodeSel
             .enter().append("g")
             .attr("class", "node")
-        // .call(d3.behavior.drag()
-        //     .origin(function(d) {
-        //         return d;
-        //     })
-        //     .on("drag", dragmove));
-        .on("click", function(d) {
-            self.model.setSelectedProteins([], false);
-            self.model.setSelectedProteins(Array.from(d.term.getInteractors().values()), true);
-        })
-        .on("mouseover", function(d) {
-            var term = d.term;
-            d3.select(this).select("circle").classed("highlightedProtein", true);
-            self.model.get("tooltipModel")
-                .set("header", "GO Term")
-                .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(term))
-                .set("location", {
-                    pageX: d3.event.pageX,
-                    pageY: d3.event.pageY
-                });
-            self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
-        })
-        .on("mouseout", function(d) {
-            d3.select(this).select("circle").classed("highlightedProtein", false);
-            self.model.get("tooltipModel").set("contents", null);
-            self.model.setHighlightedProteins([]);
-        });
+            .attr("transform", function(d) {
+                return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";})
+            // .call(d3.behavior.drag()
+            //     .origin(function(d) {
+            //         return d;
+            //     })
+            //     .on("drag", dragmove));
+            .on("click", function(d) {
+                self.model.setSelectedProteins([], false);
+                self.model.setSelectedProteins(Array.from(d.term.getInteractors(partOfHierarchy).values()), true);
+            })
+            .on("mouseover", function(d) {
+                var term = d.term;
+                d3.select(this).select("circle").classed("highlightedProtein", true);
+                self.model.get("tooltipModel")
+                    .set("header", "GO Term")
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(term))
+                    .set("location", {
+                        pageX: d3.event.pageX,
+                        pageY: d3.event.pageY
+                    });
+                self.model.setHighlightedProteins(Array.from(term.getInteractors(partOfHierarchy).values()));
+            })
+            .on("mouseout", function(d) {
+                d3.select(this).select("circle").classed("highlightedProtein", false);
+                self.model.get("tooltipModel").set("contents", null);
+                self.model.setHighlightedProteins([]);
+            });
 
-        node.append("rect")
+        var rectSel = node.append("rect")
             .attr("width", self.sankey.nodeWidth())
+            .attr("height", function(d) {
+                return Math.max(1, (d.dy ? d.dy : 0));
+            })
             .style("fill", function(d) {
                 return d.color = color(d.name.replace(/ .*/, ""));
             })
@@ -317,7 +284,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         node.append("text")
             .attr("x", -6)
             .attr("y", function(d) {
-                return Math.max(0, d.dy) / 2;
+                return Math.max(0, d.dy / 2);
             })
             .attr("dy", ".35em")
             .attr("text-anchor", "end")
@@ -331,28 +298,28 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .attr("x", 6 + self.sankey.nodeWidth())
             .attr("text-anchor", "start");
 
-        nodeSel.exit().remove();
-
-
+        //
+        //
         nodeSel.attr("transform", function(d) {
-            return "translate(" + d.x + "," + d.y + ")";
-        });
-        nodeSel.selectAll("rect").attr("height", function(d) {
-            return Math.max(1, d.dy);
+            return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";
+        }).select("rect").attr("height", function(d) {
+            return Math.max(1, (d.dy ? d.dy : 0));
         });
 
         linkSel.attr("d", path).attr("class", "goLink")
             .style("stroke-width", function(d) {
-                return Math.max(1, d.dy);
+                return Math.max(1, (d.dy ? d.dy : 0));
             });
 
+            nodeSel.exit().remove();
+            linkSel.exit().remove();
 
         function dragmove(d) {
             d3.select(this).attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
             self.sankey.relayout();
             linkSel.attr("d", path);
         }
-        //  }
+        // }
 
     },
 
@@ -468,84 +435,3 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     */
     identifier: "Go Terms View",
 });
-
-
-
-
-
-
-
-/*
-            // add in the links
-            var link = this.backgroundGroup.selectAll(".link")
-                .data(energy.links)
-                .enter().append("path")
-                .attr("class", "link")
-                .attr("d", path)
-                .style("stroke-width", function(d) {
-                    return Math.max(1, d.dy);
-                })
-                .sort(function(a, b) {
-                    return b.dy - a.dy;
-                });
-
-            // add the link titles
-            link.append("title")
-                .text(function(d) {
-                    return d.source.name + " → " +
-                        d.target.name + "\n" + format(d.value);
-                });
-
-            // add in the nodes
-            var node = this.foregroundGroup.selectAll(".node")
-                .data(energy.nodes)
-                .enter().append("g")
-                .attr("class", "node")
-                .attr("transform", function(d) {
-                    return "translate(" + d.x + "," + d.y + ")";
-                })
-                .call(d3.behavior.drag()
-                    .origin(function(d) {
-                        return d;
-                    })
-                    .on("dragstart", function() {
-                        this.parentNode.appendChild(this);
-                    })
-                    .on("drag", dragmove));
-
-            // add the rectangles for the nodes
-            node.append("rect")
-                .attr("height", function(d) {
-                    return d.dy;
-                })
-                .attr("width", this.sankey.nodeWidth())
-                .style("fill", function(d) {
-                    return d.color = color(d.name.replace(/ .*/
-/*, ""));
-                })
-                .style("stroke", function(d) {
-                    return d3.rgb(d.color).darker(2);
-                })
-                .append("title")
-                .text(function(d) {
-                    return d.name + "\n" + format(d.value);
-                });
-
-            // add in the title for the nodes
-            node.append("text")
-                .attr("x", -6)
-                .attr("y", function(d) {
-                    return d.dy / 2;
-                })
-                .attr("dy", ".35em")
-                .attr("text-anchor", "end")
-                .attr("transform", null)
-                .text(function(d) {
-                    return d.name;
-                })
-                .filter(function(d) {
-                    return d.x < width / 2;
-                })
-                .attr("x", 6 + this.sankey.nodeWidth())
-                .attr("text-anchor", "start");
-*/
