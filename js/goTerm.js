@@ -1,10 +1,10 @@
 CLMSUI = CLMSUI || {};
 
 CLMSUI.GoTerm = function() {
-  this.is_a = new Set();
-  this.part_of = new Set();
-  // this.intersection_of = new Set();
-  //   this.relationship = new Set();
+    this.is_a = new Set();
+    this.part_of = new Set();
+    // this.intersection_of = new Set();
+    //   this.relationship = new Set();
     this.interactors = new Set();
 
     this.is_aChildren = [];
@@ -35,14 +35,26 @@ CLMSUI.GoTerm.prototype.getInteractors = function(partOfHierarchy, interactorSet
         interactorSet = new Set();
     }
     var children;
-    if (partOfHierarchy == true) {
-      children = this.part_ofChildren;
-    } else {
-      children = this.is_aChildren;
+    if (typeof(partOfHierarchy) == "undefined") {
+        console.log("PO", partOfHierarchy);
     }
-    for (var c of children) {
-        c.getInteractors(partOfHierarchy, interactorSet);
-    }
+    // if (partOfHierarchy == true) {
+    //     children = this.part_ofChildren;
+    // } else {
+    //     children = this.is_aChildren;
+    // }
+    // if (partOfHierarchy == true) {
+        for (var c of this.part_ofChildren) {
+            c.getInteractors(partOfHierarchy, interactorSet);
+        }
+        for (var c of this.is_aChildren) {
+            c.getInteractors(partOfHierarchy, interactorSet);
+        }
+    // } else {
+    //     for (var c of this.is_aChildren) {
+    //         c.getInteractors(partOfHierarchy, interactorSet);
+    //     }
+    // }
     for (var i of this.interactors.values()) {
         interactorSet.add(i);
     }

@@ -158,7 +158,7 @@
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/old_goTermsViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->

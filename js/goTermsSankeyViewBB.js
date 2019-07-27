@@ -108,16 +108,17 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var node = {
                     name: dagNode.name,
                     id: dagNode.id,
-                    term: dagNode
-                };
+                    term: dagNode,
+                    partOfHierarchy: partOfHierarchy
+                  };
                 nodes.set(node.id, node);
                 var parents;
-                if (partOfHierarchy) {
-                    parents = dagNode.part_ofParents;
-                } else {
-                    parents = dagNode.is_aParents
-                }
-                for (var p of parents) {
+                // if (partOfHierarchy) {
+                //     parents = dagNode.part_ofParents;
+                // } else {
+                //     parents = dagNode.is_aParents
+                // }
+                for (var p of dagNode.part_ofParents) {
                     var fromId = p.id;
                     var toId = node.id;
                     var linkId = fromId + "_" + toId;
@@ -129,17 +130,38 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     link.target = node;
                     link.value = dagNode.getInteractors(partOfHierarchy).size;
                     link.id = linkId;
+                    link.partOf = true;
+                    linkSubsetMap.set(linkId, link);
+                }
+                for (var p of dagNode.is_aParents) {
+                    var fromId = p.id;
+                    var toId = node.id;
+                    var linkId = fromId + "_" + toId;
+                    var link = {};
+                    link.source = sankeyNode(p);
+                    if (!link.source) {
+                        console.log("!?!?");
+                    }
+                    link.target = node;
+                    link.value = dagNode.getInteractors(partOfHierarchy).size;
+                    link.id = linkId;
+                    link.partOf = false;
                     linkSubsetMap.set(linkId, link);
                 }
 
                 var children;
-                if (partOfHierarchy) {
-                    children = dagNode.part_ofChildren;
-                } else {
-                    children = dagNode.is_aChildren;
+                // if (partOfHierarchy) {
+                //     children = dagNode.part_ofChildren;
+                // } else {
+                //     children = dagNode.is_aChildren;
+                // }
+                for (var c of dagNode.part_ofChildren) {
+                    if (c.getInteractors(partOfHierarchy).size > 3) {
+                        sankeyNode(c);
+                    }
                 }
-                for (var c of children) {
-                    if (c.getInteractors(partOfHierarchy).size > 1) {
+                for (var c of dagNode.is_aChildren) {
+                    if (c.getInteractors(partOfHierarchy).size > 3) {
                         sankeyNode(c);
                     }
                 }
@@ -149,9 +171,18 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             }
         };
 
-        var root = sankeyNode(dag);
+        // var root = sankeyNode(dag);
         // root.x0 = 0;//250; //height / 2;
         // root.y0 = 0;
+        if (!partOfHierarchy){
+          sankeyNode(dag);
+        } else {
+          for (var c of dag.part_ofChildren) {
+              if (c.getInteractors(partOfHierarchy).size > 1) {
+                  sankeyNode(c);
+              }
+          }
+        }
 
         var data = {
             "nodes": Array.from(nodes.values()),
@@ -168,7 +199,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     render: function() {
-        // if (this.energy) {
+        if (this.energy) {
         var termType = d3.select("#goTermsPanelgoTermSelect").selectAll("option")
             .filter(function(d) {
                 return d3.select(this).property("selected");
@@ -213,7 +244,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var link = linkSel.enter().append("path").attr("d", path).attr("class", "goLink")
             .style("stroke-width", function(d) {
                 return Math.max(1, (d.dy ? d.dy : 0));
-            });
+            })
+            .style("stroke", function(d) {return d.partOf? "orange":"black"});
 
         link.append("title")
             .text(function(d) {
@@ -277,7 +309,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         node.append("text")
             .attr("x", -6)
             .attr("y", function(d) {
-                return Math.max(0, d.dy / 2);
+                return 0;//Math.max(0, d.dy / 2);
             })
             .attr("dy", ".35em")
             .attr("text-anchor", "end")
@@ -312,7 +344,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             self.sankey.relayout();
             linkSel.attr("d", path);
         }
-        // }
+       }
 
     },
 

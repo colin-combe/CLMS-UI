@@ -895,10 +895,12 @@ CLMSUI.modelUtils = {
                             for (var parentId of is_aValues) {
                                 // var parentId = p.replace(':', '');
                                 var parentTerm = go.get(parentId);
-                                if (goTerm.namespace = parentTerm.namespace) {
+                                if (goTerm.namespace == parentTerm.namespace) {
                                     goTerm.is_aParents.push(parentTerm);
                                     checkTerm(parentTerm);
                                     parentTerm.is_aChildren.push(goTerm);
+                                } else {
+                                   // console.log("!?", goTerm.id, parentId);
                                 }
                             }
                         }
@@ -907,23 +909,25 @@ CLMSUI.modelUtils = {
                             for (var parentId of part_ofValues) {
                                 // var parentId = p.split(" ")[0];
                                 var parentTerm = go.get(parentId);
-                                if (goTerm.namespace = parentTerm.namespace) {
+                                if (goTerm.namespace == parentTerm.namespace) {
                                     goTerm.part_ofParents.push(parentTerm);
                                     checkTerm(parentTerm);
                                     parentTerm.part_ofChildren.push(goTerm);
+                                } else {
+                                  // console.log("!?", goTerm.id, parentId);
                                 }
-                                if (parentTerm.part_of.size == 0) {
-                                    if (parentTerm.namespace == "cellular_component") {
-                                        goDags.cell_parts.part_ofChildren.push(goTerm);
-                                        // goTerm.part_ofParents.push(goDags.cell_parts);
-                                    } else if (parentTerm.namespace == "biological_process") {
-                                        goDags.process_parts.part_ofChildren.push(goTerm);
-                                        // goTerm.part_ofParents.push(goDags.process_parts);
-                                    } else if (parentTerm.namespace == "molecular_function") {
-                                        goDags.function_parts.part_ofChildren.push(goTerm);
-                                        // goTerm.part_ofParents.push(goDags.function_parts);
-                                    }
-                                }
+                                // if (parentTerm.part_of.size == 0) {
+                                //     if (parentTerm.namespace == "cellular_component") {
+                                //         goDags.cell_parts.part_ofChildren.push(goTerm);
+                                //         // goTerm.part_ofParents.push(goDags.cell_parts);
+                                //     } else if (parentTerm.namespace == "biological_process") {
+                                //         goDags.process_parts.part_ofChildren.push(goTerm);
+                                //         // goTerm.part_ofParents.push(goDags.process_parts);
+                                //     } else if (parentTerm.namespace == "molecular_function") {
+                                //         goDags.function_parts.part_ofChildren.push(goTerm);
+                                //         // goTerm.part_ofParents.push(goDags.function_parts);
+                                //     }
+                                // }
                             }
                         }
                         if (goTerm.id == "GO0008150") {
