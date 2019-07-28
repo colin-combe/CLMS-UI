@@ -3,60 +3,28 @@ CLMSUI = CLMSUI || {};
 CLMSUI.GoTerm = function() {
     this.is_a = new Set();
     this.part_of = new Set();
-    // this.intersection_of = new Set();
-    //   this.relationship = new Set();
     this.interactors = new Set();
 
     this.is_aChildren = [];
     this.is_aParents = [];
     this.part_ofChildren = [];
     this.part_ofParents = [];
-    // this.height = 25;
-    // this.width = 50;
-    // this.expanded = false;
-    // this.depth = 0;
-
-    //TODO - this wastes a bit memory coz the property is not on the prototype, fix
-    // Object.defineProperty(this, "width", {
-    //     get: function width() {
-    //         return this.upperGroup.getBBox().width;
-    //     }
-    // });
-    // var self = this;
-    // Object.defineProperty(this, "height", {
-    //     get: function height() {
-    //         return Math.sqrt(self.getInteractors().size / Math.PI) * 10;;//this.upperGroup.getBBox().height;
-    //     }
-    // });
 }
 
-CLMSUI.GoTerm.prototype.getInteractors = function(partOfHierarchy, interactorSet) {
+CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
     if (!interactorSet) {
         interactorSet = new Set();
     }
-    var children;
-    if (typeof(partOfHierarchy) == "undefined") {
-        console.log("PO", partOfHierarchy);
+    for (var c of this.part_ofChildren) {
+        c.getInteractors(interactorSet);
     }
-    // if (partOfHierarchy == true) {
-    //     children = this.part_ofChildren;
-    // } else {
-    //     children = this.is_aChildren;
-    // }
-    // if (partOfHierarchy == true) {
-        for (var c of this.part_ofChildren) {
-            c.getInteractors(partOfHierarchy, interactorSet);
-        }
-        for (var c of this.is_aChildren) {
-            c.getInteractors(partOfHierarchy, interactorSet);
-        }
-    // } else {
-    //     for (var c of this.is_aChildren) {
-    //         c.getInteractors(partOfHierarchy, interactorSet);
-    //     }
-    // }
+    for (var c of this.is_aChildren) {
+        c.getInteractors(interactorSet);
+    }
     for (var i of this.interactors.values()) {
-        interactorSet.add(i);
+        if (i.hidden == false) {
+          interactorSet.add(i);
+        }
     }
     return interactorSet;
 }

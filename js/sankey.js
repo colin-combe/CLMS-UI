@@ -54,11 +54,6 @@ d3.sankey = function() {
     var curvature = .5;
 
     function link(d) {
-      // var tempSet = new Set();
-      // var noOverlaps = true;
-      // for (var link = d.sourceLinks){
-      //     if (tempSet.has(link.id))
-      // }
       var x0 = d.source.x + d.source.dx,
           x1 = d.target.x,
           xi = d3.interpolateNumber(x0, x1),
@@ -66,6 +61,15 @@ d3.sankey = function() {
           x3 = xi(1 - curvature),
           y0 = d.source.y + (d.source.dy / 2),// + /*+ d.sy*/ + d.dy / 2,
           y1 = d.target.y + (d.target.dy / 2);// +  /*+ d.ty*/ + d.dy / 2;
+
+      var sourceVal = d3.sum(d.source.sourceLinks, value);
+      // sourceVal = 0;
+      var sourceSize = d.source.term.getInteractors().size;
+      if (sourceVal <= sourceSize){
+      //     console.log("**", d.ty);
+          y0 = d.source.y + d.sy + d.dy / 2;
+      }
+
       return "M" + x0 + "," + y0
            + "C" + x2 + "," + y0
            + " " + x3 + "," + y1
@@ -107,7 +111,7 @@ d3.sankey = function() {
       //   d3.sum(node.sourceLinks, value),
       //   d3.sum(node.targetLinks, value)
       // );
-      node.value = node.term.getInteractors(node.partOfHierarchy).size;
+      node.value = node.term.getInteractors().size;
       // console.log("*!", node.value);
     });
   }

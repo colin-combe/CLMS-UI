@@ -913,21 +913,7 @@ CLMSUI.modelUtils = {
                                     goTerm.part_ofParents.push(parentTerm);
                                     checkTerm(parentTerm);
                                     parentTerm.part_ofChildren.push(goTerm);
-                                } else {
-                                  // console.log("!?", goTerm.id, parentId);
                                 }
-                                // if (parentTerm.part_of.size == 0) {
-                                //     if (parentTerm.namespace == "cellular_component") {
-                                //         goDags.cell_parts.part_ofChildren.push(goTerm);
-                                //         // goTerm.part_ofParents.push(goDags.cell_parts);
-                                //     } else if (parentTerm.namespace == "biological_process") {
-                                //         goDags.process_parts.part_ofChildren.push(goTerm);
-                                //         // goTerm.part_ofParents.push(goDags.process_parts);
-                                //     } else if (parentTerm.namespace == "molecular_function") {
-                                //         goDags.function_parts.part_ofChildren.push(goTerm);
-                                //         // goTerm.part_ofParents.push(goDags.function_parts);
-                                //     }
-                                // }
                             }
                         }
                         if (goTerm.id == "GO0008150") {

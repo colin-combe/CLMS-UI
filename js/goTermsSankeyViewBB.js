@@ -51,7 +51,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.update();
             });
 
-        var termSelectData = ["cellular_component", "cell_parts", "biological_process", "process_parts", "molecular_function", "function_parts"];
+        var termSelectData = ["cellular_component", "biological_process", "molecular_function"];
 
         var options = this.termSelect.selectAll("option")
             .data(termSelectData)
@@ -93,11 +93,6 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 return d3.select(this).property("selected");
             })
             .datum().trim();
-        var partOfHierarchy = termType.endsWith("parts");
-
-        // var termType = selectedTermType[0];
-        // var is_aOrPartOf = selectedTermType[1];
-
 
         var nodes = new Map();
         var linkSubsetMap = new Map();
@@ -109,15 +104,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     name: dagNode.name,
                     id: dagNode.id,
                     term: dagNode,
-                    partOfHierarchy: partOfHierarchy
-                  };
+                };
                 nodes.set(node.id, node);
-                var parents;
-                // if (partOfHierarchy) {
-                //     parents = dagNode.part_ofParents;
-                // } else {
-                //     parents = dagNode.is_aParents
-                // }
+                //todo - refactor away copy'n'paste
                 for (var p of dagNode.part_ofParents) {
                     var fromId = p.id;
                     var toId = node.id;
@@ -128,7 +117,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                         console.log("!?!?");
                     }
                     link.target = node;
-                    link.value = dagNode.getInteractors(partOfHierarchy).size;
+                    link.value = dagNode.getInteractors().size;
                     link.id = linkId;
                     link.partOf = true;
                     linkSubsetMap.set(linkId, link);
@@ -143,25 +132,18 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                         console.log("!?!?");
                     }
                     link.target = node;
-                    link.value = dagNode.getInteractors(partOfHierarchy).size;
+                    link.value = dagNode.getInteractors().size;
                     link.id = linkId;
                     link.partOf = false;
                     linkSubsetMap.set(linkId, link);
                 }
-
-                var children;
-                // if (partOfHierarchy) {
-                //     children = dagNode.part_ofChildren;
-                // } else {
-                //     children = dagNode.is_aChildren;
-                // }
                 for (var c of dagNode.part_ofChildren) {
-                    if (c.getInteractors(partOfHierarchy).size > 3) {
+                    if (c.getInteractors().size > 1) {
                         sankeyNode(c);
                     }
                 }
                 for (var c of dagNode.is_aChildren) {
-                    if (c.getInteractors(partOfHierarchy).size > 3) {
+                    if (c.getInteractors().size > 1) {
                         sankeyNode(c);
                     }
                 }
@@ -171,18 +153,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             }
         };
 
-        // var root = sankeyNode(dag);
-        // root.x0 = 0;//250; //height / 2;
-        // root.y0 = 0;
-        if (!partOfHierarchy){
-          sankeyNode(dag);
-        } else {
-          for (var c of dag.part_ofChildren) {
-              if (c.getInteractors(partOfHierarchy).size > 1) {
-                  sankeyNode(c);
-              }
-          }
-        }
+        sankeyNode(dag);
 
         var data = {
             "nodes": Array.from(nodes.values()),
@@ -191,160 +162,163 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
         var self = this;
-        //  d3.json("energy.json", function(energy) {
         self.energy = data;
         self.render();
-        //});
-        console.log("data", data);
     },
 
     render: function() {
         if (this.energy) {
-        var termType = d3.select("#goTermsPanelgoTermSelect").selectAll("option")
-            .filter(function(d) {
-                return d3.select(this).property("selected");
-            })
-            .datum().trim();
-        var partOfHierarchy = termType.endsWith("parts");
+            //console.log("RENDERING GO TERMS");
+            var jqElem = $(this.svg.node());
+            var cx = jqElem.width(); //this.svg.node().clientWidth;
+            var cy = jqElem.height(); //this.svg.node().clientHeight;
+            var margin = this.options.margin;
+            var width = Math.max(0, cx - margin.left - margin.right);
+            var height = Math.max(0, cy - margin.top - margin.bottom);
 
-        console.log("RENDERING GO TERMS");
-        var jqElem = $(this.svg.node());
-        var cx = jqElem.width(); //this.svg.node().clientWidth;
-        var cy = jqElem.height(); //this.svg.node().clientHeight;
-        var margin = this.options.margin;
-        var width = Math.max(0, cx - margin.left - margin.right);
-        var height = Math.max(0, cy - margin.top - margin.bottom);
+            this.sankey = d3.sankey().nodeWidth(15);
+            this.sankey
+                .nodes(this.energy.nodes)
+                .links(this.energy.links)
+                .size([width, height])
+                .layout(32);
 
-        this.sankey = d3.sankey().nodeWidth(15);
-        this.sankey
-            .nodes(this.energy.nodes)
-            .links(this.energy.links)
-            .size([width, height])
-            .layout(1024);
+            var color = d3.scale.category20();
 
-        var color = d3.scale.category20();
+            var path = this.sankey.link();
+            var self = this;
 
-        var path = this.sankey.link();
-        var self = this;
-
-        var energy = self.energy;
+            var energy = self.energy;
 
 
-        var linkSel = self.backgroundGroup.selectAll(".goLink")
-            .data(energy.links
-            //   .sort(function(a, b) {
-            //     return b.value - a.value;
-            // })
-            ,
-             function(d) {
-                return d.id;
-            }
-          );
+            var linkSel = self.backgroundGroup.selectAll(".goLink")
+                .data(energy.links
+                      .sort(function(a, b) {
+                        return b.value - a.value;
+                    })
+                    ,
+                    function(d) {
+                        return d.id;
+                    }
+                );
 
-        var link = linkSel.enter().append("path").attr("d", path).attr("class", "goLink")
-            .style("stroke-width", function(d) {
-                return Math.max(1, (d.dy ? d.dy : 0));
-            })
-            .style("stroke", function(d) {return d.partOf? "orange":"black"});
+            linkSel.enter()
+                .append("path")
+                // .attr("d", path)
+                .attr("class", "goLink")
+                // .style("stroke-width", function(d) {
+                //     return Math.max(1, (d.dy ? d.dy : 0));
+                // })
+                .style("stroke", function(d) {
+                    return d.partOf ? "orange" : "black"
+                })
+                .append("title")
+                .text(function(d) {
+                    return d.target.name + (d.partOf ? " is part of " : " is a ") + d.source.name + "\n" + d.value;
+                });
 
-        link.append("title")
-            .text(function(d) {
-                return d.source.name + " → " + d.target.name + "\n" + d.value;
+
+            var nodeSel = this.foregroundGroup.selectAll(".node")
+                .data(energy.nodes, function(d) {
+                    return d.id;
+                });
+
+            var nodeEnter = nodeSel.enter().append("g")
+                .attr("class", "node")
+                // .attr("transform", function(d) {
+                //     return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";
+                // })
+                // .call(d3.behavior.drag()
+                //     .origin(function(d) {
+                //         return d;
+                //     })
+                //     .on("drag", dragmove));
+                .on("click", function(d) {
+                    self.model.setSelectedProteins([], false);
+                    self.model.setSelectedProteins(Array.from(d.term.getInteractors().values()), true);
+                })
+                .on("mouseover", function(d) {
+                    var term = d.term;
+                    d3.select(this).select("circle").classed("highlightedProtein", true);
+                    self.model.get("tooltipModel")
+                        .set("header", "GO Term")
+                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(term))
+                        .set("location", {
+                            pageX: d3.event.pageX,
+                            pageY: d3.event.pageY
+                        });
+                    self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
+                })
+                .on("mouseout", function(d) {
+                    d3.select(this).select("circle").classed("highlightedProtein", false);
+                    self.model.get("tooltipModel").set("contents", null);
+                    self.model.setHighlightedProteins([]);
+                });
+
+            nodeEnter.append("rect")
+                .attr("width", self.sankey.nodeWidth())
+                // .attr("height", function(d) {
+                //     return Math.max(1, (d.dy ? d.dy : 0));
+                // })
+                .style("fill", function(d) {
+                    return d.color = color(d.name.replace(/ .*/, ""));
+                })
+                .style("stroke", function(d) {
+                    return d3.rgb(d.color).darker(2);
+                })
+                .append("title")
+                .text(function(d) {
+                    return d.name + "\n" + d.value;
+                });
+
+            nodeEnter.append("text")
+                // .attr("x", -6)
+
+                .attr("dy", ".35em")
+                .attr("text-anchor", "end")
+                // .attr("transform", null)
+                .text(function(d) {
+                    return d.name;
+                })
+                // .filter(function(d) {
+                //     return d.x < width / 2;
+                // })
+                // .attr("x", 6 + self.sankey.nodeWidth())
+                .attr("text-anchor", "start");
+
+
+            nodeSel.attr("transform", function(d) {
+                return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";
             });
-
-
-        var nodeSel = this.foregroundGroup.selectAll(".node")
-            .data(energy.nodes, function(d) {
-                return d.id;
-            });
-
-        var node = nodeSel
-            .enter().append("g")
-            .attr("class", "node")
-            .attr("transform", function(d) {
-                return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";})
-            // .call(d3.behavior.drag()
-            //     .origin(function(d) {
-            //         return d;
-            //     })
-            //     .on("drag", dragmove));
-            .on("click", function(d) {
-                self.model.setSelectedProteins([], false);
-                self.model.setSelectedProteins(Array.from(d.term.getInteractors(partOfHierarchy).values()), true);
+            nodeSel.select("rect")
+                .attr("height", function(d) {
+                    return Math.max(1, (d.dy ? d.dy : 0));
+                });
+            nodeSel.select("text")
+            .attr("x", function(d) {
+                return (d.x < width / 2) ? 6 + self.sankey.nodeWidth() : -6;
             })
-            .on("mouseover", function(d) {
-                var term = d.term;
-                d3.select(this).select("circle").classed("highlightedProtein", true);
-                self.model.get("tooltipModel")
-                    .set("header", "GO Term")
-                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(term))
-                    .set("location", {
-                        pageX: d3.event.pageX,
-                        pageY: d3.event.pageY
-                    });
-                self.model.setHighlightedProteins(Array.from(term.getInteractors(partOfHierarchy).values()));
+            .attr("text-anchor", function(d) {
+                return (d.x < width / 2) ? "start" : "end";
             })
-            .on("mouseout", function(d) {
-                d3.select(this).select("circle").classed("highlightedProtein", false);
-                self.model.get("tooltipModel").set("contents", null);
-                self.model.setHighlightedProteins([]);
-            });
-
-        var rectSel = node.append("rect")
-            .attr("width", self.sankey.nodeWidth())
-            .attr("height", function(d) {
-                return Math.max(1, (d.dy ? d.dy : 0));
-            })
-            .style("fill", function(d) {
-                return d.color = color(d.name.replace(/ .*/, ""));
-            })
-            .style("stroke", function(d) {
-                return d3.rgb(d.color).darker(2);
-            })
-            .append("title")
-            .text(function(d) {
-                return d.name + "\n" + d.value;
-            });
-
-        node.append("text")
-            .attr("x", -6)
             .attr("y", function(d) {
-                return 0;//Math.max(0, d.dy / 2);
+                return (d.dy ? d.dy : 0) / 4;
             })
-            .attr("dy", ".35em")
-            .attr("text-anchor", "end")
-            .attr("transform", null)
-            .text(function(d) {
-                return d.name;
-            })
-            .filter(function(d) {
-                return d.x < width / 2;
-            })
-            .attr("x", 6 + self.sankey.nodeWidth())
-            .attr("text-anchor", "start");
 
-        //
-        //
-        nodeSel.attr("transform", function(d) {
-            return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";
-        }).select("rect").attr("height", function(d) {
-            return Math.max(1, (d.dy ? d.dy : 0));
-        });
-
-        linkSel.attr("d", path).attr("class", "goLink")
-            .style("stroke-width", function(d) {
-                return Math.max(1, (d.dy ? d.dy : 0));
-            });
+            linkSel.attr("d", path)
+                .style("stroke-width", function(d) {
+                    return Math.max(1, (d.dy ? d.dy : 0));
+                });
 
             nodeSel.exit().remove();
             linkSel.exit().remove();
 
-        function dragmove(d) {
-            d3.select(this).attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
-            self.sankey.relayout();
-            linkSel.attr("d", path);
+            function dragmove(d) {
+                d3.select(this).attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
+                self.sankey.relayout();
+                linkSel.attr("d", path);
+            }
         }
-       }
 
     },
 
