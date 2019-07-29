@@ -1,27 +1,25 @@
 CLMSUI = CLMSUI || {};
 
 CLMSUI.GoTerm = function() {
-    this.is_a = new Set();
+    this.is_a = new Set(); // i.e. superclasses
+    this.subclasses = new Set();
     this.part_of = new Set();
+    this.parts = new Set();
     this.interactors = new Set();
-
-    this.is_aChildren = [];
-    this.is_aParents = [];
-    this.part_ofChildren = [];
-    this.part_ofParents = [];
 }
 
 CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
+    var go = CLMSUI.compositeModelInst.get("go");
     if (!interactorSet) {
         interactorSet = new Set();
     }
-    for (var c of this.part_ofChildren) {
-        c.getInteractors(interactorSet);
+    for (let partId of this.parts) {
+        go.get(partId).getInteractors(interactorSet);
     }
-    for (var c of this.is_aChildren) {
-        c.getInteractors(interactorSet);
+    for (let subclassId of this.subclasses) {
+        go.get(subclassId).getInteractors(interactorSet);
     }
-    for (var i of this.interactors.values()) {
+    for (let i of this.interactors) {
         if (i.hidden == false) {
           interactorSet.add(i);
         }

@@ -95,79 +95,75 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .datum().trim();
 
         var nodes = new Map();
-        var linkSubsetMap = new Map();
-        var dag = CLMSUI.compositeModelInst.get("goDags")[termType];
+        var linksMap = new Map();
+        var go = CLMSUI.compositeModelInst.get("go");
 
-        function sankeyNode(dagNode) {
-            if (!nodes.has(dagNode.id)) {
+        if (termType == "biological_process") {
+            sankeyNode("GO0008150");
+        } else if (termType == "molecular_function") {
+            sankeyNode("GO0003674");
+        } else { // default to cellular component
+            sankeyNode("GO0005575");
+        }
+
+        function sankeyNode(goId) {
+            if (!nodes.has(goId)) {
+                var goTerm = go.get(goId);
                 var node = {
-                    name: dagNode.name,
-                    id: dagNode.id,
-                    term: dagNode,
+                    name: goTerm.name,
+                    id: goTerm.id,
+                    term: goTerm,
                 };
                 nodes.set(node.id, node);
-                //todo - refactor away copy'n'paste
-                for (var p of dagNode.part_ofParents) {
-                    var fromId = p.id;
-                    var toId = node.id;
-                    var linkId = fromId + "_" + toId;
+                for (let partOfId of goTerm.part_of) {
+                    var linkId = partOfId + "_" + node.id;
                     var link = {};
-                    link.source = sankeyNode(p);
-                    if (!link.source) {
-                        console.log("!?!?");
-                    }
+                    link.source = sankeyNode(partOfId);
                     link.target = node;
-                    link.value = dagNode.getInteractors().size;
+                    link.value = goTerm.getInteractors().size;
                     link.id = linkId;
                     link.partOf = true;
-                    linkSubsetMap.set(linkId, link);
+                    linksMap.set(linkId, link);
                 }
-                for (var p of dagNode.is_aParents) {
-                    var fromId = p.id;
-                    var toId = node.id;
-                    var linkId = fromId + "_" + toId;
+                for (let superclassId of goTerm.is_a) {
+                    var linkId = superclassId + "_" + node.id;
                     var link = {};
-                    link.source = sankeyNode(p);
-                    if (!link.source) {
-                        console.log("!?!?");
-                    }
+                    link.source = sankeyNode(superclassId);
                     link.target = node;
-                    link.value = dagNode.getInteractors().size;
+                    link.value = goTerm.getInteractors().size;
                     link.id = linkId;
                     link.partOf = false;
-                    linkSubsetMap.set(linkId, link);
+                    linksMap.set(linkId, link);
                 }
-                for (var c of dagNode.part_ofChildren) {
-                    if (c.getInteractors().size > 1) {
-                        sankeyNode(c);
+                for (let partId of goTerm.parts) {
+                    var partTerm = go.get(partId);
+                    if (partTerm.getInteractors().size > 1) {
+                        sankeyNode(partId);
                     }
                 }
-                for (var c of dagNode.is_aChildren) {
-                    if (c.getInteractors().size > 1) {
-                        sankeyNode(c);
+                for (let subclassId of goTerm.subclasses) {
+                    var subclassTerm = go.get(subclassId);
+                    if (subclassTerm.getInteractors().size > 1) {
+                        sankeyNode(subclassId);
                     }
                 }
                 return node;
             } else {
-                return nodes.get(dagNode.id);
+                return nodes.get(goId);
             }
         };
 
-        sankeyNode(dag);
-
-        var data = {
+        this.data = {
             "nodes": Array.from(nodes.values()),
-            "links": Array.from(linkSubsetMap.values())
+            "links": Array.from(linksMap.values()).sort(function(a, b) {
+                return b.value - a.value;
+            })
         };
-
-
-        var self = this;
-        self.energy = data;
-        self.render();
+        this.render();
     },
 
     render: function() {
-        if (this.energy) {
+        if (this.data) {
             //console.log("RENDERING GO TERMS");
             var jqElem = $(this.svg.node());
             var cx = jqElem.width(); //this.svg.node().clientWidth;
@@ -178,8 +174,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             this.sankey = d3.sankey().nodeWidth(15);
             this.sankey
-                .nodes(this.energy.nodes)
-                .links(this.energy.links)
+                .nodes(this.data.nodes)
+                .links(this.data.links)
                 .size([width, height])
                 .layout(32);
 
@@ -188,15 +184,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             var path = this.sankey.link();
             var self = this;
 
-            var energy = self.energy;
-
-
             var linkSel = self.backgroundGroup.selectAll(".goLink")
-                .data(energy.links
-                      .sort(function(a, b) {
-                        return b.value - a.value;
-                    })
-                    ,
+                .data(this.data.links,
                     function(d) {
                         return d.id;
                     }
@@ -204,11 +193,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             linkSel.enter()
                 .append("path")
-                // .attr("d", path)
                 .attr("class", "goLink")
-                // .style("stroke-width", function(d) {
-                //     return Math.max(1, (d.dy ? d.dy : 0));
-                // })
                 .style("stroke", function(d) {
                     return d.partOf ? "orange" : "black"
                 })
@@ -219,15 +204,12 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
             var nodeSel = this.foregroundGroup.selectAll(".node")
-                .data(energy.nodes, function(d) {
+                .data(this.data.nodes, function(d) {
                     return d.id;
                 });
 
             var nodeEnter = nodeSel.enter().append("g")
                 .attr("class", "node")
-                // .attr("transform", function(d) {
-                //     return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";
-                // })
                 // .call(d3.behavior.drag()
                 //     .origin(function(d) {
                 //         return d;
@@ -257,9 +239,6 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             nodeEnter.append("rect")
                 .attr("width", self.sankey.nodeWidth())
-                // .attr("height", function(d) {
-                //     return Math.max(1, (d.dy ? d.dy : 0));
-                // })
                 .style("fill", function(d) {
                     return d.color = color(d.name.replace(/ .*/, ""));
                 })
@@ -272,20 +251,10 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 });
 
             nodeEnter.append("text")
-                // .attr("x", -6)
-
                 .attr("dy", ".35em")
-                .attr("text-anchor", "end")
-                // .attr("transform", null)
                 .text(function(d) {
                     return d.name;
-                })
-                // .filter(function(d) {
-                //     return d.x < width / 2;
-                // })
-                // .attr("x", 6 + self.sankey.nodeWidth())
-                .attr("text-anchor", "start");
-
+                });
 
             nodeSel.attr("transform", function(d) {
                 return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";
@@ -295,15 +264,15 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return Math.max(1, (d.dy ? d.dy : 0));
                 });
             nodeSel.select("text")
-            .attr("x", function(d) {
-                return (d.x < width / 2) ? 6 + self.sankey.nodeWidth() : -6;
-            })
-            .attr("text-anchor", function(d) {
-                return (d.x < width / 2) ? "start" : "end";
-            })
-            .attr("y", function(d) {
-                return (d.dy ? d.dy : 0) / 4;
-            })
+                .attr("x", function(d) {
+                    return (d.x < width / 2) ? 6 + self.sankey.nodeWidth() : -6;
+                })
+                .attr("text-anchor", function(d) {
+                    return (d.x < width / 2) ? "start" : "end";
+                })
+                .attr("y", function(d) {
+                    return (d.dy ? d.dy : 0) / 4;
+                })
 
             linkSel.attr("d", path)
                 .style("stroke-width", function(d) {

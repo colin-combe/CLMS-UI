@@ -859,7 +859,7 @@ CLMSUI.modelUtils = {
                         } else if (term) {
                             var parts = line.split(" ");
                             if (parts[0] == "is_a") {
-                                term[parts[0]].add(parts[1]);
+                                term.is_a.add(parts[1]);
                             } else if (parts[0] == "intersection_of" || parts[0] == "relationship") {
                                 if (parts[1] == "part_of") {
                                     // console.log(term.namespace, line);
@@ -873,20 +873,21 @@ CLMSUI.modelUtils = {
                 }
                 go.set(term.id, term); // last one left over
 
-                console.log("go size:" + go.size)
+                //populate subclasses and parts
+                for (term of go.values()) {
+                    for (let superclassId of term.is_a){
+                        go.get(superclassId).subclasses.add(term.id);
+                    }
+                    for (let partOfId of term.part_of){
+                        go.get(partOfId).parts.add(term.id);
+                    }
+                }
+
                 CLMSUI.compositeModelInst.set("go", go);
 
+/*
                 var tempMap = new Map();
                 var goDags = {};
-                goDags.cell_parts = new CLMSUI.GoTerm();
-                goDags.cell_parts.name = "cell parts"
-                goDags.cell_parts.id = "cell parts"
-                goDags.process_parts = new CLMSUI.GoTerm();
-                goDags.process_parts.name = "process parts"
-                goDags.process_parts.id = "process parts"
-                goDags.function_parts = new CLMSUI.GoTerm();
-                goDags.function_parts.name = "function parts"
-                goDags.function_parts.id = "function parts"
 
                 function checkTerm(goTerm) {
                     if (!tempMap.has(goTerm.id)) {
@@ -936,7 +937,7 @@ CLMSUI.modelUtils = {
                 }
 
                 CLMSUI.compositeModelInst.set("goDags", goDags);
-
+*/
                 var proteins = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
                 for (var protein of proteins) {
                     if (protein.uniprot) {
@@ -948,8 +949,8 @@ CLMSUI.modelUtils = {
                         }
                     }
                 }
+                CLMSUI.vent.trigger("goAnnotationsUpdated");
             }
-            CLMSUI.vent.trigger("goAnnotationsUpdated");
         });
     },
 
