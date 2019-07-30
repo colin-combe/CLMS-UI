@@ -115,35 +115,41 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     term: goTerm,
                 };
                 nodes.set(node.id, node);
-                for (let partOfId of goTerm.part_of) {
-                    var linkId = partOfId + "_" + node.id;
-                    var link = {};
-                    link.source = sankeyNode(partOfId);
-                    link.target = node;
-                    link.value = goTerm.getInteractors().size;
-                    link.id = linkId;
-                    link.partOf = true;
-                    linksMap.set(linkId, link);
+                for (var partOfId of goTerm.part_of) {
+                    var partOfTerm = go.get(partOfId);
+                    if (partOfTerm.namespace == goTerm.namespace) {
+                        var linkId = partOfId + "_" + node.id;
+                        var link = {};
+                        link.source = sankeyNode(partOfId);
+                        link.target = node;
+                        link.value = goTerm.getInteractors().size;
+                        link.id = linkId;
+                        link.partOf = true;
+                        linksMap.set(linkId, link);
+                    }
                 }
-                for (let superclassId of goTerm.is_a) {
-                    var linkId = superclassId + "_" + node.id;
-                    var link = {};
-                    link.source = sankeyNode(superclassId);
-                    link.target = node;
-                    link.value = goTerm.getInteractors().size;
-                    link.id = linkId;
-                    link.partOf = false;
-                    linksMap.set(linkId, link);
+                for (var superclassId of goTerm.is_a) {
+                    var superclassTerm = go.get(superclassId);
+                    if (superclassTerm.namespace == goTerm.namespace) {
+                        var linkId = superclassId + "_" + node.id;
+                        var link = {};
+                        link.source = sankeyNode(superclassId);
+                        link.target = node;
+                        link.value = goTerm.getInteractors().size;
+                        link.id = linkId;
+                        link.partOf = false;
+                        linksMap.set(linkId, link);
+                    }
                 }
-                for (let partId of goTerm.parts) {
+                for (var partId of goTerm.parts) {
                     var partTerm = go.get(partId);
-                    if (partTerm.getInteractors().size > 1) {
+                    if (partTerm.namespace == goTerm.namespace && partTerm.getInteractors().size > 1) {
                         sankeyNode(partId);
                     }
                 }
-                for (let subclassId of goTerm.subclasses) {
+                for (var subclassId of goTerm.subclasses) {
                     var subclassTerm = go.get(subclassId);
-                    if (subclassTerm.getInteractors().size > 1) {
+                    if (subclassTerm.namespace == goTerm.namespace && subclassTerm.getInteractors().size > 1) {
                         sankeyNode(subclassId);
                     }
                 }
@@ -155,9 +161,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.data = {
             "nodes": Array.from(nodes.values()),
-            "links": Array.from(linksMap.values()).sort(function(a, b) {
-                return b.value - a.value;
-            })
+            "links": Array.from(linksMap.values())
         };
         this.render();
     },
@@ -195,8 +199,11 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 .append("path")
                 .attr("class", "goLink")
                 .style("stroke", function(d) {
-                    return d.partOf ? "orange" : "black"
+                    return d.partOf ? "#fdc086" : "#bdbdbd"
                 })
+                .style("stroke-opacity", 0)//bool ? "none" : null);
+                .on("mouseover", function(d) {d3.select(this).style("stroke-opacity", 1);})
+                .on("mouseout", function(d) {d3.select(this).style("stroke-opacity", 0);})
                 .append("title")
                 .text(function(d) {
                     return d.target.name + (d.partOf ? " is part of " : " is a ") + d.source.name + "\n" + d.value;
@@ -274,10 +281,10 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return (d.dy ? d.dy : 0) / 4;
                 })
 
-            linkSel.attr("d", path)
-                .style("stroke-width", function(d) {
-                    return Math.max(1, (d.dy ? d.dy : 0));
-                });
+            linkSel.attr("d", path);
+                // .style("stroke-width", function(d) {
+                //     return 4;//Math.max(1, (d.dy ? d.dy : 0));
+                // });
 
             nodeSel.exit().remove();
             linkSel.exit().remove();

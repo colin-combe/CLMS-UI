@@ -51,40 +51,71 @@ d3.sankey = function() {
   };
 
   sankey.link = function() {
-    var curvature = .7;
+      var curvature = 1;//.9;
 
-    function link(d) {
-      var x0 = d.source.x + d.source.dx,
-          x1 = d.target.x,
-          xi = d3.interpolateNumber(x0, x1),
-          x2 = xi(curvature),
-          x3 = xi(1 - curvature),
-          y0 = d.source.y + (d.source.dy / 2),// + /*+ d.sy*/ + d.dy / 2,
-          y1 = d.target.y + (d.target.dy / 2);// +  /*+ d.ty*/ + d.dy / 2;
+      function link(d) {
+          // if (d.target.term.getInteractors().size < 30) {
+          //     return "M" + 0 + "," + 0;
+          // } else {
+              var x0 = d.source.x + d.source.dx,
+                  x1 = d.target.x,
+                  xi = d3.interpolateNumber(x0, x1),
+                  x2 = xi(curvature),
+                  x3 = xi(1 - curvature),
+                  y0 = d.source.y + (d.source.dy / 2), // + /*+ d.sy*/ + d.dy / 2,
+                  y1 = d.target.y + (d.target.dy / 2); // +  /*+ d.ty*/ + d.dy / 2;
 
-      var sourceVal = d3.sum(d.source.sourceLinks, value);
-      // sourceVal = 0;
-      var sourceSize = d.source.term.getInteractors().size;
-      if (sourceVal <= sourceSize){
-      //     console.log("**", d.ty);
-          y0 = d.source.y + d.sy + d.dy / 2;
-      }
+                /*  y0 = d.source.y + (d.source.dy / 2) - d.dy / 2,
+                  y1 = d.target.y + (d.target.dy / 2) - d.dy / 2,
 
-      return "M" + x0 + "," + y0
-           + "C" + x2 + "," + y0
-           + " " + x3 + "," + y1
-           + " " + x1 + "," + y1;
-    }
+                  x4 = x1,
+                  y4 =  d.target.y + (d.target.dy / 2) + d.dy / 2,
 
-    link.curvature = function(_) {
-      if (!arguments.length) return curvature;
-      curvature = +_;
+                  x7 = x0,
+                  y7 =  d.source.y + (d.source.dy / 2) + d.dy / 2,
+                  xi = d3.interpolateNumber(x4, x7),
+                  x5 = xi(curvature),
+                  x6 = xi(1 - curvature); */
+
+
+/*
+              var sourceVal = d3.sum(d.source.sourceLinks, value);
+              // sourceVal = 0;
+              var sourceSize = d.source.term.getInteractors().size;
+              console.log(d.source.term.name + " > " + d.target.term.name);
+              console.log(sourceVal, sourceSize);*/
+              if (d.partOf){//sourceVal <= sourceSize) {
+                  //     console.log("**", d.ty);
+                  y0 = d.source.y, /*+ d.sy + d.dy / 2*/
+                  y1 = d.target.y
+              }
+
+
+              return "M" + x0 + "," + y0
+
+                  + " C" + x2 + "," + y0
+                  + " " + x3 + "," + y1
+                  + " " + x1 + "," + y1
+
+                  // + " L" +  + x4 + "," + y4
+                  //
+                  // + " C"  + x5 + "," + y4
+                  // + " " + x6 + "," + y7
+                  // + " " + x7 + "," + y7
+                  //
+                  // + " Z"
+                  ;
+          // }
+      };
+
+      link.curvature = function(_) {
+          if (!arguments.length) return curvature;
+          curvature = +_;
+          return link;
+      };
+
       return link;
-    };
-
-    return link;
   };
-
   // Populate the sourceLinks and targetLinks for each node.
   // Also, if the source and target are not objects, assume they are indices.
   function computeNodeLinks() {
