@@ -16,7 +16,7 @@
 .goLink {
   fill: none;
   /* stroke: #000; */
-  /* stroke-opacity: .6; */
+  stroke-opacity: .6;
   stroke-width: 6;
 }
 

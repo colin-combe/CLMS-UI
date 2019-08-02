@@ -200,14 +200,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 .attr("class", "goLink")
                 .style("stroke", function(d) {
                     return d.partOf ? "#fdc086" : "#bdbdbd"
-                })
+                });
                 .style("stroke-opacity", 0)//bool ? "none" : null);
                 .on("mouseover", function(d) {d3.select(this).style("stroke-opacity", 1);})
-                .on("mouseout", function(d) {d3.select(this).style("stroke-opacity", 0);})
-                .append("title")
-                .text(function(d) {
-                    return d.target.name + (d.partOf ? " is part of " : " is a ") + d.source.name + "\n" + d.value;
-                });
+                .on("mouseout", function(d) {d3.select(this).style("stroke-opacity", 0);});
+                // .append("title")
+                // .text(function(d) {
+                //     return d.target.name + (d.partOf ? " is part of " : " is a ") + d.source.name + "\n" + d.value;
+                // });
 
 
             var nodeSel = this.foregroundGroup.selectAll(".node")

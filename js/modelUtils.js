@@ -200,11 +200,11 @@ CLMSUI.modelUtils = {
                 ["Name", goTerm.name],
                 ["Namespace", goTerm.namespace],
                 ["Definition", goTerm.def],
-                ["Synonym", goTerm.synomym],
-                ["is_a", Array.from(goTerm.is_a.values()).join(", ")],
+                // ["Synonym", goTerm.synomym],
+                // ["is_a", Array.from(goTerm.is_a.values()).join(", ")],
                 // ["intersection_of", Array.from(goTerm.intersection_of.values()).join(", ")],
                 // ["relationship", Array.from(goTerm.relationship.values()).join(", ")],
-                ["interactors", goTerm.getInteractors(false).size]
+                // ["interactors", goTerm.getInteractors(false).size]
             ];
         },
     },
