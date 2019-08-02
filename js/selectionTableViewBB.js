@@ -607,11 +607,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 */
                 var d3this = d3.select(this);
                 if (self.numberColumns.has(d)) {
-                    d3this.html(deemphasiseFraction(getText.call(this, d)));
+                    d3this.html (deemphasiseFraction (getText.call(this, d)));
                 } else if (self.monospacedColumns.has(d)) {
-                    d3this.html(getText);
+                    d3this.html (getText);
                 } else {
-                    d3this.text(getText);
+                    d3this.text (getText);
                 }
 
                 if (self.maxWidthColumns.has(d)) {
