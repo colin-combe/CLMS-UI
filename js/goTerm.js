@@ -27,6 +27,35 @@ CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
     return interactorSet;
 }
 
+
+CLMSUI.GoTerm.prototype.isDirectRelation = function(anotherGoTerm) {
+    if (this == anotherGoTerm) {
+        return true;
+    }
+    for (var superclass of this.is_a){
+        if (superclass == anotherGoTerm.id) {
+          return true;
+        }
+    }
+    for (var subclass of this.subclasses){
+      if (subclass == anotherGoTerm.id) {
+        return true;
+      }
+    }
+    for (var partOf of this.part_of){
+      if (partOf == anotherGoTerm.id) {
+        return true;
+      }
+    }
+    for (var part of this.parts){
+      if (part == anotherGoTerm.id) {
+        return true;
+      }
+    }
+    return false;
+}
+
+
 /*
 CLMSUI.GoTerm.prototype.getClosestVisibleParents = function(visibleParents) {
     if (!visibleParents) {

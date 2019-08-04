@@ -283,7 +283,7 @@
 		});
         } else {
             spinner.stop(); // stop spinner
-            success ({});
+            success ({times:{}});   // bug fix for empty searches
         }
 
     //]]>
