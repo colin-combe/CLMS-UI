@@ -548,28 +548,6 @@ CLMSUI.modelUtils = {
         }
         return rmap;
     },
-
-    // Connect searches to proteins
-    getProteinSearchMap: function(peptideArray, rawMatchArray) {
-        var pepMap = d3.map(peptideArray, function(peptide) {
-            return peptide.id;
-        });
-        var searchMap = {};
-        rawMatchArray = rawMatchArray || [];
-        rawMatchArray.forEach(function(rawMatch) {
-            var prots = pepMap.get(rawMatch.pi/*[0]*/).prt; // pi now restored to single value, not array
-            var searchToProts = searchMap[rawMatch.si];
-            if (!searchToProts) {
-                var newSet = d3.set();
-                searchMap[rawMatch.si] = newSet;
-                searchToProts = newSet;
-            }
-            prots.forEach(function(prot) {
-                searchToProts.add(prot);
-            });
-        });
-        return searchMap;
-    },
     
     makeMultiKeyProteinMap: function (clmsModel) {
         var protMap = d3.map();
