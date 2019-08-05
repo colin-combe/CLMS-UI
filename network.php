@@ -241,10 +241,11 @@
         var z;
 
 		var success = function (json) {
-			try {
+			try {  
                 json.times.io = (Date.now() / 1000) - json.times.endAbsolute;
                 json.times.overall = json.times.io + (json.times.endAbsolute - json.times.startAbsolute);
                 console.log ("TIME t2", performance.now(), json.times);
+                //console.log (JSON.stringify(json));
                 //console.log (json);
 
 				CLMSUI.init.models (json);
