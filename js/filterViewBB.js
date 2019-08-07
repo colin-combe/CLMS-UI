@@ -127,14 +127,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     tooltip: "Filter to cross-links involving a protein name/identifier/description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
                 {
-                    "label": "Charge",
-                    "id": "charge",
-                    "chars": 3,
-                    tooltip: "Filter to cross-links with matches with this exact charge state e.g. 3, or range of charge states e.g. 2-6",
-                    pattern: "\\d+-?\\d*",
-                    classType: "chargeFilterControl",
-                },
-                {
                     "label": "Run",
                     "id": "runName",
                     "chars": 5,
