@@ -78,15 +78,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             d3.event.preventDefault();
             // react on right-clicking
             self.fixed = [];
+            self.render();
         });
         var margin = this.options.margin;
-        this.vis = this.svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");; //.attr("transform", "translate(" + 310 + "," + 310 + ")");
+        this.vis = this.svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
         this.backgroundGroup = this.vis.append("g");
         // this.linkGroup = vis.append("g");
         this.foregroundGroup = this.vis.append("g");
         this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
-        //this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
-        // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
         this.sankey = d3.sankey().nodeWidth(15);
         this.fixed = [];
 
@@ -279,7 +278,6 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 })
                 .on("mouseover", function(d) {
                     var term = d.term;
-                    //d3.select(this).select("circle").classed("highlightedProtein", true);
                     nodeSel.style("opacity", function(d2) {
                         return term.isDirectRelation(d2.term) ? 1 : 0;
                     });
@@ -293,26 +291,29 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
                 })
                 .on("mouseout", function(d) {
-                    //d3.select(this).select("circle").classed("highlightedProtein", false);
-                    nodeSel.style("opacity", 1);
-                    linkSel.style("display", "none");
-                    nodeSel.select("rect").attr("fill", function(d) {
-                        return d.color = color(d.name.replace(/ .*/, ""));
-                    });
-
-                    // self.model.get("tooltipModel").set("contents", null);
+                    if (self.fixed.length == 0) {
+                        nodeSel.style("opacity", 1);
+                        linkSel.style("display", "none");
+                        nodeSel.select("rect").attr("fill", function(d) {
+                            return d.color = color(d.name.replace(/ .*/, ""));
+                        });
+                    }
                     self.model.setHighlightedProteins([]);
                 })
                 .on("contextmenu", function(d) {
                     d3.event.preventDefault();
+                    d3.event.stopPropagation();
                     // react on right-clicking
                     self.fixed.push(d.id);
+
                 });
 
             nodeEnter.append("rect")
                 .attr("width", self.sankey.nodeWidth())
                 .style("fill", function(d) {
-                    return d.color = color(d.name.replace(/ .*/, ""));
+                    //return d.color = color(d.name.replace(/ .*/, ""));
+                    var toFill = (self.fixed.length == 0 || self.fixed.contains(d.id));
+                    return toFill? color(d.name.replace(/ .*/, "")) : "none";
                 })
                 .style("fill-opacity", function(d) {
                     return 0.2; //d.color = color(d.name.replace(/ .*/, ""));
@@ -374,66 +375,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     // called when things need repositioned, but not re-rendered from data
     // gets called before render
     resize: function() {
-        //     // Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
-        //     var jqElem = $(this.svg.node());
-        //     var cx = jqElem.width(); //this.svg.node().clientWidth;
-        //     var cy = jqElem.height(); //this.svg.node().clientHeight;
-        //     var margin = this.options.margin;
-        //     var width = Math.max(0, cx - margin.left - margin.right);
-        //     var height = Math.max(0, cy - margin.top - margin.bottom);
-        //
-        // //debug
-        // if (!this.boundsDebug) {
-        //     this.boundsDebug = this.svg.append("rect").attr("x", 5).attr("y", 5).style("stroke", "red").style("fill", "none");
-        // }
-        //
-        // this.boundsDebug.attr("width", width).attr("height", height);
         this.render();
         return this;
     },
 
-    // highlightedProteinsChanged: function() {
-    //     var highlightedParticipants = this.model.get("highlightedProteins");
-    //     for (var highlightedParticipant of highlightedParticipants) {
-    //         //console.log("*", highlightedParticipant.go);
-    //         if (highlightedParticipant.go) {
-    //             for (var goTerm of highlightedParticipant.go) {
-    //                 d3.select("#" + goTerm)
-    //                     .style("fill", "yellow");
-    //             }
-    //         }
-    //     }
-    //     return this;
-    // },
-
-    /*        selectedProteinsChanged: function() {
-            for (var group of this.groupMap.values()) {
-                if (group.children) {
-                    group._children = group.children;
-                    group.children = null;
-                }
-            }
-
-            var selectedParticipants = this.model.get("selectedProteins");
-            for (var selectedParticipant of selectedParticipants) {
-                console.log("**", selectedParticipant.go);
-                if (selectedParticipant.go) {
-                    for (var goTerm of selectedParticipant.go) {
-                        // d3.select("circle")
-                        //   .style("fill", "#000");
-                        if (this.groupMap.has(goTerm)) {
-                            console.log("!", goTerm);
-                            var group = this.groupMap.get(goTerm);
-                            this.expandToShow(group);
-                        }
-
-                    }
-                }
-            }
-            this.render(this.root);
-            //this.resize();
-            return this;
-        },
-    */
     identifier: "Go Terms View",
 });
