@@ -16,8 +16,8 @@
 .goLink {
   fill: none;
   /* stroke: #000; */
-  stroke-opacity: .6;
-  stroke-width: 6;
+  /* stroke-opacity: .6; */
+  stroke-width: 1;
 }
 
 div.goTermsView > div > div.panelInner {
@@ -25,8 +25,8 @@ div.goTermsView > div > div.panelInner {
 }
 
 .node rect {
-  cursor: move;
-  fill-opacity: .9;
+  /* cursor: move; */
+  /* fill-opacity: .9; */
   shape-rendering: crispEdges;
 }
 

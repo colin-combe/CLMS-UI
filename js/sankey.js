@@ -51,7 +51,7 @@ d3.sankey = function() {
   };
 
   sankey.link = function() {
-      var curvature = 0.6;//1;//.9;
+      var curvature = 0.7;//1;//.9;
 
       function link(d) {
           // if (d.target.term.getInteractors().size < 30) {

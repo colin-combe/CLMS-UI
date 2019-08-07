@@ -74,6 +74,11 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         // SVG element
         this.svg = this.chartDiv.append("svg");
+        this.svg.on("contextmenu", function(d) {
+            d3.event.preventDefault();
+            // react on right-clicking
+            self.fixed = [];
+        });
         var margin = this.options.margin;
         this.vis = this.svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");; //.attr("transform", "translate(" + 310 + "," + 310 + ")");
         this.backgroundGroup = this.vis.append("g");
@@ -83,81 +88,54 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         //this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
         // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
         this.sankey = d3.sankey().nodeWidth(15);
+        this.fixed = [];
+
         //markers
         var data = [{
-            id: 0,
-            name: 'circle',
-            path: 'M 0, 0  m -5, 0  a 5,5 0 1,0 10,0  a 5,5 0 1,0 -10,0',
-            viewbox: '-6 -6 12 12'
-        }, {
             id: 1,
-            name: 'square',
-            path: 'M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z',
-            viewbox: '-5 -5 10 10'
+            name: 'diamond',
+            path: 'M 0,-7.0710768 L -7.0710894,0 L 0,7.0710589 L 7.0710462,0 L 0,-7.0710768 z',
+            viewbox: '-5 -5 15 15',
+            transform: 'scale(0.7) translate(5,0)',
+            color: 'orange'
         }, {
             id: 2,
             name: 'arrow',
-            path: "M0,-5L10,0L0,5",//'M 0,0 m -3,-3 L 3,0 L -3,3 Z',
-            viewbox: '-3 -3 6 6'
-        }, {
-            id: 2,
-            name: 'stub',
-            path: 'M 0,0 m -1,-5 L 1,-5 L 1,5 L -1,5 Z',
-            viewbox: '-1 -5 2 10'
-        }]
+            path: "M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z",
+            viewbox: '-5 -5 15 15',
+            transform: 'scale(1.1) translate(1,0)',
+            color: 'black'
+        }];
 
-        var defs = this.svg.append('svg:defs')
-
-        // var paths = svg.append('svg:g')
-        //     .attr('id', 'markers')
-        //     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-
+        var defs = this.svg.append('svg:defs');
         var marker = defs.selectAll('marker')
             .data(data)
             .enter()
             .append('svg:marker')
             .attr('id', function(d) {
-                return 'marker_' + d.name
+                return 'marker_' + d.name;
             })
-            .attr('markerHeight', 5)
-            .attr('markerWidth', 5)
-            .attr('markerUnits', 'strokeWidth')
-            .attr('orient', 'auto')
+            .attr('markerHeight', 15)
+            .attr('markerWidth', 15)
+            .attr('markerUnits', 'userSpaceOnUse')
+            // .attr('orient', 'auto')
             .attr('refX', 0)
             .attr('refY', 0)
             .attr('viewBox', function(d) {
-                return d.viewbox
+                return d.viewbox;
             })
             .append('svg:path')
             .attr('d', function(d) {
-                return d.path
+                return d.path;
             })
-            .attr('fill', function(d, i) {
-                return "black"//color(i)
+            .attr('fill', function(d) {
+                return d.color;
+            })
+            .attr('transform', function(d) {
+                return d.transform;
             });
-
-        // var path = paths.selectAll('path')
-        //     .data(data)
-        //     .enter()
-        //     .append('svg:path')
-        //     .attr('d', function(d, i) {
-        //         return 'M 0,' + (i * 100) + ' L ' + (width - margin.right) + ',' + (i * 100) + ''
-        //     })
-        //     .attr('stroke', function(d, i) {
-        //         return color(i)
-        //     })
-        //     .attr('stroke-width', 5)
-        //     .attr('stroke-linecap', 'round')
-        //     .attr('marker-start', function(d, i) {
-        //         return 'url(#marker_' + d.name + ')'
-        //     })
-        //     .attr('marker-end', function(d, i) {
-        //         return 'url(#marker_' + d.name + ')'
-        //     })
-
     },
 
-    //resize gets called before render
     update: function() {
         var termType = d3.select("#goTermsPanelgoTermSelect").selectAll("option")
             .filter(function(d) {
@@ -269,14 +247,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 .append("path")
                 .attr("class", "goLink")
                 .style("stroke", function(d) {
-                    return d.partOf ? "#fdc086" : "#bdbdbd"
+                    return d.partOf ? "#fdc086" : "black"; //"#bdbdbd"
                 })
                 .style("display", "none")
                 .attr('marker-start', function(d, i) {
-                    return 'url(#marker_' + 'arrow' + ')'
+                    return 'url(#marker_' + (d.partOf ? "diamond" : "arrow") + ')';
                 })
             // .on("mouseover", function(d) {d3.select(this).style("stroke-opacity", 1);})
-            // .on("mouseout", function(d) {d3.select(this).style("stroke-opacity", 0);});
+            // .on("mouseout", function(d) {d3.select(this)scale(1.1) .style("stroke-opacity", 0);});
             // .append("title")
             // .text(function(d) {
             //     return d.target.name + (d.partOf ? " is part of " : " is a ") + d.source.name + "\n" + d.value;
@@ -312,14 +290,6 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                         return d == dr ? d.color = color(d.name.replace(/ .*/, "")) : "none";
                     });
 
-
-                    // self.model.get("tooltipModel")
-                    //     .set("header", "GO Term")
-                    //     .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(term))
-                    //     .set("location", {
-                    //         pageX: d3.event.pageX,
-                    //         pageY: d3.event.pageY
-                    //     });
                     self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
                 })
                 .on("mouseout", function(d) {
@@ -332,12 +302,20 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
                     // self.model.get("tooltipModel").set("contents", null);
                     self.model.setHighlightedProteins([]);
+                })
+                .on("contextmenu", function(d) {
+                    d3.event.preventDefault();
+                    // react on right-clicking
+                    self.fixed.push(d.id);
                 });
 
             nodeEnter.append("rect")
                 .attr("width", self.sankey.nodeWidth())
                 .style("fill", function(d) {
                     return d.color = color(d.name.replace(/ .*/, ""));
+                })
+                .style("fill-opacity", function(d) {
+                    return 0.2; //d.color = color(d.name.replace(/ .*/, ""));
                 })
                 .style("stroke", function(d) {
                     return d3.rgb(d.color).darker(2);
@@ -362,10 +340,10 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 });
             nodeSel.select("text")
                 .attr("x", function(d) {
-                    return (d.x < width / 2) ? 6 + self.sankey.nodeWidth() : -6;
+                    return (d.x < width / 1.5) ? 6 + self.sankey.nodeWidth() : -6;
                 })
                 .attr("text-anchor", function(d) {
-                    return (d.x < width / 2) ? "start" : "end";
+                    return (d.x < width / 1.5) ? "start" : "end";
                 })
                 .attr("y", function(d) {
                     return (d.dy ? d.dy : 0) / 4;
