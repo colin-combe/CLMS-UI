@@ -16,8 +16,6 @@ function callback (model) {
 	});
     
     QUnit.test("Decoy Protein Matching", function (assert) {
-        console.log ("CLMS", clmsModel);
-        
         var decoys = [
             {id: "10001001", name: "REV", accession: "REV_P02768-A", is_decoy: true},
             {id: "10001002", name: "RAN", accession: "RAN_P02768-A", is_decoy: true},
@@ -34,6 +32,27 @@ function callback (model) {
         decoys.forEach (function (decoy) { clmsModel.get("participants").delete (decoy.id); });
         
 		assert.deepEqual(actual, expected, "Expected "+JSON.stringify(expected)+" decoy to real protein match, Passed!");
+	});
+    
+    QUnit.test("Search to Protein Mapping", function (assert) {
+        var peptides = [
+            {id: "1", prt: ["A"]},
+            {id: "2", prt: ["A"]},
+            {id: "3", prt: ["A", "B"]},
+            {id: "4", prt: ["C"]},
+            {id: "5", prt: ["C", "D"]},
+        ];
+        var matches = [
+            {pi: ["1", "2"], si: "S1"},
+            {pi: ["1", "3"], si: "S1"},
+            {pi: ["1", "4"], si: "S1"},
+            {pi: ["4", "5"], si: "S2"},
+        ];
+        
+		var actual = clmsModel.getProteinSearchMap (peptides, matches);
+        var expected = {"S1": d3.set(["A", "B", "C"]), "S2": d3.set(["C", "D"])};
+        
+		assert.deepEqual(actual, expected, "Expected "+JSON.stringify(expected)+" search to protein map, Passed!");
 	});
     
 	
