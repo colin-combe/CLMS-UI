@@ -11,7 +11,7 @@ CLMSUI.fdr = function(crossLinksArr, options) {
         var filtered = crossLink.matches_pp
             .filter(function(match_pp) {
                 // filter out matches which don't pass current subset filter (used to be just peptide length we considered here)
-                return filterModel.subsetFilter(match_pp.match, proteinMatchFunc);
+                return filterModel.subsetFilter(match_pp.match);
             });
         return Math.sqrt(d3.sum(filtered, function(match_pp) {
             return match_pp.match.score() * match_pp.match.score();
@@ -30,8 +30,6 @@ CLMSUI.fdr = function(crossLinksArr, options) {
     if (!filterModel || !clmsModel) {
         return null;
     }
-
-    var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
 
     // Work out link score based on a function of the related match scores
     var clCount = crossLinksArr.length;

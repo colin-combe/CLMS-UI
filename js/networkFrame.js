@@ -223,12 +223,6 @@ CLMSUI.init.modelsEssential = function(options) {
         });
     }
 
-    // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel, MJG 17/05/17
-    var searchMap = CLMSUI.modelUtils.getProteinSearchMap(options.peptides, options.rawMatches);
-    clmsModelInst.get("searches").forEach(function(value, key) {
-        value.participantIDSet = searchMap[key];
-    });
-
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
 

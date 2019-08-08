@@ -31,7 +31,6 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 //navigation
                 pepSeq: "",
                 protNames: "",
-                charge: "",
                 runName: "",
                 scanNumber: "",
                 urpPpi: 1,
@@ -50,7 +49,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 //this.scoreExtent = this.matches.extent (fu)
                 this.valMap = d3.map();
                 this.valMap.set("?", "Q");
-                this.preprocessedInputText = d3.map(); // preprocessed user input values so they're not constantly reparsed for every match
+                this.preprocessedInputValues = d3.map(); // preprocessed user input values so they're not constantly reparsed for every match
 
                 this.resetValues = this.toJSON(); // Store copy of original values if needed to restore later
             },
@@ -65,17 +64,12 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return this;
             },
 
-            processTextFilters: function (searchArray) {
+            preprocessFilterInputValues: function (searchArray) {
                 var protSplit1 = this.get("protNames").toLowerCase().split(","); // split by commas
-                this.preprocessedInputText.set("protNames", protSplit1.map(function(prot) {
+                this.preprocessedInputValues.set("protNames", protSplit1.map(function(prot) {
                     return prot.split("-");
                 })); // split these in turn by hyphens
-                //console.log ("preprocessedInputText", this.preprocessedInputText.get("protNames"));
-
-                var chargeRange = this.get("charge").split("-").map(function(val, i) {
-                    return +val || [0, Infinity][i];
-                });
-                this.preprocessedInputText.set("chargeRange", chargeRange);
+                //console.log ("preprocessedValues", this.preprocessedValues.get("protNames"));
 
                 var pepSeq = this.get("pepSeq");
                 var splitPepSeq = pepSeq.split("-").map(function(part) {
@@ -84,7 +78,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                         lower: part.toLowerCase()
                     };
                 });
-                this.preprocessedInputText.set("pepSeq", splitPepSeq);
+                this.preprocessedInputValues.set("pepSeq", splitPepSeq);
                 
                 // Search group pre calculations
                 this.precalcedSearchGroupsSet = d3.set(this.get("searchGroups"));
@@ -96,12 +90,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 this.precalcedSearchToGroupMap = searchGroupMap;
             },
 
-            naiveProteinMatch: function(p1, p2) {
-                return p1 === p2;
-            },
-
-            subsetFilter: function(match, matchingProteinPairFunc) {
-                matchingProteinPairFunc = matchingProteinPairFunc || this.naiveProteinMatch; // naive default match
+            subsetFilter: function(match) {
                 var linear = match.isLinear();
                 var ambig = match.isAmbig();
 
@@ -118,18 +107,12 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
                 //self-links? - if self links's not selected and match is self link return false
                 // possible an ambiguous self link will still get displayed
-                var showSelfLinks = this.get("selfLinks");
-                var showBetweenLinks = this.get("betweenLinks");
-                var showHomomultimericLinks = this.get("homomultimericLinks");
-                // if ((showSelfLinks || showBetweenLinks) && !linear) { // we don't test linears here
 
-                if (!((match.couldBelongToSelfLink == true && showSelfLinks && !match.confirmedHomomultimer) ||
-                        (match.couldBelongToBetweenLink == true && showBetweenLinks) ||
-                        (match.confirmedHomomultimer == true && showHomomultimericLinks))) {
+                if (!((match.couldBelongToSelfLink && !match.confirmedHomomultimer && this.get("selfLinks")) ||
+                        (match.couldBelongToBetweenLink && this.get("betweenLinks")) ||
+                        (match.confirmedHomomultimer && this.get("homomultimericLinks")))) {
                     return false;
                 }
-
-                // }
 
                 //temp
                 var aaApart = +this.get("aaApart");
@@ -138,8 +121,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     if ( /*!match.confirmedHomomultimer &&*/ !ambig && match.crossLinks[0].isSelfLink()) {
                         // linears report false for isSelfLink so they never get to this bit (where toResidue would be null)
                         var unambigCrossLink = match.crossLinks[0];
-                        var calc = Math.abs(unambigCrossLink.toResidue - unambigCrossLink.fromResidue);
-                        if (calc < aaApart) {
+                        if (Math.abs(unambigCrossLink.toResidue - unambigCrossLink.fromResidue) < aaApart) {
                             return false;
                         }
                     }
@@ -184,7 +166,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             proteinNameCheck: function(match, searchString) {
                 if (searchString) {
                     //protein name check
-                    var stringPartArrays = this.preprocessedInputText.get("protNames");
+                    var stringPartArrays = this.preprocessedInputValues.get("protNames");
                     var participants = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
                     var matchedPeptides = match.matchedPeptides;
                     var matchedPepCount = matchedPeptides.length;
@@ -235,16 +217,6 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             navigationFilter: function(match) {
                 // Arranged so cheaper checks are done first
 
-                //charge check - charge now not filtered
-                /*
-                var chargeFilter = this.get("charge");
-                var chargeRange = this.preprocessedInputText.get("chargeRange");
-                var mpCharge = match.precursorCharge;
-                if (chargeFilter && (chargeRange.length === 1 ? mpCharge !== chargeRange[0] : (mpCharge < chargeRange[0] || mpCharge > chargeRange[1]))) {
-                    return false;
-                }
-                */
-
                 //run name check
                 var runNameFilter = this.get("runName");
                 if (runNameFilter &&
@@ -268,7 +240,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
 
                 //peptide seq check
-                if (seqCheck(this.get("pepSeq"), this.preprocessedInputText.get("pepSeq")) === false) {
+                if (seqCheck(this.get("pepSeq"), this.preprocessedInputValues.get("pepSeq")) === false) {
                     return false;
                 }
 
