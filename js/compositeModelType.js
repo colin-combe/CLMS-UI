@@ -13,7 +13,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             selectedProteins: [],
             highlightedProteins: [],
             groupColours: null, // will be d3.scale for colouring by search/group,
-            TTCrossLinkCount: 0
+            TTCrossLinkCount: 0,
+            groupedGoTerms: []
         });
 
         this.listenTo(this.get("clmsModel"), "change:matches", function() {
@@ -529,7 +530,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         });
         this.setSelectedProteins(toSelect);
     },
-
+/*
     groupSelectedProteins: function() {
         var groups = this.get("groups");
         if (!groups){
@@ -548,7 +549,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.trigger("groupsChanged");
 
     },
-
+*/
     getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
         if (xlink.toProtein){
         // distancesObj and alignCollection can be supplied to function or, if not present, taken from model

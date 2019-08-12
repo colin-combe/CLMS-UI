@@ -74,12 +74,16 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         // SVG element
         this.svg = this.chartDiv.append("svg");
-        this.svg.on("contextmenu", function(d) {
-            d3.event.preventDefault();
-            // react on right-clicking
-            self.fixed = [];
-            self.render();
-        });
+        this.svg.on("click", function(d) {
+                self.model.set("groupedGoTerms", []);
+                self.model.trigger("groupedGoTermsChanged");
+            })
+            .on("contextmenu", function(d) {
+                d3.event.preventDefault();
+                // react on right-clicking
+                self.fixed = [];
+                self.render();
+            });
         var margin = this.options.margin;
         this.vis = this.svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
         this.backgroundGroup = this.vis.append("g");
@@ -87,7 +91,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.foregroundGroup = this.vis.append("g");
         this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
         this.sankey = d3.sankey().nodeWidth(15);
-        this.fixed = [];
+        //this.fixed = [];
 
         //markers
         var data = [{
@@ -275,6 +279,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 .on("click", function(d) {
                     self.model.setSelectedProteins([], false);
                     self.model.setSelectedProteins(Array.from(d.term.getInteractors().values()), true);
+
+                    self.model.get("groupedGoTerms").push(d.term);
+                    self.model.trigger("groupedGoTermsChanged");
                 })
                 .on("mouseover", function(d) {
                     var term = d.term;
@@ -291,29 +298,29 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
                 })
                 .on("mouseout", function(d) {
-                    if (self.fixed.length == 0) {
+                    //if (self.fixed.length == 0) {
                         nodeSel.style("opacity", 1);
                         linkSel.style("display", "none");
                         nodeSel.select("rect").attr("fill", function(d) {
                             return d.color = color(d.name.replace(/ .*/, ""));
                         });
-                    }
+                    // }
                     self.model.setHighlightedProteins([]);
                 })
                 .on("contextmenu", function(d) {
                     d3.event.preventDefault();
                     d3.event.stopPropagation();
                     // react on right-clicking
-                    self.fixed.push(d.id);
+                    //self.fixed.push(d.id);
 
                 });
 
             nodeEnter.append("rect")
                 .attr("width", self.sankey.nodeWidth())
                 .style("fill", function(d) {
-                    //return d.color = color(d.name.replace(/ .*/, ""));
-                    var toFill = (self.fixed.length == 0 || self.fixed.contains(d.id));
-                    return toFill? color(d.name.replace(/ .*/, "")) : "none";
+                    return d.color = color(d.name.replace(/ .*/, ""));
+                    // var toFill = (self.fixed.length == 0 || self.fixed.contains(d.id));
+                    // return toFill ? color(d.name.replace(/ .*/, "")) : "none";
                 })
                 .style("fill-opacity", function(d) {
                     return 0.2; //d.color = color(d.name.replace(/ .*/, ""));
