@@ -257,6 +257,7 @@
 						onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
 					}
 				);
+                d3.select(".gutter").attr("title", "Drag to change space available to selection table");
 				CLMSUI.init.views();
 				allDataLoaded ();
 			} catch (err) {
