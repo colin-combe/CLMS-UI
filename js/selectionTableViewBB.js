@@ -84,7 +84,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             searchMissedCleavages: "Search Max. Missed Cleavages",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorItensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd"]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorIntensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd"]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
@@ -590,10 +590,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             return cellFunc ? cellFunc(link) : (link[d] || "");
         };
 
-        var deemphasiseFraction = function(text) {
-            var z = text ? text.toString().indexOf(".") : -1;
-            if (z < 0) return text;
-            return text.slice(0, z + 1) + "<span class='smallText'>" + text.slice(z + 1) + "</span>";
+        var deemphasiseFraction = function (text) {
+            var str = text ? text.toString() : "";
+            var dpoint = str.indexOf(".");
+            if (dpoint < 0) return text;
+            var sci = str.indexOf("+", dpoint + 1);
+            return text.slice(0, dpoint) + "<span class='smallText'>" + (sci >= 0 ? text.slice(dpoint, sci) + "</span>" + text.slice(sci) : text.slice(dpoint) + "</span>");
         };
 
         cellJoin
