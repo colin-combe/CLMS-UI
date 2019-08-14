@@ -23,6 +23,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     },
 
     initialize: function(viewOptions) {
+        var controlGroups = [
+            {id: "subsetToggles", selector: "subsetToggles", klass: "toggles subsetToggles", type: "checkbox"},
+            {id: "subsetNumberFilters", selector: "subsetToggles", klass: "toggles subsetToggles", type: "checkbox"},
+        ];
+        
         var defaultOptions = {
             modes: [{
                     "label": "Manual",
@@ -38,32 +43,38 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             subsetToggles: [{
                     "label": "Linear",
                     "id": "linears",
-                    tooltip: "Show linear peptides"
+                    tooltip: "Show linear peptides",
+                    group: "subsetToggles"
                 },
                 {
                     "label": "Cross-links",
                     "id": "crosslinks",
-                    tooltip: "Show cross-links"
+                    tooltip: "Show cross-links",
+                    group: "subsetToggles"
                 },
                 {
                     "label": "Ambig.",
                     "id": "ambig",
-                    tooltip: "Show ambiguous cross-links"
+                    tooltip: "Show ambiguous cross-links",
+                    group: "subsetToggles",                    
                 },
                 {
                     "label": "Between",
                     "id": "betweenLinks",
-                    tooltip: "Show cross-links between different proteins"
+                    tooltip: "Show cross-links between different proteins",
+                    group: "subsetToggles"
                 },
                 {
                     "label": "Self",
                     "id": "selfLinks",
-                    tooltip: "Show cross-links between the same protein"
+                    tooltip: "Show cross-links between the same protein",
+                    group: "subsetToggles"
                 },
                 {
                     "label": "Homomult.",
                     "id": "homomultimericLinks",
-                    tooltip: "Show cross-links with overlapping linked peptides "
+                    tooltip: "Show cross-links with overlapping linked peptides",
+                    group: "subsetToggles"
                 },
             ],
             subsetNumberFilters: [{
@@ -71,14 +82,18 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     "id": "aaApart",
                     min: 0,
                     max: 999,
-                    tooltip: "Only show cross-links separated by at least N amino acids e.g. 10"
+                    tooltip: "Only show cross-links separated by at least N amino acids e.g. 10",
+                    group: "subsetNumberFilters",
+                    inequality: "&ge;"
                 },
                 {
                     "label": "Pep. length",
                     "id": "pepLength",
                     min: 1,
                     max: 99,
-                    tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4"
+                    tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4",
+                    group: "subsetNumberFilters",
+                    inequality: "&ge;"
                 },
             ],
             validationStatusToggles: [{
@@ -159,6 +174,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         });
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions || {});
+        var subsets = d3.merge ([this.options.subsetToggles, this.options.subsetNumberFilters]);
+        var subsetNest = d3.nest().key(function(d) { return d.group; }).entries(subsets);
+        console.log ("subsetNest", subsetNest);
         
         
         var uniqueGroups = this.model.get("searchGroups");
@@ -265,15 +283,16 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 .attr("title", function(d) {
                     return d.tooltip ? d.tooltip : undefined;
                 })
-                .append("label");
+                .append("label")
+            ;
             subsetToggles.append("span")
                 .text(function(d) {
                     return d.label;
-                });
+                })
+            ;
             subsetToggles.append("input")
                 .attr("class", "subsetToggleFilterToggle")
                 .attr("type", "checkbox")
-            //.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
             ;
 
             var subsetNumberFilters = dataSubsetDivSel.selectAll("div.subsetNumberFilterDiv")
@@ -294,20 +313,15 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 })
             ;
 
-            subsetNumberFilters.append("p").classed("cutoffLabel", true).append("span").html("&ge;");
+            subsetNumberFilters.append("p").classed("cutoffLabel", true).append("span").html(function(d) { return d.inequality; });
 
             subsetNumberFilters.append("input")
                 .attr({
                     class: "subsetNumberFilter",
                     type: "number",
-                    min: function(d) {
-                        return d.min;
-                    },
-                    max: function(d) {
-                        return d.max;
-                    }
+                    min: function(d) { return d.min; },
+                    max: function(d) { return d.max; }
                 })
-            //.property ("value", function(d) { return self.model.get(d.id); })
             ;
         }
 
