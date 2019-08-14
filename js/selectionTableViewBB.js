@@ -88,7 +88,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
-        this.minWidthColumns = d3.set(["massError"]);
+        this.minWidthColumns = d3.set(["massError", "searchMissedCleavages"]);
         this.emphasiseColumns = d3.set(["pos1", "pos2"]);
 
         // entries commented out until a replacement is found for xlv
@@ -390,7 +390,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 })
                 .classed("colSectionStart", function(d) {
                     return self.colSectionStarts.has(d);
+                })
+                .classed("minWidth", function(d) {
+                    return self.minWidthColumns.has(d);
                 });
+            ;
 
             this.setPage(this.page);
         }

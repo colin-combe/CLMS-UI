@@ -81,8 +81,8 @@
     text-overflow: ellipsis;
 }
 
-.selectView TD.minWidth {
-    min-width: 6em;
+.selectView TD.minWidth, .selectView TH.minWidth {
+    min-width: 7em;
 }
 
 .selectView TD.emphasise {
