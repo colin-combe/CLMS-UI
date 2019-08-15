@@ -6,9 +6,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         "mouseleave table": "highlight",
         "mouseenter table": "focusTable",
         "keydown table": "selectByKey",
-        "click .pageUp": "pageUp",
-        "click .pageDown": "pageDown",
-
     },
 
     initialize: function(options) {
@@ -87,11 +84,11 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             searchMissedCleavages: "Search Max. Missed Cleavages",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorItensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd"]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorIntensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd"]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
-        this.minWidthColumns = d3.set(["massError"]);
+        this.minWidthColumns = d3.set(["massError", "searchMissedCleavages"]);
         this.emphasiseColumns = d3.set(["pos1", "pos2"]);
 
         // entries commented out until a replacement is found for xlv
@@ -228,21 +225,46 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.pageSize = this.options.pageSize || 20;
         var pager = d3el.select(".pager");
         if (!self.options.mainModel) {
-            //pager.append("span").text("Page:");
 
-            // pager.append("input")
-            //     .attr("type", "number")
-            //     .attr("min", "1")
-            //     .attr("max", "999")
-            //     .style("display", "inline-block")
-            //     .on("input", function () {
-            //         // this check stops deleting final character resetting page to 1 all the time
-            //         if (d3.event.inputType !== "deleteContentBackward" && this.value) { // "deleteContentBackward" is chrome specific
-            //             self.setPage(this.value);
-            //         }
-            //     });
-
-            pager.append("span").html("Page:<span id='page'>1</span><button class='pageDown'>&lt;</button><button class='pageUp'>&gt;</button>")
+            pager.append("input")
+                .attr("class", "selectionTablePageInput")
+                 .attr("type", "number")
+                 .attr("min", "1")
+                 .attr("max", "999")
+                 .style("display", "inline-block")
+                 .on("input", function () {
+                // this check stops deleting final character resetting page to 1 all the time
+                     if (d3.event.inputType !== "deleteContentBackward" && this.value) { // "deleteContentBackward" is chrome specific
+                         self.setPage(this.value);
+                     }
+                 })
+            ;
+            
+            var timer, interval;
+            pager.append("span").selectAll(".btn")
+                .data([{text: "<", incr: -1, tooltip: "Higher scoring crosslinks"}, {text: ">", incr: 1, tooltip: "Lower scoring crosslinks"}])
+                .enter()
+                .append("button")
+                .attr("class", "btn btn-1 btn-1a btnIncr")
+                .attr("title", function(d) { return d.tooltip; })
+                .text (function (d) { return d.text; })
+                .on ("mousedown", function (d) {
+                    self.pageIncrement (d.incr);
+                    timer = setTimeout (function () {
+                        interval = setInterval (function () {
+                            self.pageIncrement (d.incr);
+                        }, 50);
+                    }, 500);
+                })
+                .on ("mouseup", function () {
+                    clearTimeout (timer);
+                    clearInterval (interval);
+                })
+                .on ("mouseleave", function () {
+                    clearTimeout (timer);
+                    clearInterval (interval);
+                })
+            ;
 
         } else {
             pager.append("span").text("Alternative Explanations");
@@ -368,26 +390,22 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 })
                 .classed("colSectionStart", function(d) {
                     return self.colSectionStarts.has(d);
+                })
+                .classed("minWidth", function(d) {
+                    return self.minWidthColumns.has(d);
                 });
+            ;
 
             this.setPage(this.page);
         }
     },
 
-    pageUp: function() {
-        if (this.page < this.getPageCount()) {
-            var newpage = this.page + 1;
-            d3.select("#page").text(newpage);
-            this.setPage(newpage);
+    pageIncrement: function (incr) {
+        var newPage = this.page + incr;
+        if (newPage >= 1 && newPage <= this.getPageCount()) {
+            this.setPage (newPage);
         }
-    },
-
-    pageDown: function() {
-        if (this.page > 1) {
-            var newpage = this.page - 1;
-            d3.select("#page").text(newpage);
-            this.setPage(newpage);
-        }
+        return this;
     },
 
     setPage: function(pg) {
@@ -398,9 +416,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var pageCount = this.getPageCount();
         pg = Math.max(Math.min(pg, pageCount), 1);
         this.page = pg;
-        // var input = d3.select(this.el).select(".pager>input");
-        // input.property("value", pg);
-        d3.select("#page").text(pg);
+        d3.select(this.el).select(".pager>input").property("value", pg);
+        //d3.select("#page").text(pg);
 
         var limit = totalSelectedFilteredMatches; // selectedXLinkCount;
         var lower = (limit === 0) ? 0 : ((pg - 1) * this.pageSize) + 1;
@@ -573,10 +590,12 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             return cellFunc ? cellFunc(link) : (link[d] || "");
         };
 
-        var deemphasiseFraction = function(text) {
-            var z = text ? text.toString().indexOf(".") : -1;
-            if (z < 0) return text;
-            return text.slice(0, z + 1) + "<span class='smallText'>" + text.slice(z + 1) + "</span>";
+        var deemphasiseFraction = function (text) {
+            var str = text ? text.toString() : "";
+            var dpoint = str.indexOf(".");
+            if (dpoint < 0) return text;
+            var sci = str.indexOf("+", dpoint + 1);
+            return text.slice(0, dpoint) + "<span class='smallText'>" + (sci >= 0 ? text.slice(dpoint, sci) + "</span>" + text.slice(sci) : text.slice(dpoint) + "</span>");
         };
 
         cellJoin

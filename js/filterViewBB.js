@@ -126,7 +126,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     "chars": 7,
                     tooltip: "Filter to cross-links involving a protein name/identifier/description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
-                {
+            ],
+            navigationMassSpecFilters: [{
                     "label": "Run",
                     "id": "runName",
                     "chars": 5,
@@ -137,7 +138,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     "id": "scanNumber",
                     "chars": 5,
                     tooltip: "Filter to cross-links with matches with this scan number e.g. 44565",
-                    pattern: "\\d*"
+                    //pattern: "\\d*",
+                    type: "number"
                 },
             ],
             navigationNumberFilters: [{
@@ -403,7 +405,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
 
         function initNavigationGroup() {
-            var navDivSel = makeFilterControlDiv ({id: "navFilters", expandable: true, groupName: "Text"});
+            var navDivSel = makeFilterControlDiv ({id: "navFilters", expandable: true, groupName: "Protein"});
             //~ navDivSel.append("span").attr("class", "sideOn").text("NAVIGATION");
 
             var textFilters = navDivSel.selectAll("div.textFilters")
@@ -425,18 +427,76 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     return d.label;
                 })
             ;
-            textFilters.append("input")
+            var tfilters = textFilters.append("input")
                 .attr("class", "filterTypeText")
-                .attr("type", "textbox")
+                .attr("type", function (d) { return d.type || "text"; })
                 .attr("size", function(d) {
                     return d.chars;
                 })
-                //.property ("value", function(d) { return self.model.get(d.id); })
-                .filter(function(d) {
+            ;
+            
+            // add patterns to inputs that have them 
+            tfilters.filter(function(d) {
                     return d.pattern;
                 })
                 .attr("pattern", function(d) {
                     return d.pattern;
+                })
+            ;
+            // add max-width to number inputs (cos size doesn't work for them)
+            tfilters.filter (function (d) {
+                    return d.type === "number";
+                })
+                .style ("max-width", function (d) {
+                    return d.chars+"em";   
+                })
+            ;
+        }
+        
+        function initMassSpecNavigationGroup() {
+            var navMassSpecDivSel = makeFilterControlDiv ({id: "navMassSpecFilters", expandable: true, groupName: "Mass Spec"});
+            
+            var textFilters = navMassSpecDivSel.selectAll("div.textFilters")
+                .data(this.options.navigationMassSpecFilters, function(d) {
+                    return d.id;
+                })
+                .enter()
+                .append("div")
+                .attr("class", function(d) {   
+                    return "textFilters" + (d.classType ? " "+ d.classType : "");
+                })
+                .attr("title", function(d) {
+                    return d.tooltip ? d.tooltip : undefined;
+                })
+                .append("label")
+            ;
+            textFilters.append("span")
+                .text(function(d) {
+                    return d.label;
+                })
+            ;
+            var tfilters = textFilters.append("input")
+                .attr("class", "filterTypeText")
+                .attr("type", function (d) { return d.type || "text"; })
+                .attr("size", function(d) {
+                    return d.chars;
+                })
+            ;
+            
+            // add patterns to inputs that have them 
+            tfilters.filter(function(d) {
+                    return d.pattern;
+                })
+                .attr("pattern", function(d) {
+                    return d.pattern;
+                })
+            ;
+            // add max-width to number inputs (cos size doesn't work for them)
+            tfilters.filter (function (d) {
+                    return d.type === "number";
+                })
+                .style ("max-width", function (d) {
+                    return d.chars+"em";   
                 })
             ;
         }
@@ -540,6 +600,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         initScoreFilterGroup.call(this);
         initFDRPlaceholder.call(this);
         initNavigationGroup.call(this);
+        initMassSpecNavigationGroup.call(this);
         initNavigationGroup2.call(this);
         initGroupGroup.call(this);
         addScrollRightButton.call(this);
