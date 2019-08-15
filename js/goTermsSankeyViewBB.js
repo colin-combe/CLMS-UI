@@ -75,14 +75,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         // SVG element
         this.svg = this.chartDiv.append("svg");
         this.svg.on("click", function(d) {
-                self.model.set("groupedGoTerms", []);
-                self.model.trigger("groupedGoTermsChanged");
+                // self.model.set("groupedGoTerms", []);
+                // self.model.trigger("groupedGoTermsChanged");
             })
             .on("contextmenu", function(d) {
                 d3.event.preventDefault();
                 // react on right-clicking
-                self.fixed = [];
-                self.render();
+                //self.fixed = [];
+                //self.render();
             });
         var margin = this.options.margin;
         this.vis = this.svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -137,6 +137,22 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .attr('transform', function(d) {
                 return d.transform;
             });
+
+        //associate go terms with proteins - this prob shouldn't be here
+        var go = CLMSUI.compositeModelInst.get("go");
+        var proteins = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
+        for (var protein of proteins) {
+            if (protein.uniprot) {
+                for (var goId of protein.uniprot.go) {
+                    var goTerm = go.get(goId);
+                    if (goTerm) {
+                        goTerm.interactors.add(protein);
+                    }
+                }
+            }
+        }
+        this.update();
+
     },
 
     update: function() {
@@ -220,6 +236,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     render: function() {
         if (this.data) {
+
             //console.log("RENDERING GO TERMS");
             var jqElem = $(this.svg.node());
             var cx = jqElem.width(); //this.svg.node().clientWidth;
@@ -279,9 +296,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 .on("click", function(d) {
                     self.model.setSelectedProteins([], false);
                     self.model.setSelectedProteins(Array.from(d.term.getInteractors().values()), true);
-
-                    self.model.get("groupedGoTerms").push(d.term);
-                    self.model.trigger("groupedGoTermsChanged");
+                    // self.model.get("groupedGoTerms").push(d.term);
+                    // self.model.trigger("groupedGoTermsChanged");
+                    d3.event.stopPropagation();
                 })
                 .on("mouseover", function(d) {
                     var term = d.term;

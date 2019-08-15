@@ -812,7 +812,7 @@ CLMSUI.modelUtils = {
     },
 
 
-    updateGOAnnotations: function() {
+    loadGOAnnotations: function() {
 
         var url = "./go.obo";
 
@@ -863,71 +863,7 @@ CLMSUI.modelUtils = {
 
                 CLMSUI.compositeModelInst.set("go", go);
 
-/*
-                var tempMap = new Map();
-                var goDags = {};
-
-                function checkTerm(goTerm) {
-                    if (!tempMap.has(goTerm.id)) {
-                        if (goTerm.is_a.size > 0) {
-                            var is_aValues = goTerm.is_a.values();
-                            for (var parentId of is_aValues) {
-                                // var parentId = p.replace(':', '');
-                                var parentTerm = go.get(parentId);
-                                if (goTerm.namespace == parentTerm.namespace) {
-                                    goTerm.is_aParents.push(parentTerm);
-                                    checkTerm(parentTerm);
-                                    parentTerm.is_aChildren.push(goTerm);
-                                } else {
-                                   // console.log("!?", goTerm.id, parentId);
-                                }
-                            }
-                        }
-                        if (goTerm.part_of.size > 0) {
-                            var part_ofValues = goTerm.part_of.values();
-                            for (var parentId of part_ofValues) {
-                                // var parentId = p.split(" ")[0];
-                                var parentTerm = go.get(parentId);
-                                if (goTerm.namespace == parentTerm.namespace) {
-                                    goTerm.part_ofParents.push(parentTerm);
-                                    checkTerm(parentTerm);
-                                    parentTerm.part_ofChildren.push(goTerm);
-                                }
-                            }
-                        }
-                        if (goTerm.id == "GO0008150") {
-                            goDags.biological_process = goTerm;
-                        } else if (goTerm.id == "GO0003674") {
-                            goDags.molecular_function = goTerm;
-                        } else if (goTerm.id == "GO0005575") {
-                            goDags.cellular_component = goTerm;
-                        }
-                        tempMap.set(goTerm.id, goTerm);
-                        return goTerm;
-                    } else {
-                        return tempMap.get(goTerm.id);
-                    }
-                    return null;
-                };
-
-                for (var t of go.values()) {
-                    checkTerm(t);
-                }
-
-                CLMSUI.compositeModelInst.set("goDags", goDags);
-*/
-                var proteins = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
-                for (var protein of proteins) {
-                    if (protein.uniprot) {
-                        for (var goId of protein.uniprot.go) {
-                            var goTerm = go.get(goId);
-                            if (goTerm) {
-                                goTerm.interactors.add(protein);
-                            }
-                        }
-                    }
-                }
-                CLMSUI.vent.trigger("goAnnotationsUpdated");
+                allDataLoaded();
             }
         });
     },

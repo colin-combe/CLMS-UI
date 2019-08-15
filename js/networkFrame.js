@@ -23,7 +23,7 @@ CLMSUI.vent = {};
 _.extend(CLMSUI.vent, Backbone.Events);
 
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
-var allDataLoaded = _.after(3, function() {
+var allDataLoaded = _.after(4, function() {
     console.log("DATA LOADED AND WINDOW LOADED");
 
     CLMSUI.blosumCollInst.trigger("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
@@ -86,8 +86,6 @@ var allDataLoaded = _.after(3, function() {
     annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
-
-    CLMSUI.modelUtils.updateGOAnnotations(); //this makes an asynch call to read go.obo the triggers goAnnotationsUpdated
 
     CLMSUI.vent.trigger("buildAsyncViews");
     //CLMSUI.init.viewsThatNeedAsyncData();
@@ -183,6 +181,9 @@ CLMSUI.init.models = function(options) {
 
     // Start the asynchronous blosum fetching after the above events have been set up
     CLMSUI.blosumCollInst.fetch(options.blosumOptions || {});
+
+    CLMSUI.modelUtils.loadGOAnnotations(); // it will call allDataLoaded when done
+
 };
 
 
