@@ -241,10 +241,11 @@
         var z;
 
 		var success = function (json) {
-			try {
+			try {  
                 json.times.io = (Date.now() / 1000) - json.times.endAbsolute;
                 json.times.overall = json.times.io + (json.times.endAbsolute - json.times.startAbsolute);
                 console.log ("TIME t2", performance.now(), json.times);
+                //console.log (JSON.stringify(json));
                 //console.log (json);
 
 				CLMSUI.init.models (json);
@@ -256,6 +257,7 @@
 						onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
 					}
 				);
+                d3.select(".gutter").attr("title", "Drag to change space available to selection table");
 				CLMSUI.init.views();
 				allDataLoaded ();
 			} catch (err) {
@@ -284,7 +286,7 @@
             });
         } else {
             spinner.stop(); // stop spinner
-            success ({});
+            success ({times:{}});   // bug fix for empty searches
         }
 
     //]]>

@@ -40,7 +40,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var result;
 
         if (filterModel) {
-            filterModel.processTextFilters (searches); // saves doing stuff later on for every match
+            filterModel.preprocessFilterInputValues (searches); // saves doing stuff later on for every match
         }
         // if its FDR based filtering,
         // set all matches fdrPass att to false, then calc
@@ -62,10 +62,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             }, {
                 silent: true
             });
-
         }
-
-        var proteinMatchFunc = clmsModel.isMatchingProteinPairFromIDs.bind(clmsModel);
 
         function filterCrossLink(crossLink) {
             crossLink.filteredMatches_pp = [];
@@ -82,7 +79,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 if (pass) {
                     var filteredMatches_pp = crossLink.matches_pp.filter(
                         function(value) {
-                            return filterModel.subsetFilter(value.match, proteinMatchFunc);
+                            return filterModel.subsetFilter(value.match);
                         }
                     );
 
@@ -122,7 +119,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     for (var m = 0; m < matchCount; m++) {
                         var matchAndPepPos = matches_pp[m];
                         var match = matchAndPepPos.match;
-                        var pass = filterModel.subsetFilter(match, proteinMatchFunc) &&
+                        var pass = filterModel.subsetFilter(match) &&
                             filterModel.validationStatusFilter(match) &&
                             filterModel.scoreFilter(match) &&
                             filterModel.decoyFilter(match);
@@ -254,7 +251,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         /*
         var cfilter = crossfilter (clmsModel.get("matches"));
         var subsetDimension = cfilter.dimension (function (match) {
-            return filterModel.subsetFilter (match, proteinMatchFunc);
+            return filterModel.subsetFilter (match);
         });
         subsetDimension.filterExact (true);
         console.log (cfilter.allFiltered());

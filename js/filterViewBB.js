@@ -23,6 +23,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     },
 
     initialize: function(viewOptions) {
+        var controlGroups = [
+            {id: "subsetToggles", selector: "subsetToggles", klass: "toggles subsetToggles", type: "checkbox"},
+            {id: "subsetNumberFilters", selector: "subsetToggles", klass: "toggles subsetToggles", type: "checkbox"},
+        ];
+        
         var defaultOptions = {
             modes: [{
                     "label": "Manual",
@@ -38,32 +43,38 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             subsetToggles: [{
                     "label": "Linear",
                     "id": "linears",
-                    tooltip: "Show linear peptides"
+                    tooltip: "Show linear peptides",
+                    group: "subsetToggles"
                 },
                 {
                     "label": "Cross-links",
                     "id": "crosslinks",
-                    tooltip: "Show cross-links"
+                    tooltip: "Show cross-links",
+                    group: "subsetToggles"
                 },
                 {
                     "label": "Ambig.",
                     "id": "ambig",
-                    tooltip: "Show ambiguous cross-links"
+                    tooltip: "Show ambiguous cross-links",
+                    group: "subsetToggles",                    
                 },
                 {
                     "label": "Between",
                     "id": "betweenLinks",
-                    tooltip: "Show cross-links between different proteins"
+                    tooltip: "Show cross-links between different proteins",
+                    group: "subsetToggles"
                 },
                 {
                     "label": "Self",
                     "id": "selfLinks",
-                    tooltip: "Show cross-links between the same protein"
+                    tooltip: "Show cross-links between the same protein",
+                    group: "subsetToggles"
                 },
                 {
                     "label": "Homomult.",
                     "id": "homomultimericLinks",
-                    tooltip: "Show cross-links with overlapping linked peptides "
+                    tooltip: "Show cross-links with overlapping linked peptides",
+                    group: "subsetToggles"
                 },
             ],
             subsetNumberFilters: [{
@@ -71,14 +82,18 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     "id": "aaApart",
                     min: 0,
                     max: 999,
-                    tooltip: "Only show cross-links separated by at least N amino acids e.g. 10"
+                    tooltip: "Only show cross-links separated by at least N amino acids e.g. 10",
+                    group: "subsetNumberFilters",
+                    inequality: "&ge;"
                 },
                 {
                     "label": "Pep. length",
                     "id": "pepLength",
                     min: 1,
                     max: 99,
-                    tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4"
+                    tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4",
+                    group: "subsetNumberFilters",
+                    inequality: "&ge;"
                 },
             ],
             validationStatusToggles: [{
@@ -126,15 +141,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     "chars": 7,
                     tooltip: "Filter to cross-links involving a protein name/identifier/description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
-                {
-                    "label": "Charge",
-                    "id": "charge",
-                    "chars": 3,
-                    tooltip: "Filter to cross-links with matches with this exact charge state e.g. 3, or range of charge states e.g. 2-6",
-                    pattern: "\\d+-?\\d*",
-                    classType: "chargeFilterControl",
-                },
-                {
+            ],
+            navigationMassSpecFilters: [{
                     "label": "Run",
                     "id": "runName",
                     "chars": 5,
@@ -145,7 +153,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     "id": "scanNumber",
                     "chars": 5,
                     tooltip: "Filter to cross-links with matches with this scan number e.g. 44565",
-                    pattern: "\\d*"
+                    //pattern: "\\d*",
+                    type: "number"
                 },
             ],
             navigationNumberFilters: [{
@@ -165,6 +174,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         });
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions || {});
+        var subsets = d3.merge ([this.options.subsetToggles, this.options.subsetNumberFilters]);
+        var subsetNest = d3.nest().key(function(d) { return d.group; }).entries(subsets);
+        console.log ("subsetNest", subsetNest);
         
         
         var uniqueGroups = this.model.get("searchGroups");
@@ -271,15 +283,16 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 .attr("title", function(d) {
                     return d.tooltip ? d.tooltip : undefined;
                 })
-                .append("label");
+                .append("label")
+            ;
             subsetToggles.append("span")
                 .text(function(d) {
                     return d.label;
-                });
+                })
+            ;
             subsetToggles.append("input")
                 .attr("class", "subsetToggleFilterToggle")
                 .attr("type", "checkbox")
-            //.property ("checked", function(d) { return Boolean (self.model.get(d.id)); })
             ;
 
             var subsetNumberFilters = dataSubsetDivSel.selectAll("div.subsetNumberFilterDiv")
@@ -300,20 +313,15 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 })
             ;
 
-            subsetNumberFilters.append("p").classed("cutoffLabel", true).append("span").html("&ge;");
+            subsetNumberFilters.append("p").classed("cutoffLabel", true).append("span").html(function(d) { return d.inequality; });
 
             subsetNumberFilters.append("input")
                 .attr({
                     class: "subsetNumberFilter",
                     type: "number",
-                    min: function(d) {
-                        return d.min;
-                    },
-                    max: function(d) {
-                        return d.max;
-                    }
+                    min: function(d) { return d.min; },
+                    max: function(d) { return d.max; }
                 })
-            //.property ("value", function(d) { return self.model.get(d.id); })
             ;
         }
 
@@ -411,7 +419,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
 
         function initNavigationGroup() {
-            var navDivSel = makeFilterControlDiv ({id: "navFilters", expandable: true, groupName: "Text"});
+            var navDivSel = makeFilterControlDiv ({id: "navFilters", expandable: true, groupName: "Protein"});
             //~ navDivSel.append("span").attr("class", "sideOn").text("NAVIGATION");
 
             var textFilters = navDivSel.selectAll("div.textFilters")
@@ -433,18 +441,76 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     return d.label;
                 })
             ;
-            textFilters.append("input")
+            var tfilters = textFilters.append("input")
                 .attr("class", "filterTypeText")
-                .attr("type", "textbox")
+                .attr("type", function (d) { return d.type || "text"; })
                 .attr("size", function(d) {
                     return d.chars;
                 })
-                //.property ("value", function(d) { return self.model.get(d.id); })
-                .filter(function(d) {
+            ;
+            
+            // add patterns to inputs that have them 
+            tfilters.filter(function(d) {
                     return d.pattern;
                 })
                 .attr("pattern", function(d) {
                     return d.pattern;
+                })
+            ;
+            // add max-width to number inputs (cos size doesn't work for them)
+            tfilters.filter (function (d) {
+                    return d.type === "number";
+                })
+                .style ("max-width", function (d) {
+                    return d.chars+"em";   
+                })
+            ;
+        }
+        
+        function initMassSpecNavigationGroup() {
+            var navMassSpecDivSel = makeFilterControlDiv ({id: "navMassSpecFilters", expandable: true, groupName: "Mass Spec"});
+            
+            var textFilters = navMassSpecDivSel.selectAll("div.textFilters")
+                .data(this.options.navigationMassSpecFilters, function(d) {
+                    return d.id;
+                })
+                .enter()
+                .append("div")
+                .attr("class", function(d) {   
+                    return "textFilters" + (d.classType ? " "+ d.classType : "");
+                })
+                .attr("title", function(d) {
+                    return d.tooltip ? d.tooltip : undefined;
+                })
+                .append("label")
+            ;
+            textFilters.append("span")
+                .text(function(d) {
+                    return d.label;
+                })
+            ;
+            var tfilters = textFilters.append("input")
+                .attr("class", "filterTypeText")
+                .attr("type", function (d) { return d.type || "text"; })
+                .attr("size", function(d) {
+                    return d.chars;
+                })
+            ;
+            
+            // add patterns to inputs that have them 
+            tfilters.filter(function(d) {
+                    return d.pattern;
+                })
+                .attr("pattern", function(d) {
+                    return d.pattern;
+                })
+            ;
+            // add max-width to number inputs (cos size doesn't work for them)
+            tfilters.filter (function (d) {
+                    return d.type === "number";
+                })
+                .style ("max-width", function (d) {
+                    return d.chars+"em";   
                 })
             ;
         }
@@ -548,6 +614,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         initScoreFilterGroup.call(this);
         initFDRPlaceholder.call(this);
         initNavigationGroup.call(this);
+        initMassSpecNavigationGroup.call(this);
         initNavigationGroup2.call(this);
         initGroupGroup.call(this);
         addScrollRightButton.call(this);
