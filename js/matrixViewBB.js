@@ -997,6 +997,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return (crossLink.toProtein.id === proteinIDs[0].proteinID && crossLink.fromProtein.id === proteinIDs[1].proteinID) || (crossLink.toProtein.id === proteinIDs[1].proteinID && crossLink.fromProtein.id === proteinIDs[0].proteinID);
                 }, this);
 
+                // sort so that selected links appear on top
                 var sortedFinalCrossLinks;
                 if (highlightOnly) {
                     sortedFinalCrossLinks = finalCrossLinks.filter (function (link) { return highlightedCrossLinkIDs.has(link.id); });
