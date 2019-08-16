@@ -16,7 +16,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend({
     events: {
         "change input.subsetNumberFilter": "directInput",
         "keyup input.subsetNumberFilter": "directInputIfReturn",
-        "mouseup input.subsetNumberFilter": "directInput",
+        //"mouseup input.subsetNumberFilter": "directInput",
     },
 
     initialize: function(viewOptions) {
@@ -142,8 +142,8 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend({
         // on this is interpreted as a change to the current model, and a CurrentColourModelChanged event is fired
         // The LinkColourAssignment and CurrentColourModelChanged events arriving almost in tandem at the distogram
         // caused c3 to freak out with hiding / showing series (known c3 bugginess) and things went wrong.
-        // Essentially though we don't need to run brushmove here, the rounding caused by ruinning it doesn't change anything
-        //this.brushmove();
+        // Essentially though we don't need to run brushmove here, the rounding caused by running it doesn't change anything
+        //this.brushmove();	
 
 
         topGroup.append("text")

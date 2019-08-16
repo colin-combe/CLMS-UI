@@ -280,11 +280,16 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             });
 
         // rerender crosslinks if selection/highlight changed, filteringDone or colourmodel changed
-        this.listenTo (this.model, "change:selection filteringDone currentColourModelChanged", this.renderCrossLinks);
+        this.listenTo (this.model, "change:selection filteringDone", this.renderCrossLinks);
+        this.listenTo (this.model, "currentColourModelChanged", function (colourModel, domain) {
+            if (colourModel.get("id") !== this.colourScaleModel.get("id")) {    // test if model is distances, if so rendering is already guaranteed
+                this.renderCrossLinks();
+            }
+        }); 
         this.listenTo (this.model, "change:highlights", function () { this.renderCrossLinks ({rehighlightOnly: true}); });
         this.listenTo (this.model, "change:linkColourAssignment", this.render);
         this.listenTo (this.model, "change:selectedProteins", this.makeProteinPairingOptions);
-        this.listenTo (this.colourScaleModel, "colourModelChanged", this.render); // colourScaleModel is pointer to distance colour model, so thsi triggers even if not current colour model (redraws background)
+        this.listenTo (this.colourScaleModel, "colourModelChanged", function () { this.render({noResize: true}); }); // colourScaleModel is pointer to distance colour model, so this triggers even if not current colour model (redraws background)
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); // Entire new set of distances
         this.listenTo (this.model.get("clmsModel"), "change:matches", this.matchesChanged); // New matches added (via csv generally)
         this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render); // Existing residues/pdb but distances changed
@@ -702,20 +707,18 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         cd[index + 3] = a;
     },
 
-    drawPixel32: function(cd, pixi, r, g, b, a) {
-        cd[pixi] = (a << 24) + (b << 16) + (g << 8) + r;
-    },
-
-    render: function() {
+    render: function (renderOptions) {
+        renderOptions = renderOptions || {};
         if (this.options.matrixObj && this.isVisible()) {
-            console.log("MATRIX RENDER");
-
+            if (!renderOptions.noResize) {
+                this.resize();
+            }
             this
-                .resize()
                 .renderBackgroundMap()
                 .renderCrossLinks({
                     isVisible: true
-                });
+                })
+            ;
         }
         return this;
     },
@@ -767,6 +770,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     renderBackgroundMap: function() {
+        var z = performance.now();
         var distancesObj = this.model.get("clmsModel").get("distancesObj");
         var stageModel = this.model.get("stageModel");
 
@@ -799,20 +803,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             // draw the areas covered by pdb chain data
             this.renderChainBlocks(alignInfo);
 
-            // Work out if at least one of the matrices has distances beyond just the crosslinks
-            var linksOnly = true;
-            alignInfo[0].forEach(function(alignInfo1) {
-                var chainIndex1 = alignInfo1.chainID;
-                alignInfo[1].forEach(function(alignInfo2) {
-                    var chainIndex2 = alignInfo2.chainID;
-                    var distanceMatrixValue = distancesObj.matrices[chainIndex1 + "-" + chainIndex2];
-                    linksOnly &= distanceMatrixValue.linksOnly;
-                }, this);
-            }, this);
-
             var seqLengths = this.getSeqLengthData();
-            // If so, it's worth drawing the background, setting up the canvas etc
-            //if (linksOnly) {
             // Don't draw backgrounds for huge protein combinations (5,000,000 =~ 2250 x 2250 is limit), begins to be memory issue
             if (seqLengths.lengthA * seqLengths.lengthB > 5e6) {
                 // shrink canvas / hide image if not showing it
@@ -841,7 +832,9 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     col = d3.hsl(col);
                     col.s = 0.4; // - (0.1 * i);
                     col.l = 0.85; // - (0.1 * i);
-                    return col.rgb();
+                    var col2 = col.rgb();
+                    //return [col2.r, col2.g, col2.b];
+                    return (255 << 24) + (col2.b << 16) + (col2.g << 8) + col2.r;   // 32-bit value of colour
                 });
 
                 var seqLengthB = seqLengths.lengthB - 1;
@@ -850,76 +843,42 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var start = performance.now();
 
                 // function to draw one matrix according to a pairing of two chains (called in loop later)
-                var drawDistanceMatrix = function(imgDataArr, minArray, matrixValue, alignInfo1, alignInfo2) {
+                var drawDistanceMatrix = function (imgDataArr, minArray, matrixValue, alignInfo1, alignInfo2) {
                     var alignColl = this.model.get("alignColl");
                     var distanceMatrix = matrixValue.distanceMatrix;
-                    var linksOnly = matrixValue.linksOnly;
                     var pw = this.canvas.attr("width");
-
+                    
+                    var atoms1 = stageModel.getAllResidueCoordsForChain (matrixValue.chain1);
+                    var atoms2 = (matrixValue.chain1 !== matrixValue.chain2) ? stageModel.getAllResidueCoordsForChain (matrixValue.chain2) : atoms1;
                     // precalc some stuff that would get recalculatd a lot in the inner loop
-                    var preCalcSearchIndices = d3.keys(distanceMatrix[0]).map(function(dIndex) {
-                        return alignColl.getAlignedIndex(+dIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
+                    var preCalcSearchIndices = d3.range(atoms2.length).map(function(seqIndex) {
+                        return alignColl.getAlignedIndex(seqIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
                     });
-                    //console.log ("pcsi", preCalcSearchIndices, this);
-
-                    var atoms1 = linksOnly ? stageModel.getAllResidueCoordsForChain (matrixValue.chain1) : [];
-                    var atoms2 = linksOnly ? ((matrixValue.chain1 !== matrixValue.chain2) ? stageModel.getAllResidueCoordsForChain (matrixValue.chain2) : atoms1) : [];
+                    //console.log ("pcsi", preCalcSearchIndices);
                     //console.log ("atoms", atoms1, atoms2);
 
                     // draw chain values, aligned to search sequence
-                    if (linksOnly) {
-                        preCalcSearchIndices = d3.range(atoms2.length).map(function(seqIndex) {
-                            return alignColl.getAlignedIndex(seqIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
-                        });
-                        var max2 = max * max;
-                        var min2 = min * min;
+                    var max2 = max * max;
+                    var min2 = min * min;
 
-                        var p = performance.now();
-                        for (var i = 0; i < atoms1.length; i++) {
-                            var searchIndex1 = alignColl.getAlignedIndex(i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
-                            if (searchIndex1 >= 0) {
-                                for (var j = 0, len = atoms2.length; j < len; j++) { // was seqLength
-                                    var distance2 = CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]);
-                                    if (distance2 < max2) {
-                                        var searchIndex2 = preCalcSearchIndices[j];
-                                        if (searchIndex2 > 0) {
-                                            var index = searchIndex1 + ((seqLengthB - searchIndex2) * pw);
-                                            var val = minArray ? minArray[index] : 0;
-                                            if (val === 0 || val > distance2) {
-                                                var col = colourArray[distance2 > min2 ? 1 : 0];
-                                                this.drawPixel(imgDataArr, index, col.r, col.g, col.b, 255);
-                                                //drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
-                                                if (minArray) {
-                                                    minArray[index] = val;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        p = performance.now() - p;
-                        console.log (atoms1.length * atoms2.length, "coordinates drawn to canvas in ", p, " ms.");
-                    }
-                    else {
-                        for (var i = 0; i < distanceMatrix.length; i++) {
+                    //var p = performance.now();
+                    var len = atoms2.length;
+                    for (var i = 0; i < atoms1.length; i++) {
+                        var searchIndex1 = alignColl.getAlignedIndex(i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
+                        if (searchIndex1 >= 0) {
                             var row = distanceMatrix[i];
-                            var searchIndex1 = alignColl.getAlignedIndex(i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
-                            if (row && searchIndex1 >= 0) {
-                                for (var j = 0, len = row.length; j < len; j++) { // was seqLength
-                                    var distance = !linksOnly ? row[j] : Math.sqrt (CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]));
-                                    if (distance < max) {
-                                        var searchIndex2 = preCalcSearchIndices[j];
-                                        if (searchIndex2 > 0) {
-                                            var index = searchIndex1 + ((seqLengthB - searchIndex2) * pw);
-                                            var val = minArray ? minArray[index] : 0;
-                                            if (val === 0 || val > distance) {
-                                                var col = colourArray[distance > min ? 1 : 0];
-                                                this.drawPixel(imgDataArr, index, col.r, col.g, col.b, 255);
-                                                //drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
-                                                if (minArray) {
-                                                    minArray[index] = val;
-                                                }
+                            for (var j = 0; j < len; j++) { // was seqLength
+                                var distance2 = row ? row[j] * row[j] : CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]);
+                                if (distance2 < max2) {
+                                    var searchIndex2 = preCalcSearchIndices[j];
+                                    if (searchIndex2 >= 0) {
+                                        var index = searchIndex1 + ((seqLengthB - searchIndex2) * pw);
+                                        var val = minArray ? minArray[index] : 0;
+                                        if (val === 0 || val > distance2) {
+                                            var col = colourArray[distance2 > min2 ? 1 : 0];
+                                            imgDataArr[index] = col;
+                                            if (minArray) {
+                                                minArray[index] = val;
                                             }
                                         }
                                     }
@@ -927,12 +886,14 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                             }
                         }
                     }
+                    //p = performance.now() - p;
+                    //console.log (atoms1.length * atoms2.length, "coordinates drawn to canvas in ", p, " ms.");
                 };
 
                 var middle = performance.now();
 
                 var canvasData = ctx.getImageData(0, 0, this.canvas.attr("width"), this.canvas.attr("height"));
-                var cd = canvasData.data;
+                var cd = new Uint32Array (canvasData.data.buffer); // canvasData.data         // 32-bit view of buffer
                 var minArray = (alignInfo[0].length * alignInfo[1].length) > 1 ? new Float32Array(this.canvas.attr("width") * this.canvas.attr("height")) : undefined;
 
                 // draw actual content of chain pairings
@@ -950,7 +911,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var end = performance.now();
                 CLMSUI.times.push(Math.round(end - middle));
                 //console.log ("CLMSUI.times", CLMSUI.times);
-
+                
                 this.zoomGroup.select(".backgroundImage").select("image")
                     .style("display", null) // default value
                     .attr("width", this.canvas.attr("width"))
@@ -959,12 +920,16 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 ;
             }
         }
+        z = performance.now() - z;
+        console.log ("render background map", z, "ms");
+        
         return this;
     },
 
     renderCrossLinks: function (renderOptions) {
 
         renderOptions = renderOptions || {};
+        //console.log ("renderCrossLinks", renderOptions);
 
         if (renderOptions.isVisible || (this.options.matrixObj && this.isVisible())) {
             var self = this;
