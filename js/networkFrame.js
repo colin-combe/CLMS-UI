@@ -426,16 +426,16 @@ CLMSUI.init.views = function() {
             myOptions: {
                 title: "Protein-Selection",
                 menu: [{
-                        name: "Invert",
-                        func: compModel.invertSelectedProteins,
-                        context: compModel,
-                        tooltip: "Switch selected and unselected proteins"
-                    },
-                    {
-                        name: "Hide",
+                        name: "Hide Selected",
                         func: compModel.hideSelectedProteins,
                         context: compModel,
                         tooltip: "Hide selected proteins"
+                    },
+                    {
+                            name: "Hide Unselected",
+                            func: compModel.hideUnselectedProteins,
+                            context: compModel,
+                            tooltip: "Hide unselected proteins"
                     },
                     {
                         name: "+Neighbours",
