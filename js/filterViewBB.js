@@ -901,7 +901,7 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
                 } else {
                     if (i === 0 && decoysPresent) {
                         var roughFDR = (self.model.getFilteredCrossLinks("decoysTD").length - self.model.getFilteredCrossLinks("decoysDD").length) / (self.model.getFilteredCrossLinks().length || 1);
-                        return "• Rough FDR Equivalent = " + self.pctFormat(roughFDR);
+                        return "• Apparent link-level FDR: " + self.pctFormat(roughFDR);
                     }
                     return "";
                 }

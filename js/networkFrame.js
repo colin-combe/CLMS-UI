@@ -23,7 +23,7 @@ CLMSUI.vent = {};
 _.extend(CLMSUI.vent, Backbone.Events);
 
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
-var allDataLoaded = _.after(3, function() {
+var allDataLoaded = _.after(4, function() {
     console.log("DATA LOADED AND WINDOW LOADED");
 
     CLMSUI.blosumCollInst.trigger("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
@@ -181,6 +181,9 @@ CLMSUI.init.models = function(options) {
 
     // Start the asynchronous blosum fetching after the above events have been set up
     CLMSUI.blosumCollInst.fetch(options.blosumOptions || {});
+
+    CLMSUI.modelUtils.loadGOAnnotations(); // it will call allDataLoaded when done
+
 };
 
 
@@ -369,12 +372,12 @@ CLMSUI.init.views = function() {
             tooltip: "Explains and allows changing of current colour scheme",
             sectionEnd: false
         },
-        // {
-        //     id: "goTermsChkBxPlaceholder",
-        //     label: "GO Terms",
-        //     eventName: "goTermsShow",
-        //     tooltip: "Browse Gene Ontology terms"
-        // },
+        {
+            id: "goTermsChkBxPlaceholder",
+            label: "GO Terms",
+            eventName: "goTermsShow",
+            tooltip: "Browse Gene Ontology terms"
+        },
     ];
     checkBoxData.forEach(function(cbdata) {
         var options = $.extend({
@@ -423,16 +426,16 @@ CLMSUI.init.views = function() {
             myOptions: {
                 title: "Protein-Selection",
                 menu: [{
-                        name: "Invert",
-                        func: compModel.invertSelectedProteins,
-                        context: compModel,
-                        tooltip: "Switch selected and unselected proteins"
-                    },
-                    {
-                        name: "Hide",
+                        name: "Hide Selected",
                         func: compModel.hideSelectedProteins,
                         context: compModel,
                         tooltip: "Hide selected proteins"
+                    },
+                    {
+                            name: "Hide Unselected",
+                            func: compModel.hideUnselectedProteins,
+                            context: compModel,
+                            tooltip: "Hide unselected proteins"
                     },
                     {
                         name: "+Neighbours",
@@ -447,7 +450,13 @@ CLMSUI.init.views = function() {
                         context: compModel,
                         label: "Protein Selection by Description",
                         tooltip: "Select proteins whose descriptions include input text"
-                    }
+                    },
+                    // {
+                    //     name: "Group",
+                    //     func: compModel.groupSelectedProteins,
+                    //     context: compModel,
+                    //     tooltip: "Put selected proteins in a group"
+                    // }
                 ],
                 tooltipModel: compModel.get("tooltipModel")
             }
@@ -988,12 +997,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#userAnnotationsMetaLoadPanel",
         model: compModel,
         displayEventName: "userAnnotationsMetaShow",
-    });
-
-    new CLMSUI.GafMetaDataFileChooserBB({
-        el: "#gafAnnotationsMetaLoadPanel",
-        model: compModel,
-        displayEventName: "gafMetaShow",
     });
 
     new CLMSUI.GoTermsViewBB({

@@ -190,7 +190,7 @@ function getMatchesCSV() {
     crossLinks.forEach(function(crossLink) {
         crossLink.filteredMatches_pp.forEach(function(match) {
             matchMap.set(match.match.id, match.match);
-        });
+    });
     });
     console.log ("finish map", performance.now() - zz, "ms.");
     zz = performance.now();
@@ -232,11 +232,6 @@ function getMatchesCSV() {
             linkType = "Between";
         }
 
-        // if (match.matchedPeptides[0].sequence.indexOf(match.matchedPeptides[1].sequence)  > -1
-        //     || match.matchedPeptides[1].sequence.indexOf(match.matchedPeptides[0].sequence) > -1) {
-        //     linkType = "Substring";
-        // }
-
         var decoyType;
         if (decoy1 && decoy2) {
             decoyType = "DD";
@@ -255,7 +250,7 @@ function getMatchesCSV() {
     }
 	*/
     });
-    
+
     console.log ("build string", performance.now() - zz, "ms.");
 
     //console.log ("MCSV", count, matchMap.values().length);
@@ -285,9 +280,9 @@ function getSSL() {
             }
 
             if (delta > 0) {
-                delta = "[+" + (delta) + "]";
+                delta = "[+" + delta + "]";
             } else {
-                delta = "[" + (delta) + "]";
+                delta = "[" + delta + "]";
             }
 
             modificationDeltasMap.set(sym, delta);
@@ -359,7 +354,7 @@ function getSSL() {
             } else {
                 sequence = sequence + "K[" + joiningAAModMass + "]" + pep2sslSeq;
             }
-            
+
             var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
             var pp2 = CLMSUI.utils.pepPosConcat(match, 1);
             var lp1 = CLMSUI.utils.fullPosConcat(match, 0);
