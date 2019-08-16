@@ -707,10 +707,6 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         cd[index + 3] = a;
     },
 
-    drawPixel32: function(cd, pixi, r, g, b, a) {
-        cd[pixi] = (a << 24) + (b << 16) + (g << 8) + r;
-    },
-
     render: function (renderOptions) {
         renderOptions = renderOptions || {};
         if (this.options.matrixObj && this.isVisible()) {
@@ -836,7 +832,9 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     col = d3.hsl(col);
                     col.s = 0.4; // - (0.1 * i);
                     col.l = 0.85; // - (0.1 * i);
-                    return col.rgb();
+                    var col2 = col.rgb();
+                    //return [col2.r, col2.g, col2.b];
+                    return (255 << 24) + (col2.b << 16) + (col2.g << 8) + col2.r;   // 32-bit value of colour
                 });
 
                 var seqLengthB = seqLengths.lengthB - 1;
@@ -863,12 +861,13 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     var max2 = max * max;
                     var min2 = min * min;
 
-                    var p = performance.now();
+                    //var p = performance.now();
+                    var len = atoms2.length;
                     for (var i = 0; i < atoms1.length; i++) {
                         var searchIndex1 = alignColl.getAlignedIndex(i + 1, alignInfo1.proteinID, true, alignInfo1.alignID, true) - 1;
                         if (searchIndex1 >= 0) {
                             var row = distanceMatrix[i];
-                            for (var j = 0, len = atoms2.length; j < len; j++) { // was seqLength
+                            for (var j = 0; j < len; j++) { // was seqLength
                                 var distance2 = row ? row[j] * row[j] : CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]);
                                 if (distance2 < max2) {
                                     var searchIndex2 = preCalcSearchIndices[j];
@@ -877,8 +876,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                                         var val = minArray ? minArray[index] : 0;
                                         if (val === 0 || val > distance2) {
                                             var col = colourArray[distance2 > min2 ? 1 : 0];
-                                            this.drawPixel(imgDataArr, index, col.r, col.g, col.b, 255);
-                                            //drawPixel32 (data, i + ((seqLength - j) * pw), col.r, col.g, col.b, 255);
+                                            imgDataArr[index] = col;
                                             if (minArray) {
                                                 minArray[index] = val;
                                             }
@@ -888,14 +886,14 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                             }
                         }
                     }
-                    p = performance.now() - p;
-                    console.log (atoms1.length * atoms2.length, "coordinates drawn to canvas in ", p, " ms.");
+                    //p = performance.now() - p;
+                    //console.log (atoms1.length * atoms2.length, "coordinates drawn to canvas in ", p, " ms.");
                 };
 
                 var middle = performance.now();
 
                 var canvasData = ctx.getImageData(0, 0, this.canvas.attr("width"), this.canvas.attr("height"));
-                var cd = canvasData.data;
+                var cd = new Uint32Array (canvasData.data.buffer); // canvasData.data         // 32-bit view of buffer
                 var minArray = (alignInfo[0].length * alignInfo[1].length) > 1 ? new Float32Array(this.canvas.attr("width") * this.canvas.attr("height")) : undefined;
 
                 // draw actual content of chain pairings
@@ -913,7 +911,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var end = performance.now();
                 CLMSUI.times.push(Math.round(end - middle));
                 //console.log ("CLMSUI.times", CLMSUI.times);
-
+                
                 this.zoomGroup.select(".backgroundImage").select("image")
                     .style("display", null) // default value
                     .attr("width", this.canvas.attr("width"))
