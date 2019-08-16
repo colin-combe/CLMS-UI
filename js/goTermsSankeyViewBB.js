@@ -89,7 +89,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.backgroundGroup = this.vis.append("g");
         // this.linkGroup = vis.append("g");
         this.foregroundGroup = this.vis.append("g");
-        this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
+        this.listenTo(this.model.get("clmsModel"), "change:matches", this.render); // New matches added (via csv generally)
+        this.listenTo(this.model, "hiddenChanged", this.render);
         this.sankey = d3.sankey().nodeWidth(15);
         //this.fixed = [];
 
@@ -137,9 +138,20 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .attr('transform', function(d) {
                 return d.transform;
             });
+    },
 
-        //associate go terms with proteins - this prob shouldn't be here
+    update: function() {
+        var termType = d3.select("#goTermsPanelgoTermSelect").selectAll("option")
+            .filter(function(d) {
+                return d3.select(this).property("selected");
+            })
+            .datum().trim();
+
         var go = CLMSUI.compositeModelInst.get("go");
+        //associate go terms with proteins (clear them first)
+        for (var g of go.values()) {
+            g.interactors = new Set();
+        }
         var proteins = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
         for (var protein of proteins) {
             if (protein.uniprot) {
@@ -151,20 +163,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 }
             }
         }
-        this.update();
-
-    },
-
-    update: function() {
-        var termType = d3.select("#goTermsPanelgoTermSelect").selectAll("option")
-            .filter(function(d) {
-                return d3.select(this).property("selected");
-            })
-            .datum().trim();
 
         var nodes = new Map();
         var linksMap = new Map();
-        var go = CLMSUI.compositeModelInst.get("go");
 
         if (termType == "biological_process") {
             sankeyNode("GO0008150");
@@ -231,161 +232,163 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             "nodes": Array.from(nodes.values()),
             "links": Array.from(linksMap.values())
         };
-        this.render();
     },
 
     render: function() {
-        if (this.data) {
+        if (this.isVisible()) {
+            this.update();
+            if (this.data) {
 
-            //console.log("RENDERING GO TERMS");
-            var jqElem = $(this.svg.node());
-            var cx = jqElem.width(); //this.svg.node().clientWidth;
-            var cy = jqElem.height(); //this.svg.node().clientHeight;
-            var margin = this.options.margin;
-            var width = Math.max(0, cx - margin.left - margin.right);
-            var height = Math.max(0, cy - margin.top - margin.bottom);
+                //console.log("RENDERING GO TERMS");
+                var jqElem = $(this.svg.node());
+                var cx = jqElem.width(); //this.svg.node().clientWidth;
+                var cy = jqElem.height(); //this.svg.node().clientHeight;
+                var margin = this.options.margin;
+                var width = Math.max(0, cx - margin.left - margin.right);
+                var height = Math.max(0, cy - margin.top - margin.bottom);
 
-            this.sankey
-                .nodes(this.data.nodes)
-                .links(this.data.links)
-                .size([width, height])
-                .layout(32);
+                this.sankey
+                    .nodes(this.data.nodes)
+                    .links(this.data.links)
+                    .size([width, height])
+                    .layout(32);
 
-            var color = d3.scale.category20();
+                var color = d3.scale.category20();
 
-            var path = this.sankey.link();
-            var self = this;
+                var path = this.sankey.link();
+                var self = this;
 
-            var linkSel = self.backgroundGroup.selectAll(".goLink")
-                .data(this.data.links,
-                    function(d) {
+                var linkSel = self.backgroundGroup.selectAll(".goLink")
+                    .data(this.data.links,
+                        function(d) {
+                            return d.id;
+                        }
+                    );
+
+                linkSel.enter()
+                    .append("path")
+                    .attr("class", "goLink")
+                    .style("stroke", function(d) {
+                        return d.partOf ? "#fdc086" : "black"; //"#bdbdbd"
+                    })
+                    .style("display", "none")
+                    .attr('marker-start', function(d, i) {
+                        return 'url(#marker_' + (d.partOf ? "diamond" : "arrow") + ')';
+                    })
+                // .on("mouseover", function(d) {d3.select(this).style("stroke-opacity", 1);})
+                // .on("mouseout", function(d) {d3.select(this)scale(1.1) .style("stroke-opacity", 0);});
+                // .append("title")
+                // .text(function(d) {
+                //     return d.target.name + (d.partOf ? " is part of " : " is a ") + d.source.name + "\n" + d.value;
+                // });
+
+
+                var nodeSel = this.foregroundGroup.selectAll(".node")
+                    .data(this.data.nodes, function(d) {
                         return d.id;
-                    }
-                );
-
-            linkSel.enter()
-                .append("path")
-                .attr("class", "goLink")
-                .style("stroke", function(d) {
-                    return d.partOf ? "#fdc086" : "black"; //"#bdbdbd"
-                })
-                .style("display", "none")
-                .attr('marker-start', function(d, i) {
-                    return 'url(#marker_' + (d.partOf ? "diamond" : "arrow") + ')';
-                })
-            // .on("mouseover", function(d) {d3.select(this).style("stroke-opacity", 1);})
-            // .on("mouseout", function(d) {d3.select(this)scale(1.1) .style("stroke-opacity", 0);});
-            // .append("title")
-            // .text(function(d) {
-            //     return d.target.name + (d.partOf ? " is part of " : " is a ") + d.source.name + "\n" + d.value;
-            // });
-
-
-            var nodeSel = this.foregroundGroup.selectAll(".node")
-                .data(this.data.nodes, function(d) {
-                    return d.id;
-                });
-
-            var nodeEnter = nodeSel.enter().append("g")
-                .attr("class", "node")
-                // .call(d3.behavior.drag()
-                //     .origin(function(d) {
-                //         return d;
-                //     })
-                //     .on("drag", dragmove));
-                .on("click", function(d) {
-                    self.model.setSelectedProteins([], false);
-                    self.model.setSelectedProteins(Array.from(d.term.getInteractors().values()), true);
-                    // self.model.get("groupedGoTerms").push(d.term);
-                    // self.model.trigger("groupedGoTermsChanged");
-                    d3.event.stopPropagation();
-                })
-                .on("mouseover", function(d) {
-                    var term = d.term;
-                    nodeSel.style("opacity", function(d2) {
-                        return term.isDirectRelation(d2.term) ? 1 : 0;
-                    });
-                    linkSel.style("display", function(dlink) {
-                        return d == dlink.source || d == dlink.target ? null : "none";
-                    });
-                    nodeSel.select("rect").attr("fill", function(dr) {
-                        return d == dr ? d.color = color(d.name.replace(/ .*/, "")) : "none";
                     });
 
-                    self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
-                })
-                .on("mouseout", function(d) {
-                    //if (self.fixed.length == 0) {
+                var nodeEnter = nodeSel.enter().append("g")
+                    .attr("class", "node")
+                    // .call(d3.behavior.drag()
+                    //     .origin(function(d) {
+                    //         return d;
+                    //     })
+                    //     .on("drag", dragmove));
+                    .on("click", function(d) {
+                        self.model.setSelectedProteins([], false);
+                        self.model.setSelectedProteins(Array.from(d.term.getInteractors().values()), true);
+                        // self.model.get("groupedGoTerms").push(d.term);
+                        // self.model.trigger("groupedGoTermsChanged");
+                        d3.event.stopPropagation();
+                    })
+                    .on("mouseover", function(d) {
+                        var term = d.term;
+                        nodeSel.style("opacity", function(d2) {
+                            return term.isDirectRelation(d2.term) ? 1 : 0;
+                        });
+                        linkSel.style("display", function(dlink) {
+                            return d == dlink.source || d == dlink.target ? null : "none";
+                        });
+                        nodeSel.select("rect").attr("fill", function(dr) {
+                            return d == dr ? d.color = color(d.name.replace(/ .*/, "")) : "none";
+                        });
+
+                        self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
+                    })
+                    .on("mouseout", function(d) {
+                        //if (self.fixed.length == 0) {
                         nodeSel.style("opacity", 1);
                         linkSel.style("display", "none");
                         nodeSel.select("rect").attr("fill", function(d) {
                             return d.color = color(d.name.replace(/ .*/, ""));
                         });
-                    // }
-                    self.model.setHighlightedProteins([]);
-                })
-                .on("contextmenu", function(d) {
-                    d3.event.preventDefault();
-                    d3.event.stopPropagation();
-                    // react on right-clicking
-                    //self.fixed.push(d.id);
+                        // }
+                        self.model.setHighlightedProteins([]);
+                    })
+                    .on("contextmenu", function(d) {
+                        d3.event.preventDefault();
+                        d3.event.stopPropagation();
+                        // react on right-clicking
+                        //self.fixed.push(d.id);
 
+                    });
+
+                nodeEnter.append("rect")
+                    .attr("width", self.sankey.nodeWidth())
+                    .style("fill", function(d) {
+                        return d.color = color(d.name.replace(/ .*/, ""));
+                        // var toFill = (self.fixed.length == 0 || self.fixed.contains(d.id));
+                        // return toFill ? color(d.name.replace(/ .*/, "")) : "none";
+                    })
+                    .style("fill-opacity", function(d) {
+                        return 0.2; //d.color = color(d.name.replace(/ .*/, ""));
+                    })
+                    .style("stroke", function(d) {
+                        return d3.rgb(d.color).darker(2);
+                    })
+                    .append("title")
+                    .text(function(d) {
+                        return d.value;
+                    });
+
+                nodeEnter.append("text")
+                    .attr("dy", ".35em")
+                    .text(function(d) {
+                        return d.name;
+                    });
+
+                nodeSel.attr("transform", function(d) {
+                    return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";
                 });
+                nodeSel.select("rect")
+                    .attr("height", function(d) {
+                        return Math.max(1, (d.dy ? d.dy : 0));
+                    });
+                nodeSel.select("text")
+                    .attr("x", function(d) {
+                        return (d.x < width / 1.5) ? 6 + self.sankey.nodeWidth() : -6;
+                    })
+                    .attr("text-anchor", function(d) {
+                        return (d.x < width / 1.5) ? "start" : "end";
+                    })
+                    .attr("y", function(d) {
+                        return (d.dy ? d.dy : 0) / 4;
+                    });
 
-            nodeEnter.append("rect")
-                .attr("width", self.sankey.nodeWidth())
-                .style("fill", function(d) {
-                    return d.color = color(d.name.replace(/ .*/, ""));
-                    // var toFill = (self.fixed.length == 0 || self.fixed.contains(d.id));
-                    // return toFill ? color(d.name.replace(/ .*/, "")) : "none";
-                })
-                .style("fill-opacity", function(d) {
-                    return 0.2; //d.color = color(d.name.replace(/ .*/, ""));
-                })
-                .style("stroke", function(d) {
-                    return d3.rgb(d.color).darker(2);
-                })
-                .append("title")
-                .text(function(d) {
-                    return d.value;
-                });
-
-            nodeEnter.append("text")
-                .attr("dy", ".35em")
-                .text(function(d) {
-                    return d.name;
-                });
-
-            nodeSel.attr("transform", function(d) {
-                return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";
-            });
-            nodeSel.select("rect")
-                .attr("height", function(d) {
-                    return Math.max(1, (d.dy ? d.dy : 0));
-                });
-            nodeSel.select("text")
-                .attr("x", function(d) {
-                    return (d.x < width / 1.5) ? 6 + self.sankey.nodeWidth() : -6;
-                })
-                .attr("text-anchor", function(d) {
-                    return (d.x < width / 1.5) ? "start" : "end";
-                })
-                .attr("y", function(d) {
-                    return (d.dy ? d.dy : 0) / 4;
-                });
-
-            linkSel.attr("d", path);
-            // .style("stroke-width", function(d) {
-            //     return 4;//Math.max(1, (d.dy ? d.dy : 0));
-            // });
-
-            nodeSel.exit().remove();
-            linkSel.exit().remove();
-
-            function dragmove(d) {
-                d3.select(this).attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
-                self.sankey.relayout();
                 linkSel.attr("d", path);
+                // .style("stroke-width", function(d) {
+                //     return 4;//Math.max(1, (d.dy ? d.dy : 0));
+                // });
+
+                nodeSel.exit().remove();
+                linkSel.exit().remove();
+
+                function dragmove(d) {
+                    d3.select(this).attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
+                    self.sankey.relayout();
+                    linkSel.attr("d", path);
+                }
             }
         }
 
