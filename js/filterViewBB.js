@@ -174,9 +174,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         });
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions || {});
+        /*
         var subsets = d3.merge ([this.options.subsetToggles, this.options.subsetNumberFilters]);
         var subsetNest = d3.nest().key(function(d) { return d.group; }).entries(subsets);
         console.log ("subsetNest", subsetNest);
+        */
         
         
         var uniqueGroups = this.model.get("searchGroups");

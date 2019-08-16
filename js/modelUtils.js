@@ -1323,7 +1323,7 @@ CLMSUI.modelUtils = {
         return vals;
     },
 
-    getDistanceSquared: function(coords1, coords2) {
+    getDistanceSquared: function (coords1, coords2) {
         var d2 = 0;
         for (var n = 0; n < coords1.length; n++) {
             var diff = coords1[n] - coords2[n];
