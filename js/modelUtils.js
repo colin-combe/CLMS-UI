@@ -826,7 +826,7 @@ CLMSUI.modelUtils = {
 
                 for (var l = 0; l < lines.length; l++) {
                     //not having ':' in go ids, so valid html id later, maybe a mistake
-                    var line = lines[l].replace(/:/g, '');
+                    var line = lines[l].replace(/:|\r$/g, '');  //remove carriage returns at end of line too - mjg
                     //line = line.replace(/:/g, '');
                     if (line.trim() != "") {
                         if (line.trim() == "[Term]" || line.trim() == "[Typedef]") {
@@ -854,6 +854,7 @@ CLMSUI.modelUtils = {
                 //populate subclasses and parts
                 for (term of go.values()) {
                     for (let superclassId of term.is_a){
+                        //console.log ("go", go, superclassId, go.get(superclassId));
                         go.get(superclassId).subclasses.add(term.id);
                     }
                     for (let partOfId of term.part_of){
