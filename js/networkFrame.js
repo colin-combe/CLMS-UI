@@ -22,9 +22,14 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.vent = {};
 _.extend(CLMSUI.vent, Backbone.Events);
 
+CLMSUI.init = CLMSUI.init || {};
+
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
-var allDataLoaded = _.after(4, function() {
+CLMSUI.init.postDataLoaded = function() {
     console.log("DATA LOADED AND WINDOW LOADED");
+    
+    CLMSUI.compositeModelInst.set("go", CLMSUI.go); // add pre-parsed go terms to compositeModel from placeholder
+    CLMSUI.go = null;
 
     CLMSUI.blosumCollInst.trigger("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
 
@@ -93,12 +98,14 @@ var allDataLoaded = _.after(4, function() {
     CLMSUI.compositeModelInst.applyFilter(); // do it first time so filtered sets aren't empty
 
     CLMSUI.vent.trigger("initialSetupDone"); //	Message that models and views are ready for action, with filter set initially
-});
+};
 
-CLMSUI.init = CLMSUI.init || {};
+// This bar function calls postDataLoaded on the 4th go, ensuring all data is in place from various data loading ops
+var allDataLoaded = _.after(4, CLMSUI.init.postDataLoaded);
 
 // for qunit testing
 CLMSUI.init.pretendLoad = function() {
+    allDataLoaded();
     allDataLoaded();
 };
 
@@ -182,8 +189,8 @@ CLMSUI.init.models = function(options) {
     // Start the asynchronous blosum fetching after the above events have been set up
     CLMSUI.blosumCollInst.fetch(options.blosumOptions || {});
 
-    CLMSUI.modelUtils.loadGOAnnotations(); // it will call allDataLoaded when done
-
+    // Start asynchronous GO term fetching
+    //CLMSUI.modelUtils.loadGOAnnotations(); // it will call allDataLoaded when done
 };
 
 

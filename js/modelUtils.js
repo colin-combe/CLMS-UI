@@ -812,61 +812,63 @@ CLMSUI.modelUtils = {
     },
 
 
-    loadGOAnnotations: function() {
+    loadGOAnnotations: function (txt) {
+        console.log ("parsing go obo");
+        var z = performance.now();
+        var go = new Map();
+        //var lines = txt.split('\n');
+        var term;
+        var i = 0, l = 0;
+        var first = true;
+        
+        //for (var l = 0; l < lines.length; l++) {
+        while (i !== 0 || first) {
+            first = false;
+            var endi = txt.indexOf("\n", i);
+            var line = txt.slice(i, endi);
+            //not having ':' in go ids, so valid html id later, maybe a mistake, (do trim here to get rid of '/r's too - mjg)
+            line = line.trim().replace (/:/g, '');
+            //var line = lines[l].trim().replace (/:/g, '');
 
-        var url = "./go.obo";
-
-        d3.text(url, function(error, txt) {
-            if (error) {
-                console.log("error", error, "for", url, arguments);
-            } else {
-                var go = new Map();
-                var lines = txt.split('\n');
-                var term;
-
-                for (var l = 0; l < lines.length; l++) {
-                    //not having ':' in go ids, so valid html id later, maybe a mistake
-                    var line = lines[l].replace(/:|\r$/g, '');  //remove carriage returns at end of line too - mjg
-                    //line = line.replace(/:/g, '');
-                    if (line.trim() != "") {
-                        if (line.trim() == "[Term]" || line.trim() == "[Typedef]") {
-                            if (term) {
-                                go.set(term.id, term);
-                            }
-                            term = new CLMSUI.GoTerm();
-                        } else if (term) {
-                            var parts = line.split(" ");
-                            if (parts[0] == "is_a") {
-                                term.is_a.add(parts[1]);
-                            } else if (parts[0] == "intersection_of" || parts[0] == "relationship") {
-                                if (parts[1] == "part_of") {
-                                    // console.log(term.namespace, line);
-                                    term.part_of.add(parts[2]);
-                                }
-                            } else {
-                                term[parts[0]] = parts.slice(1, parts.length).join(" ");
-                            }
+            if (line) {
+                if (line == "[Term]" || line == "[Typedef]") {
+                    if (term) {
+                        go.set(term.id, term);
+                    }
+                    term = new CLMSUI.GoTerm();
+                } else if (term) {
+                    var parts = line.split(" ");
+                    if (parts[0] == "is_a") {
+                        term.is_a.add(parts[1]);
+                    } else if (parts[0] == "intersection_of" || parts[0] == "relationship") {
+                        if (parts[1] == "part_of") {
+                            // console.log(term.namespace, line);
+                            term.part_of.add(parts[2]);
                         }
+                    } else {
+                        term[parts[0]] = parts.slice(1, parts.length).join(" ");
                     }
                 }
-                go.set(term.id, term); // last one left over
-
-                //populate subclasses and parts
-                for (term of go.values()) {
-                    for (let superclassId of term.is_a){
-                        //console.log ("go", go, superclassId, go.get(superclassId));
-                        go.get(superclassId).subclasses.add(term.id);
-                    }
-                    for (let partOfId of term.part_of){
-                        go.get(partOfId).parts.add(term.id);
-                    }
-                }
-
-                CLMSUI.compositeModelInst.set("go", go);
-
-                allDataLoaded();
             }
-        });
+            i = endi + 1;
+            l++;
+        } 
+        go.set(term.id, term); // last one left over
+
+        //populate subclasses and parts
+        for (term of go.values()) {
+            for (let superclassId of term.is_a){
+                //console.log ("go", go, superclassId, go.get(superclassId));
+                go.get(superclassId).subclasses.add(term.id);
+            }
+            for (let partOfId of term.part_of){
+                go.get(partOfId).parts.add(term.id);
+            }
+        }
+        console.log (performance.now() - z, "ms.");
+        console.log ("for obo parsing", l, "lines into map size", go.size);
+        
+        return go;
     },
 
 
