@@ -854,7 +854,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     var preCalcSearchIndices = d3.range(atoms2.length).map(function(seqIndex) {
                         return alignColl.getAlignedIndex(seqIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
                     });
-                    //console.log ("pcsi", preCalcSearchIndices);
+                    var preCalcRowIndices = preCalcSearchIndices.map (function (i) { return i >= 0 ? (seqLengthB - i) * pw : -1; });
+                    //console.log ("pcsi", preCalcSearchIndices, preCalcRowIndices);
                     //console.log ("atoms", atoms1, atoms2);
 
                     // draw chain values, aligned to search sequence
@@ -870,15 +871,15 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                             for (var j = 0; j < len; j++) { // was seqLength
                                 var distance2 = row ? row[j] * row[j] : CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]);
                                 if (distance2 < max2) {
-                                    var searchIndex2 = preCalcSearchIndices[j];
+                                    var searchIndex2 = preCalcRowIndices[j];
                                     if (searchIndex2 >= 0) {
-                                        var index = searchIndex1 + ((seqLengthB - searchIndex2) * pw);
-                                        var val = minArray ? minArray[index] : 0;
-                                        if (val === 0 || val > distance2) {
-                                            var col = colourArray[distance2 > min2 ? 1 : 0];
-                                            imgDataArr[index] = col;
+                                        var aindex = searchIndex1 + searchIndex2;   //((seqLengthB - searchIndex2) * pw);
+                                        var val = minArray ? minArray[aindex] : 0;
+                                        var r = distance2 > min2 ? 1 : 2;
+                                        if (r > val) {
+                                            imgDataArr[aindex] = colourArray[2 - r];    // 32-bit array view can take colour directly
                                             if (minArray) {
-                                                minArray[index] = val;
+                                                minArray[aindex] = r;//val;
                                             }
                                         }
                                     }
@@ -894,7 +895,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
 
                 var canvasData = ctx.getImageData(0, 0, this.canvas.attr("width"), this.canvas.attr("height"));
                 var cd = new Uint32Array (canvasData.data.buffer); // canvasData.data         // 32-bit view of buffer
-                var minArray = (alignInfo[0].length * alignInfo[1].length) > 1 ? new Float32Array(this.canvas.attr("width") * this.canvas.attr("height")) : undefined;
+                var minArray = (alignInfo[0].length * alignInfo[1].length) > 1 ? new Uint8Array(this.canvas.attr("width") * this.canvas.attr("height")) : undefined;
 
                 // draw actual content of chain pairings
                 alignInfo[0].forEach(function(alignInfo1) {
@@ -948,7 +949,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     linkWidth /= overallScale;
                     linkWidth = Math.ceil (linkWidth);
                 }
-                console.log ("os", overallScale);
+                //console.log ("os", overallScale);
                 var xLinkWidth = linkWidth * xStep;
                 var yLinkWidth = linkWidth * yStep;
 
