@@ -5,7 +5,7 @@
 //    	the Rappsilber Laboratory (http://www.rappsilberlab.org/).
 //
 //		author: Colin Combe, Martin Graham
-//		
+//
 //		ThreeColourSliderBB.js
 //
 //      A brush slider with three colours taken from an underlying colour scale passed in as the model

@@ -2,41 +2,36 @@
     display: none;
     left: 6em;
     top: 6em;
-    width: 500px;
+    width: 1000px;
     height: 500px;
 }
 
-.goTermsView svg {
-    height: 4500px;
-    width: 4500px;
-    position: absolute;
+ .goTermsView svg {
+    height: 100%;
+    width: 100%;
+    /* position: absolute; */
     /* shape-rendering: crispedges; */
-}
-
-.node {
-    cursor: pointer;
-}
-
-.node circle {
-    fill: #000;
-    /* stroke: steelblue; */
-    stroke-width: 1px;
-}
-
-.node text {
-    font: 12px sans-serif;
-    dominant-baseline: middle;
-    margin-left: 5px;
+    pointer-events: auto;
 }
 
 .goLink {
-    fill: none;
-    stroke: #aaa;
-    stroke-width: 1px;
-      /* marker-start: url(#end-arrow); */
+  fill: none;
+  /* stroke: #000; */
+  /* stroke-opacity: .6; */
+  stroke-width: 1;
 }
-
 
 div.goTermsView > div > div.panelInner {
   /* overflow: scroll; */
+}
+
+.node rect {
+  /* cursor: move; */
+  /* fill-opacity: .9; */
+  shape-rendering: crispEdges;
+}
+
+.node text {
+  pointer-events: none;
+  text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white;
 }
