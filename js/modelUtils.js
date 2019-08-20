@@ -810,6 +810,18 @@ CLMSUI.modelUtils = {
             source: "file"
         });
     },
+    
+    
+    convertGO_OBOtoJson: function (url) {
+        d3.text (url, function(error, txt) {
+            if (error) {
+                console.log("error", error, "for", url, arguments);
+            } else {
+                CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+                CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
+            }
+        });
+    },
 
 
     loadGOAnnotations: function (txt) {
@@ -825,7 +837,7 @@ CLMSUI.modelUtils = {
         while (i !== 0 || first) {
             first = false;
             var endi = txt.indexOf("\n", i);
-            var line = txt.slice(i, endi);
+            var line = txt.slice(i, endi !== -1 ? endi : undefined);
             //not having ':' in go ids, so valid html id later, maybe a mistake, (do trim here to get rid of '/r's too - mjg)
             line = line.trim().replace (/:/g, '');
             //var line = lines[l].trim().replace (/:/g, '');
@@ -839,10 +851,12 @@ CLMSUI.modelUtils = {
                 } else if (term) {
                     var parts = line.split(" ");
                     if (parts[0] == "is_a") {
+                        term.is_a = term.is_a || new Set();
                         term.is_a.add(parts[1]);
                     } else if (parts[0] == "intersection_of" || parts[0] == "relationship") {
                         if (parts[1] == "part_of") {
                             // console.log(term.namespace, line);
+                            term.part_of = term.part_of || new Set();
                             term.part_of.add(parts[2]);
                         }
                     } else {
@@ -857,18 +871,41 @@ CLMSUI.modelUtils = {
 
         //populate subclasses and parts
         for (term of go.values()) {
-            for (let superclassId of term.is_a){
-                //console.log ("go", go, superclassId, go.get(superclassId));
-                go.get(superclassId).subclasses.add(term.id);
+            if (term.is_a) {
+                for (let superclassId of term.is_a){
+                    //console.log ("go", go, superclassId, go.get(superclassId));
+                    var other = go.get(superclassId);
+                    other.subclasses = other.subclasses || new Set();
+                    other.subclasses.add(term.id);
+                }
             }
-            for (let partOfId of term.part_of){
-                go.get(partOfId).parts.add(term.id);
+            if (term.part_of) {
+                for (let partOfId of term.part_of){
+                    var other = go.get(partOfId);
+                    other.parts = other.parts || new Set();
+                    other.parts.add(term.id);
+                }
             }
         }
         console.log (performance.now() - z, "ms.");
         console.log ("for obo parsing", l, "lines into map size", go.size);
         
         return go;
+    },
+    
+    jsonifyGoMap (goMap) {
+        var json = {};
+        goMap.forEach (function (v, k) {
+            var newv = $.extend({}, v);
+            Object.keys(newv).forEach (function (key) {
+                if (newv[key] instanceof Set) {
+                    newv[key] = [...newv[key]];
+                }
+            });
+            json[k] = JSON.parse(JSON.stringify(newv));
+        });
+        
+        return json;
     },
 
 

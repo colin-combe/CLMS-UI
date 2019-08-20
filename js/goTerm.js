@@ -1,10 +1,10 @@
 CLMSUI = CLMSUI || {};
 
 CLMSUI.GoTerm = function() {
-    this.is_a = new Set(); // i.e. superclasses
-    this.subclasses = new Set();
-    this.part_of = new Set();
-    this.parts = new Set();
+    //this.is_a = new Set(); // i.e. superclasses
+    //this.subclasses = new Set();
+    //this.part_of = new Set();
+    //this.parts = new Set();
     this.interactors = new Set();
 }
 
@@ -13,15 +13,21 @@ CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
     if (!interactorSet) {
         interactorSet = new Set();
     }
-    for (let partId of this.parts) {
-        go.get(partId).getInteractors(interactorSet);
+    if (this.parts) {
+        for (let partId of this.parts) {
+            go.get(partId).getInteractors(interactorSet);
+        }
     }
-    for (let subclassId of this.subclasses) {
-        go.get(subclassId).getInteractors(interactorSet);
+    if (this.subclasses) {
+        for (let subclassId of this.subclasses) {
+            go.get(subclassId).getInteractors(interactorSet);
+        }
     }
-    for (let i of this.interactors) {
-        if (i.hidden == false) {
-          interactorSet.add(i);
+    if (this.interactors) {
+        for (let i of this.interactors) {
+            if (i.hidden == false) {
+              interactorSet.add(i);
+            }
         }
     }
     return interactorSet;
@@ -32,25 +38,17 @@ CLMSUI.GoTerm.prototype.isDirectRelation = function(anotherGoTerm) {
     if (this == anotherGoTerm) {
         return true;
     }
-    for (var superclass of this.is_a){
-        if (superclass == anotherGoTerm.id) {
-          return true;
-        }
-    }
-    for (var subclass of this.subclasses){
-      if (subclass == anotherGoTerm.id) {
+    if (this.is_a && this.is_a.has (anotherGoTerm.id)) {
         return true;
-      }
     }
-    for (var partOf of this.part_of){
-      if (partOf == anotherGoTerm.id) {
+    if (this.subclasses && this.subclasses.has (anotherGoTerm.id)) {
         return true;
-      }
     }
-    for (var part of this.parts){
-      if (part == anotherGoTerm.id) {
+    if (this.part_of && this.part_of.has (anotherGoTerm.id)) {
         return true;
-      }
+    }
+    if (this.parts && this.parts.has (anotherGoTerm.id)) {
+        return true;
     }
     return false;
 }

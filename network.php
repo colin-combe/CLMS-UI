@@ -290,6 +290,7 @@
                     console.log("error", error, "for", url, arguments);
                 } else {
                     CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+                    //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
                     allDataLoaded ();
                 }
             });

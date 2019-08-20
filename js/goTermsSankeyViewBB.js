@@ -158,6 +158,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 for (var goId of protein.uniprot.go) {
                     var goTerm = go.get(goId);
                     if (goTerm) {
+                        //goTerm.interactors
                         goTerm.interactors.add(protein);
                     }
                 }
@@ -184,42 +185,50 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     term: goTerm,
                 };
                 nodes.set(node.id, node);
-                for (var partOfId of goTerm.part_of) {
-                    var partOfTerm = go.get(partOfId);
-                    if (partOfTerm.namespace == goTerm.namespace) {
-                        var linkId = partOfId + "_" + node.id;
-                        var link = {};
-                        link.source = sankeyNode(partOfId);
-                        link.target = node;
-                        link.value = goTerm.getInteractors().size;
-                        link.id = linkId;
-                        link.partOf = true;
-                        linksMap.set(linkId, link);
+                if (goTerm.part_of) {
+                    for (var partOfId of goTerm.part_of) {
+                        var partOfTerm = go.get(partOfId);
+                        if (partOfTerm.namespace == goTerm.namespace) {
+                            var linkId = partOfId + "_" + node.id;
+                            var link = {};
+                            link.source = sankeyNode(partOfId);
+                            link.target = node;
+                            link.value = goTerm.getInteractors().size;
+                            link.id = linkId;
+                            link.partOf = true;
+                            linksMap.set(linkId, link);
+                        }
                     }
                 }
-                for (var superclassId of goTerm.is_a) {
-                    var superclassTerm = go.get(superclassId);
-                    if (superclassTerm.namespace == goTerm.namespace) {
-                        var linkId = superclassId + "_" + node.id;
-                        var link = {};
-                        link.source = sankeyNode(superclassId);
-                        link.target = node;
-                        link.value = goTerm.getInteractors().size;
-                        link.id = linkId;
-                        link.partOf = false;
-                        linksMap.set(linkId, link);
+                if (goTerm.is_a) {
+                    for (var superclassId of goTerm.is_a) {
+                        var superclassTerm = go.get(superclassId);
+                        if (superclassTerm.namespace == goTerm.namespace) {
+                            var linkId = superclassId + "_" + node.id;
+                            var link = {};
+                            link.source = sankeyNode(superclassId);
+                            link.target = node;
+                            link.value = goTerm.getInteractors().size;
+                            link.id = linkId;
+                            link.partOf = false;
+                            linksMap.set(linkId, link);
+                        }
                     }
                 }
-                for (var partId of goTerm.parts) {
-                    var partTerm = go.get(partId);
-                    if (partTerm.namespace == goTerm.namespace && partTerm.getInteractors().size > 1) {
-                        sankeyNode(partId);
+                if (goTerm.parts) {
+                    for (var partId of goTerm.parts) {
+                        var partTerm = go.get(partId);
+                        if (partTerm.namespace == goTerm.namespace && partTerm.getInteractors().size > 1) {
+                            sankeyNode(partId);
+                        }
                     }
                 }
-                for (var subclassId of goTerm.subclasses) {
-                    var subclassTerm = go.get(subclassId);
-                    if (subclassTerm.namespace == goTerm.namespace && subclassTerm.getInteractors().size > 1) {
-                        sankeyNode(subclassId);
+                if (goTerm.subclasses) {
+                    for (var subclassId of goTerm.subclasses) {
+                        var subclassTerm = go.get(subclassId);
+                        if (subclassTerm.namespace == goTerm.namespace && subclassTerm.getInteractors().size > 1) {
+                            sankeyNode(subclassId);
+                        }
                     }
                 }
                 return node;
