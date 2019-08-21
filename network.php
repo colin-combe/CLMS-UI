@@ -266,28 +266,39 @@
 		};
 
 
-
-
         z = performance.now();
         console.log ("TIME t1", performance.now());
 
         if (window.location.search) {
+            // Load spectrum matches
             var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
-        d3.json (url, function (error, json) {
-            spinner.stop(); // stop spinner on request returning
+            d3.json (url, function (error, json) {
+                spinner.stop(); // stop spinner on request returning
 
-			if (!error) {
-				success (json);
-			} else {
-                CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
-				console.error ("Error", error);
-			}
-		});
+                if (!error) {
+                    success (json);
+                } else {
+                    CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
+                    console.error ("Error", error);
+                }
+            });
+            
+            // Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
+            url = "./go.obo";
+            d3.text (url, function(error, txt) {
+                if (error) {
+                    console.log("error", error, "for", url, arguments);
+                } else {
+                    CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+                    //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
+                    allDataLoaded ();
+                }
+            });
         } else {
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches
         }
-
+    
     //]]>
     </script>
 
