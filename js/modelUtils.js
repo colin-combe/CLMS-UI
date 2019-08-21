@@ -843,24 +843,29 @@ CLMSUI.modelUtils = {
             //var line = lines[l].trim().replace (/:/g, '');
 
             if (line) {
-                if (line == "[Term]" || line == "[Typedef]") {
+                if (line === "[Term]" || line === "[Typedef]") {
                     if (term) {
                         go.set(term.id, term);
                     }
                     term = new CLMSUI.GoTerm();
                 } else if (term) {
-                    var parts = line.split(" ");
-                    if (parts[0] == "is_a") {
+                    //var parts = line.split(" ");  // speed up by avoiding split if humanly possible as free text lines are space heavy
+                    var tag = line.slice (0, line.indexOf(" "));
+                    var value = line.slice (tag.length + 1);
+                    if (tag === "is_a") {
+                        var vi = value.indexOf(" ");
+                        var valuewc = vi >= 0 ? value.slice(0, vi) : value; // remove comment portion
                         term.is_a = term.is_a || new Set();
-                        term.is_a.add(parts[1]);
-                    } else if (parts[0] == "intersection_of" || parts[0] == "relationship") {
-                        if (parts[1] == "part_of") {
+                        term.is_a.add (valuewc);
+                    } else if (tag === "intersection_of" || tag === "relationship") {
+                        var parts = value.split(" ", 2);    // split to first 2 only, avoid parsing comments
+                        if (parts[0] === "part_of") {
                             // console.log(term.namespace, line);
                             term.part_of = term.part_of || new Set();
-                            term.part_of.add(parts[2]);
+                            term.part_of.add (parts[1]);
                         }
                     } else {
-                        term[parts[0]] = parts.slice(1, parts.length).join(" ");
+                        term[tag] = value;   // quicker in chrome at least
                     }
                 }
             }
@@ -869,6 +874,7 @@ CLMSUI.modelUtils = {
         } 
         go.set(term.id, term); // last one left over
 
+        var zz = performance.now();
         //populate subclasses and parts
         for (term of go.values()) {
             if (term.is_a) {
@@ -887,7 +893,7 @@ CLMSUI.modelUtils = {
                 }
             }
         }
-        console.log (performance.now() - z, "ms.");
+        console.log (zz-z, "ms. first pass (is_a, part_of)", performance.now() - zz, "ms. second pass (subclasses, parts)");
         console.log ("for obo parsing", l, "lines into map size", go.size);
         
         return go;
@@ -899,7 +905,11 @@ CLMSUI.modelUtils = {
             var newv = $.extend({}, v);
             Object.keys(newv).forEach (function (key) {
                 if (newv[key] instanceof Set) {
-                    newv[key] = [...newv[key]];
+                    if (newv[key].size === 0) {
+                        delete newv[key];
+                    } else {
+                        newv[key] = [...newv[key]];
+                    }
                 }
             });
             json[k] = JSON.parse(JSON.stringify(newv));

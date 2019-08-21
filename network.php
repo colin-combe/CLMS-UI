@@ -294,6 +294,29 @@
                     allDataLoaded ();
                 }
             });
+            
+            /*
+            url = "./goObj.json";
+            d3.json (url, function(error, json) {
+                if (error) {
+                    console.log("error", error, "for", url, arguments);
+                } else {
+                    CLMSUI.jsongo = json;
+                    var z = performance.now();
+                    var terms = d3.values (json);
+                    terms.forEach (function (t) {
+                        var entries = d3.entries(t);
+                        entries.forEach (function (entry) {
+                            if (entry.value instanceof Array) {
+                                t[entry.key] = new Set (entry.value);
+                            }
+                        });
+                    });
+                    console.log (performance.now() - z, "ms for json sets");
+                    //allDataLoaded ();
+                }
+            });
+            */
         } else {
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches

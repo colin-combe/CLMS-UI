@@ -150,15 +150,19 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var go = CLMSUI.compositeModelInst.get("go");
         //associate go terms with proteins (clear them first)
         for (var g of go.values()) {
-            g.interactors = new Set();
+            var gints = g.interactors;
+            if (gints && gints.size > 0) {
+                gints.clear();
+            }
         }
+
         var proteins = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
         for (var protein of proteins) {
             if (protein.uniprot) {
                 for (var goId of protein.uniprot.go) {
                     var goTerm = go.get(goId);
                     if (goTerm) {
-                        //goTerm.interactors
+                        goTerm.interactors = goTerm.interactors || new Set ();
                         goTerm.interactors.add(protein);
                     }
                 }
