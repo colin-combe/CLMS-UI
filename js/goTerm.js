@@ -1,11 +1,12 @@
 CLMSUI = CLMSUI || {};
 
 CLMSUI.GoTerm = function() {
+    // lazy instantiation instead
     //this.is_a = new Set(); // i.e. superclasses
     //this.subclasses = new Set();
     //this.part_of = new Set();
     //this.parts = new Set();
-    this.interactors = new Set();
+    //this.interactors = new Set();
 }
 
 CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
@@ -35,22 +36,14 @@ CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
 
 
 CLMSUI.GoTerm.prototype.isDirectRelation = function(anotherGoTerm) {
-    if (this == anotherGoTerm) {
-        return true;
-    }
-    if (this.is_a && this.is_a.has (anotherGoTerm.id)) {
-        return true;
-    }
-    if (this.subclasses && this.subclasses.has (anotherGoTerm.id)) {
-        return true;
-    }
-    if (this.part_of && this.part_of.has (anotherGoTerm.id)) {
-        return true;
-    }
-    if (this.parts && this.parts.has (anotherGoTerm.id)) {
-        return true;
-    }
-    return false;
+    var agoid = anotherGoTerm.id;
+    return ( 
+        (this == anotherGoTerm) ||
+        (this.is_a && this.is_a.has (agoid)) ||
+        (this.subclasses && this.subclasses.has (agoid)) ||
+        (this.part_of && this.part_of.has (agoid)) ||
+        (this.parts && this.parts.has (agoid)) 
+    );
 }
 
 
