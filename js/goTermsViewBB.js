@@ -16,15 +16,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             // "mousemove .mouseMat": "brushNeighbourhood",
         });
     },
-
-    // defaultOptions: {
-    //     margin: {
-    //         top: 30,
-    //         right: 20,
-    //         bottom: 40,
-    //         left: 60
-    //     },
-    // },
+    defaultOptions: {
+        margin: {
+            top: 30,
+            right: 20,
+            bottom: 40,
+            left: 60
+        },
+    },
 
     initialize: function(viewOptions) {
         CLMSUI.DistanceMatrixViewBB.__super__.initialize.apply(this, arguments);
@@ -51,30 +50,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.update();
             });
 
-
-        this.chartDiv = flexWrapperPanel.append("div")
-            .attr("class", "panelInner")
-            .attr("flex-grow", 1)
-            .style("position", "relative");
-
-        // SVG element
-        this.svg = this.chartDiv.append("svg");
-
-        var vis = this.svg.append("g"); //.attr("transform", "translate(" + 310 + "," + 310 + ")");
-
-        this.svg.call(d3.behavior.zoom()
-            .scaleExtent([1 / 2, 4])
-            .on("zoom", zoomed));
-
-        function zoomed() {
-            vis.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-        }
-
-        //four  layers
-        this.linksGroup = vis.append("g");
-        this.foregroundGroup = vis.append("g");
-
-        var termSelectData = ["biological_process", "molecular_function", "cellular_component"];
+        var termSelectData = ["cellular_component", "cellular_component part_of", "biological_process is_a", "biological_process part_of", "molecular_function is_a", "molecular_function part_of"];
 
         var options = this.termSelect.selectAll("option")
             .data(termSelectData)
@@ -90,128 +66,116 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 return d;
             });
 
-        this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
-        //  this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
-        // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
+        this.chartDiv = flexWrapperPanel.append("div")
+            .attr("class", "panelInner")
+            .attr("flex-grow", 1)
+            .style("position", "relative");
 
-        this.d3cola = cola.d3adaptor(d3)
+        // SVG element
+        this.svg = this.chartDiv.append("svg");
+
+        var vis = this.svg.append("g"); //.attr("transform", "translate(" + 310 + "," + 310 + ")");
+
+        // this.svg.call(d3.behavior.zoom()
+        //     .scaleExtent([1 / 2, 4])
+        //     .on("zoom", zoomed));
+        //
+        // function zoomed() {
+        //     vis.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+        // }
+        // ************** Generate the tree diagram	 *****************
+        var margin = {
+                top: 20,
+                right: 120,
+                bottom: 20,
+                left: 120
+            },
+            width = 960 - margin.right - margin.left,
+            height = 500 - margin.top - margin.bottom;
+
+        this.i = 0;
+        this.diagonal = d3.svg.diagonal()
+            .projection(function(d) {
+                return [d.y, d.x];
+            });
+
+        // var svg = d3.select("body").append("svg")
+        //     .attr("width", width + margin.right + margin.left)
+        //     .attr("height", height + margin.top + margin.bottom)
+        //     .append("g")
+        //     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+        //four  layers
+        this.backgroundGroup = vis.append("g");
+        this.linkGroup = vis.append("g");
+        this.foregroundGroup = vis.append("g");
+
+        //this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
+        this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
+        // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
+        this.tree = d3.layout.tree().size(500, 500); //width, height);
+
     },
 
-    update: function() {
+    render: function() {
         var termType = d3.select("#goTermsPanelgoTermSelect").selectAll("option")
             .filter(function(d) {
                 return d3.select(this).property("selected");
             })
             .datum();
-        this.root = CLMSUI.compositeModelInst.get("goTrees")[termType];
-        this.root.expanded = true;
-        this.render(this.root);
+
+        var dag = CLMSUI.compositeModelInst.get("goDags")[termType];
+
+        function treeNode(dagNode, treeParent) {
+            var node = {
+                name: dagNode.name,
+                parent: treeParent ? treeParent.name : null,
+                _children: [],
+                term: dagNode
+            };
+            for (var c of dagNode.is_aChildren) {
+                if (c.getInteractors().size > 0) {
+                    node._children.push(treeNode(c, node));
+                }
+            }
+            return node;
+        }
+
+        this.root = treeNode(dag);
+
+        this.root.x0 = 250; //height / 2;
+        this.root.y0 = 0;
+
+        this.update(this.root);
     },
 
-    render: function() {
-        console.log("GO RENDER!");
-        if (this.d3cola) {
-            this.d3cola.stop();
-        }
-        var self = this;
-        var nodes = new Map(); // not hidden nodes
-        var linkSubsetMap = new Map();
-        /*var depthMap = new Map();*/
-        if (this.root) {
-            recurseGroup(this.root);
-        }
+    update: function(source) {
+        var duration = 750;
 
-        function recurseGroup(group) {
-            if (!nodes.has(group.id)) { //}&& group.getInteractors().size > 0) {
-                nodes.set(group.id, group);
-                /*                var sameDepthArr = depthMap.get(group.depth);
-                                if (!sameDepthArr) {
-                                    sameDepthArr = [];
-                                    depthMap.set(group.depth, sameDepthArr)
-                                }
-                                sameDepthArr.push(group);
-                */
-                for (var p of group.getClosestVisibleParents().values()) {
-                    recurseGroup(p);
-                    var fromId = p.id;
-                    var toId = group.id;
-                    var linkId = fromId + "_" + toId;
-                    var link = linkSubsetMap.get(linkId);
-                    if (!link) {
-                        var link = {};
-                        link.source = p; //.getRenderedParticipant();
-                        link.target = group; //.getRenderedParticipant();
-                        link.id = linkId;
-                        linkSubsetMap.set(linkId, link);
-                    }
-                }
-                if (group.expanded) {
-                    for (var c of group.children) {
-                        recurseGroup(c);
-                    }
-                }
-            }
-        };
+        // Compute the new tree layout.
+        var nodes = this.tree.nodes(this.root), //.reverse(),
+            links = this.tree.links(nodes);
 
-        nodes = CLMS.arrayFromMapValues(nodes);
-        edges = CLMS.arrayFromMapValues(linkSubsetMap);
-
-
-        /*function setNodeDepth (node, depth) {
-            if (depth > node.depth) {
-                node.depth = depth;
-            }
-            for (var c of node.children){
-                setNodeDepth(c, depth + 1);
-            }
-        }
-
-        // setNodeDepth(goTrees.biological_process, 0);
-        // setNodeDepth(goTrees.molecular_function, 0);
-        // setNodeDepth(goTrees.cellular_component, 0);
-
-        /*      var constraints = [];
-        for (var sameDepth of depthMap.values()) {
-            var constraint = {
-                "type": "alignment",
-                "axis": "x"
-            }
-            var offsets = [];
-            for (var n of sameDepth) {
-                var ni = nodes.indexOf(n);
-                offsets.push({
-                    node: ni,
-                    offset: 0
-                });
-            }
-            constraint.offsets = offsets;
-            constraints.push(constraint);
-        }
-*/
-        delete this.d3cola._lastStress;
-        delete this.d3cola._alpha;
-        delete this.d3cola._descent;
-        delete this.d3cola._rootGroup;
-
-        this.d3cola
-            .avoidOverlaps(true)
-            .convergenceThreshold(0.1)
-            .nodes(nodes)
-            .links(edges)
-            // .constraints(constraints)
-            .flowLayout('x', 300);
+        // Normalize for fixed-depth.
+        nodes.forEach(function(d) {
+            d.y = d.depth * 180;
+        });
 
         var self = this;
 
-        var node = this.foregroundGroup.selectAll(".node")
+        // Update the nodes…
+        var node = this.foregroundGroup.selectAll("g.node")
             .data(nodes, function(d) {
-                return d.id;
+                return d.id || (d.id = ++self.i);
             });
 
+        // Enter any new nodes at the parent's previous position.
         var nodeEnter = node.enter().append("g")
-            .classed("node", true)
-            .attr("id", function(d) {
-                return d.id;
+            .attr("class", "node")
+            .attr("transform", function(d) {
+                return "translate(" + source.y0 + "," + source.x0 + ")";
             })
             .on("contextmenu", function(d, i) {
                 d3.event.preventDefault();
@@ -219,196 +183,263 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.click(d);
             })
             .on("click", function(d) {
-
-                // self.model.setSelectedProteins([], false);
-                // self.toSelect = new Set();
-                // self.selectTerm(d);
-                // self.model.setSelectedProteins(Array.from(self.toSelect), true);
+                self.model.setSelectedProteins([], false);
+                self.model.setSelectedProteins(Array.from(d.term.getInteractors().values()), true);
             })
             .on("mouseover", function(d) {
+                var term = d.term;
                 d3.select(this).select("circle").classed("highlightedProtein", true);
                 self.model.get("tooltipModel")
                     .set("header", "GO Term")
-                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(d))
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(term))
                     .set("location", {
                         pageX: d3.event.pageX,
                         pageY: d3.event.pageY
                     });
+                self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
             })
             .on("mouseout", function(d) {
                 d3.select(this).select("circle").classed("highlightedProtein", false);
                 self.model.get("tooltipModel").set("contents", null);
+                self.model.setHighlightedProteins([]);
             });
 
-        node.exit().remove();
-
-        nodeEnter.append("circle");
+        nodeEnter.append("circle")
+            .attr("r", 1e-6)
+            .style("fill", function(d) {
+                return d._children ? "lightsteelblue" : "#fff";
+            });
 
         nodeEnter.append("text")
-            .classed("label", true)
-            .classed("xlv_text", true)
-            .attr("x", 7)
+            .attr("x", function(d) {
+                return d.children || d._children ? -13 : 13;
+            })
+            .attr("dy", ".35em")
+            .attr("text-anchor", function(d) {
+                return d.children || d._children ? "end" : "start";
+            })
             .text(function(d) {
                 return d.name;
+            })
+            .style("fill-opacity", 1e-6);
+
+        // Transition nodes to their new position.
+        var nodeUpdate = node.transition()
+            .duration(duration)
+            .attr("transform", function(d) {
+                return "translate(" + d.y + "," + d.x + ")";
             });
 
-        node.selectAll("circle")
+        nodeUpdate.select("circle")
+            .attr("r", 10)
             .style("fill", function(d) {
-                return d.expanded ? "white" : "black";
+                return d._children ? "lightsteelblue" : "#fff";
+            });
+
+        nodeUpdate.select("text")
+            .style("fill-opacity", 1);
+
+        // Transition exiting nodes to the parent's new position.
+        var nodeExit = node.exit().transition()
+            .duration(duration)
+            .attr("transform", function(d) {
+                return "translate(" + source.y + "," + source.x + ")";
             })
-            .style("stroke", function(d) {
-                return d.expanded ? "black" : "none";
+            .remove();
+
+        nodeExit.select("circle")
+            .attr("r", 1e-6);
+
+        nodeExit.select("text")
+            .style("fill-opacity", 1e-6);
+
+        // Update the nodes…
+        var nodeBackground = this.backgroundGroup.selectAll("circle.nodeBackground")
+            .data(nodes, function(d) {
+                return d.id || (d.id = ++self.i)
+            });
+
+        // Enter any new nodes at the parent's previous position.
+        var nodeBackgroundEnter = nodeBackground.enter().append("circle")
+            .attr("class", "nodeBackground")
+            .attr("transform", function(d) {
+                return "translate(" + source.y0 + "," + source.x0 + ")";
+            })
+            .on("contextmenu", function(d, i) {
+                d3.event.preventDefault();
+                // react on right-clicking
+                self.click(d);
+            })
+            .on("click", function(d) {
+                self.model.setSelectedProteins([], false);
+                self.model.setSelectedProteins(Array.from(d.term.getInteractors().values()), true);
+            })
+            .on("mouseover", function(d) {
+                var term = d.term;
+                d3.select(this).select("circle").classed("highlightedProtein", true);
+                self.model.get("tooltipModel")
+                    .set("header", "GO Term")
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(term))
+                    .set("location", {
+                        pageX: d3.event.pageX,
+                        pageY: d3.event.pageY
+                    });
+                self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
+            })
+            .on("mouseout", function(d) {
+                d3.select(this).select("circle").classed("highlightedProtein", false);
+                self.model.get("tooltipModel").set("contents", null);
+                self.model.setHighlightedProteins([]);
             })
             .attr("r", function(d) {
-                return d.expanded ? 5 : 3;
-            });
-
-
-        var link = this.linksGroup.selectAll(".goLink")
-            .data(edges, function(d) {
-                return d.id;
-            });
-
-        var linkEnter =
-            link.enter().append("line") //.append("path")
-            .classed("goLink", true)
-            .attr("id", function(d) {
-                return d.id;
-            });
-
-        link.exit().remove();
-
-        //        node.select("circle").attr("r", function (d) {return d.expanded? 0 : d.getBlobRadius();})
-        // Math.sqrt(d.getInteractors().size / Math.PI) * 10
-
-        /*var nodeDebug = this.vis.selectAll(".nodeDebug")
-            .data(nodes, function(d) {
-                return d.id;
-            });
-
-        var nodeDebugEnter = nodeDebug
-            .enter().append('rect')
-            .classed('node', true)
-            .attr({
-                rx: 5,
-                ry: 5
+                return Math.sqrt(d.term.getInteractors().size / Math.PI) * 20;
             })
-            .style('stroke', "red")
-            .style('fill', "none");
-
-        nodeDebug.exit().remove();*/
-
-        this.d3cola.start(10, 15, 20).on("tick", function() {
-            node.attr("transform", function(d) {
-                return "translate(" + d.x + "," + d.y + ")";
+            .style("fill", function(d) {
+                return "white";
             });
 
-            /*
-            nodeDebug.attr({
-                x: function(d) {
-                    return d.bounds.x
-                },
-                y: function(d) {
-                    return d.bounds.y
-                },
-                width: function(d) {
-                    return 50; //d.bounds.width()
-                },
-                height: function(d) {
-                    return 50; //d.bounds.height()
-                }
-            });*/
 
-            link.attr("x1", function(d) {
-                return d.source.x;
-            }).attr("y1", function(d) {
-                return d.source.y;
-            }).attr("x2", function(d) {
-                return d.target.x;
-            }).attr("y2", function(d) {
-                return d.target.y;
+        // Transition nodes to their new position.
+        var nodeBackgroundUpdate = nodeBackground.transition()
+            .duration(duration)
+            .attr("transform", function(d) {
+                return "translate(" + d.y + "," + d.x + ")";
+            });
+        //
+        // nodeUpdate.select("circle")
+        //     .attr("r", 10)
+        //     .style("fill", function(d) {
+        //         return d._children ? "lightsteelblue" : "#fff";
+        //     });
+        //
+        // nodeUpdate.select("text")
+        //     .style("fill-opacity", 1);
+
+        // Transition exiting nodes to the parent's new position.
+        var nodeBackgroundExit = nodeBackground.exit().transition()
+            .duration(duration)
+            .attr("transform", function(d) {
+                return "translate(" + source.y + "," + source.x + ")";
+            })
+            .remove();
+
+        nodeBackgroundExit.select("circle")
+            .attr("r", 1e-6);
+
+        /*
+
+                var backgroundCircleSel = this.backgroundGroup.selectAll(".bcNode")
+                    .data(nodes, function(d) {
+                        return d.id;
+                    });
+
+                var bcEnter = backgroundCircleSel.enter().append("circle")
+                    .classed("bcNode", true)
+                    .attr("r", function(d) {
+                      // console.log("I", d.getInteractors().size)
+                        return Math.sqrt(d.getInteractors().size / Math.PI) * 10;
+                    })
+                backgroundCircleSel.exit().remove();*/
+
+        // Update the links…
+        var link = this.linkGroup.selectAll("path.goLink")
+            .data(links, function(d) {
+                return d.target.id;
             });
 
+        // Enter any new links at the parent's previous position.
+        link.enter().insert("path", "g")
+            .attr("class", "goLink")
+            .attr("d", function(d) {
+                var o = {
+                    x: source.x0,
+                    y: source.y0
+                };
+                return self.diagonal({
+                    source: o,
+                    target: o
+                });
+            });
+
+        // Transition links to their new position.
+        link.transition()
+            .duration(duration)
+            .attr("d", self.diagonal);
+
+        // Transition exiting nodes to the parent's new position.
+        link.exit().transition()
+            .duration(duration)
+            .attr("d", function(d) {
+                var o = {
+                    x: source.x,
+                    y: source.y
+                };
+                return self.diagonal({
+                    source: o,
+                    target: o
+                });
+            })
+            .remove();
+
+        // Stash the old positions for transition.
+        nodes.forEach(function(d) {
+            d.x0 = d.x;
+            d.y0 = d.y;
         });
-
-        return this;
     },
 
     // Toggle children on click.
     click: function(d) {
-        d.expanded = !d.expanded;
-        this.render();
+        if (d.children) {
+            d._children = d.children;
+            d.children = null;
+        } else {
+            d.children = d._children;
+            d._children = null;
+        }
+        this.update(d);
     },
 
-    /*
-            expandToShow: function(d) {
-                console.log("expanding:" + d.name, d)
-                if (d._children) {
-                    d.children = d._children;
-                    d._children = null;
-                }
-                if (d.parent) {
-                    // var group = this.groupMap.get(d.parent);
-                    // if (group) {
-                    this.expandToShow(d.parent);
-                } else {
-                    console.log("no parent?", d.name);
-                }
-                // }
-            },
-
-
-            selectTerm: function(d) {
-                var goId = d.id;
-                var proteins = this.model.get("clmsModel").get("participants");
-                for (var protein of proteins.values()) {
-                    if (protein.go && protein.go.has(goId)) {
-                        this.toSelect.add(protein);
-                    }
-                }
-                var children = d.children ? d.children : d._children;
-                if (children) {
-                    for (var child of children) {
-                        this.selectTerm(child);
-                    }
-                }
-            },
-        */
     relayout: function() {
-        // this.resize();
+        // relayout called before render
+        this.resize();
         return this;
     },
 
     // called when things need repositioned, but not re-rendered from data
     resize: function() {
+        console.log("resize");
         // Firefox returns 0 for an svg element's clientWidth/Height, so use zepto/jquery width function instead
-        // var jqElem = $(this.svg.node());
-        // var cx = jqElem.width(); //this.svg.node().clientWidth;
-        // var cy = jqElem.height(); //this.svg.node().clientHeight;
-        // var margin = this.options.margin;
-        // var width = Math.max(0, cx - margin.left - margin.right);
-        // var height = Math.max(0, cy - margin.top - margin.bottom);
-        //this.update(this.treeData2);
-        //this.tree.size(this.getTreeSize());
-        //        this.render();
+        var jqElem = $(this.chartDiv.node());
+        var cx = jqElem.width(); //this.svg.node().clientWidth;
+        var cy = jqElem.height(); //this.svg.node().clientHeight;
+        var margin = this.options.margin;
+        var width = Math.max(0, cx); // - margin.left - margin.right);
+        var height = Math.max(0, cy); // - margin.top - margin.bottom);
+        this.svg.style("width", width).style("height", height);
+        this.tree = d3.layout.tree().size([width, height]);
+        if (this.root) {
+            this.update(this.root);
+        }
+
         return this;
     },
-    /*
-        highlightedProteinsChanged: function() {
-            var highlightedParticipants = this.model.get("highlightedProteins");
-            for (var highlightedParticipant of highlightedParticipants) {
-                //console.log("*", highlightedParticipant.go);
-                if (highlightedParticipant.go) {
-                    for (var goTerm of highlightedParticipant.go) {
-                        d3.select("#" + goTerm)
-                            .style("fill", "#000");
-                    }
+
+    highlightedProteinsChanged: function() {
+        var highlightedParticipants = this.model.get("highlightedProteins");
+        for (var highlightedParticipant of highlightedParticipants) {
+            //console.log("*", highlightedParticipant.go);
+            if (highlightedParticipant.go) {
+                for (var goTerm of highlightedParticipant.go) {
+                    d3.select("#" + goTerm)
+                        .style("fill", "yellow");
                 }
             }
-            return this;
-        },
+        }
+        return this;
+    },
 
-        selectedProteinsChanged: function() {
+    /*        selectedProteinsChanged: function() {
             for (var group of this.groupMap.values()) {
                 if (group.children) {
                     group._children = group.children;

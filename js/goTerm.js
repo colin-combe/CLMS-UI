@@ -1,32 +1,53 @@
 CLMSUI = CLMSUI || {};
 
 CLMSUI.GoTerm = function() {
-    this.is_a = new Set();
-    this.intersection_of = new Set();
-    this.relationship = new Set();
-    this.interactors = new Set();
-
-    this.children = [];
-    this.parents = [];
-    this.height = 25;
-    this.width = 50;
-    this.expanded = false;
-    this.depth = 0;
+    // lazy instantiation instead
+    //this.is_a = new Set(); // i.e. superclasses
+    //this.subclasses = new Set();
+    //this.part_of = new Set();
+    //this.parts = new Set();
+    //this.interactors = new Set();
 }
 
 CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
+    var go = CLMSUI.compositeModelInst.get("go");
     if (!interactorSet) {
         interactorSet = new Set();
     }
-    for (var c of this.children) {
-        c.getInteractors(interactorSet)
+    if (this.parts) {
+        for (let partId of this.parts) {
+            go.get(partId).getInteractors(interactorSet);
+        }
     }
-    for (var i of this.interactors) {
-        interactorSet.add(i);
+    if (this.subclasses) {
+        for (let subclassId of this.subclasses) {
+            go.get(subclassId).getInteractors(interactorSet);
+        }
+    }
+    if (this.interactors) {
+        for (let i of this.interactors) {
+            if (i.hidden == false) {
+              interactorSet.add(i);
+            }
+        }
     }
     return interactorSet;
 }
 
+
+CLMSUI.GoTerm.prototype.isDirectRelation = function(anotherGoTerm) {
+    var agoid = anotherGoTerm.id;
+    return ( 
+        (this == anotherGoTerm) ||
+        (this.is_a && this.is_a.has (agoid)) ||
+        (this.subclasses && this.subclasses.has (agoid)) ||
+        (this.part_of && this.part_of.has (agoid)) ||
+        (this.parts && this.parts.has (agoid)) 
+    );
+}
+
+
+/*
 CLMSUI.GoTerm.prototype.getClosestVisibleParents = function(visibleParents) {
     if (!visibleParents) {
         visibleParents = new Set();
@@ -53,3 +74,4 @@ CLMSUI.GoTerm.prototype.isVisible = function() {
     }
     return false;
 }
+*/

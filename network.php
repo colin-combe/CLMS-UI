@@ -78,9 +78,9 @@
         <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
+    		<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
+    		<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
+    		<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
@@ -94,14 +94,12 @@
         <script type="text/javascript" src="../vendor/js/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-		<script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
+		    <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
-		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
-		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
-		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
+    		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
+    		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
+    		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3-octree.js<?php echo $cacheBuster ?>"></script>
-        <!-- <script type="text/javascript" src="../vendor/js/zepto.js"></script> -->
-        <!-- <script type="text/javascript" src="../vendor/js/crossfilter.js"></script> -->
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>
@@ -159,8 +157,9 @@
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/goTermsViewBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
@@ -241,7 +240,7 @@
         var z;
 
 		var success = function (json) {
-			try {  
+			try {
                 json.times.io = (Date.now() / 1000) - json.times.endAbsolute;
                 json.times.overall = json.times.io + (json.times.endAbsolute - json.times.startAbsolute);
                 console.log ("TIME t2", performance.now(), json.times);
@@ -266,13 +265,12 @@
 			}
 		};
 
-        
-		
 
         z = performance.now();
         console.log ("TIME t1", performance.now());
 
         if (window.location.search) {
+            // Load spectrum matches
             var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
             d3.json (url, function (error, json) {
                 spinner.stop(); // stop spinner on request returning
@@ -284,11 +282,46 @@
                     console.error ("Error", error);
                 }
             });
+            
+            // Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
+            url = "./go.obo";
+            d3.text (url, function(error, txt) {
+                if (error) {
+                    console.log("error", error, "for", url, arguments);
+                } else {
+                    CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+                    //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
+                    allDataLoaded ();
+                }
+            });
+            
+            /*
+            url = "./goObj.json";
+            d3.json (url, function(error, json) {
+                if (error) {
+                    console.log("error", error, "for", url, arguments);
+                } else {
+                    CLMSUI.jsongo = json;
+                    var z = performance.now();
+                    var terms = d3.values (json);
+                    terms.forEach (function (t) {
+                        var entries = d3.entries(t);
+                        entries.forEach (function (entry) {
+                            if (entry.value instanceof Array) {
+                                t[entry.key] = new Set (entry.value);
+                            }
+                        });
+                    });
+                    console.log (performance.now() - z, "ms for json sets");
+                    //allDataLoaded ();
+                }
+            });
+            */
         } else {
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches
         }
-
+    
     //]]>
     </script>
 

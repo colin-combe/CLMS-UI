@@ -174,9 +174,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         });
         
         this.options = _.extend(defaultOptions, viewOptions.myOptions || {});
+        /*
         var subsets = d3.merge ([this.options.subsetToggles, this.options.subsetNumberFilters]);
         var subsetNest = d3.nest().key(function(d) { return d.group; }).entries(subsets);
         console.log ("subsetNest", subsetNest);
+        */
         
         
         var uniqueGroups = this.model.get("searchGroups");
@@ -899,7 +901,7 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
                 } else {
                     if (i === 0 && decoysPresent) {
                         var roughFDR = (self.model.getFilteredCrossLinks("decoysTD").length - self.model.getFilteredCrossLinks("decoysDD").length) / (self.model.getFilteredCrossLinks().length || 1);
-                        return "• Rough FDR Equivalent = " + self.pctFormat(roughFDR);
+                        return "• Apparent link-level FDR: " + self.pctFormat(roughFDR);
                     }
                     return "";
                 }

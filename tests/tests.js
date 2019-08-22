@@ -1304,7 +1304,7 @@ function testSetupNew (cbfunc) {
 		});
 		
 		options.blosumOptions = {url: "../R/blosums.json"};
-		CLMSUI.init.pretendLoad();	// add 1 to allDataLoaded bar (we aren't loading views here)
+		CLMSUI.init.pretendLoad();	// add 2 to allDataLoaded bar (we aren't loading views or GO terms here)
 		CLMSUI.init.models (options);
 	});
 }

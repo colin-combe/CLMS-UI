@@ -39,8 +39,10 @@ CLMSUI.modelUtils = {
         return CLMSUI.modelUtils.getResidueType(getTo ? xlink.toProtein : xlink.fromProtein, getTo ? xlink.toResidue : xlink.fromResidue, seqAlignFunc);
     },
 
-    filterOutDecoyInteractors: function (interactors) {
-        return interactors.filter (function (i) { return !i.is_decoy; });
+    filterOutDecoyInteractors: function(interactors) {
+        return interactors.filter(function(i) {
+            return !i.is_decoy;
+        });
     },
 
     makeTooltipContents: {
@@ -83,8 +85,8 @@ CLMSUI.modelUtils = {
                 var goTermsMap = CLMSUI.compositeModelInst.get("go");
                 var goTermsText = "";
                 for (var goId of interactor.go) {
-                  var goTerm = goTermsMap.get(goId);
-                  goTermsText  += goTerm.name + "<br>";
+                    var goTerm = goTermsMap.get(goId);
+                    goTermsText += goTerm.name + "<br>";
                 }
                 contents.push(["GO", goTermsText]);
             }
@@ -198,10 +200,11 @@ CLMSUI.modelUtils = {
                 ["Name", goTerm.name],
                 ["Namespace", goTerm.namespace],
                 ["Definition", goTerm.def],
-                ["Synonym", goTerm.synomym],
-                ["is_a", Array.from(goTerm.is_a.values()).join(", ")],
-                ["intersection_of", Array.from(goTerm.intersection_of.values()).join(", ")],
-                ["relationship", Array.from(goTerm.relationship.values()).join(", ")]
+                // ["Synonym", goTerm.synomym],
+                // ["is_a", Array.from(goTerm.is_a.values()).join(", ")],
+                // ["intersection_of", Array.from(goTerm.intersection_of.values()).join(", ")],
+                // ["relationship", Array.from(goTerm.relationship.values()).join(", ")],
+                // ["interactors", goTerm.getInteractors(false).size]
             ];
         },
     },
@@ -347,26 +350,26 @@ CLMSUI.modelUtils = {
     },
 
     amino1toMass: {
-        "A":71.03711,
-        "R":156.10111,
-        "N":114.04293,
-        "D":115.02694,
-        "C":103.00919,
-        "E":129.04259,
-        "Q":128.05858,
-        "G":57.02146,
-        "H":137.05891,
-        "I":113.08406,
-        "L":113.08406,
-        "K":128.09496,
-        "M":131.04049,
-        "F":147.06841,
-        "P":97.05276,
-        "S":87.03203,
-        "T":101.04768,
-        "W":186.07931,
-        "Y":163.06333,
-        "V":99.06841,
+        "A": 71.03711,
+        "R": 156.10111,
+        "N": 114.04293,
+        "D": 115.02694,
+        "C": 103.00919,
+        "E": 129.04259,
+        "Q": 128.05858,
+        "G": 57.02146,
+        "H": 137.05891,
+        "I": 113.08406,
+        "L": 113.08406,
+        "K": 128.09496,
+        "M": 131.04049,
+        "F": 147.06841,
+        "P": 97.05276,
+        "S": 87.03203,
+        "T": 101.04768,
+        "W": 186.07931,
+        "Y": 163.06333,
+        "V": 99.06841,
     },
 
     // return array of indices of first occurrence of a sequence when encountering a repetition
@@ -425,7 +428,7 @@ CLMSUI.modelUtils = {
             var max = {
                 key: undefined,
                 seqObj: undefined,
-                bestScore: 2   //1e-25
+                bestScore: 2 //1e-25
             };
             var seqObj = sequenceObjs[n];
             entries.forEach(function(entry) {
@@ -469,7 +472,7 @@ CLMSUI.modelUtils = {
             if (interactorCollection.length === undefined) {
                 interactorCollection = CLMS.arrayFromMapValues(interactorCollection);
             }
-            ids = CLMSUI.modelUtils.filterOutDecoyInteractors (interactorCollection)
+            ids = CLMSUI.modelUtils.filterOutDecoyInteractors(interactorCollection)
                 .map(function(prot) {
                     return prot.accession;
                 })
@@ -513,9 +516,10 @@ CLMSUI.modelUtils = {
         var subIndexedMap = {};
         d3.entries(mmap).forEach(function(entry) {
             subIndexedMap[entry.key] = d3.nest()
-                .key(function(d) { return d[subIndexingProperty];})
-                .entries(entry.value)
-            ;
+                .key(function(d) {
+                    return d[subIndexingProperty];
+                })
+                .entries(entry.value);
         });
         return subIndexedMap;
     },
@@ -548,18 +552,18 @@ CLMSUI.modelUtils = {
         }
         return rmap;
     },
-    
-    makeMultiKeyProteinMap: function (clmsModel) {
+
+    makeMultiKeyProteinMap: function(clmsModel) {
         var protMap = d3.map();
         clmsModel.get("participants").forEach(function(value, key) {
             protMap.set(value.accession, key);
             protMap.set(value.name, key);
             protMap.set(value.id, key);
-        }); 
+        });
         return protMap;
     },
-    
-    parseProteinID: function (protMap, pid) {
+
+    parseProteinID: function(protMap, pid) {
         var parts = pid.split("|");
         var pkey;
         parts.forEach(function(part) {
@@ -570,7 +574,7 @@ CLMSUI.modelUtils = {
 
     updateLinkMetadata: function(metaDataFileContents, clmsModel) {
         var crossLinks = clmsModel.get("crossLinks");
-        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
         var first = true;
         var columns = [];
         var columnTypes = {};
@@ -581,9 +585,9 @@ CLMSUI.modelUtils = {
             return d[ref + " " + n] || d[ref + n];
         }
 
-        function parseProteinID2 (i, d) {
+        function parseProteinID2(i, d) {
             var p = getValueN("Protein", i, d) || "";
-            return CLMSUI.modelUtils.parseProteinID (protMap, p);
+            return CLMSUI.modelUtils.parseProteinID(protMap, p);
         }
 
         var matchedCrossLinks = [];
@@ -593,8 +597,8 @@ CLMSUI.modelUtils = {
 
             // Maybe need to generate key from several columns
             if (!crossLink) {
-                var pkey1 = parseProteinID2 (1, d);
-                var pkey2 = parseProteinID2 (2, d);
+                var pkey1 = parseProteinID2(1, d);
+                var pkey2 = parseProteinID2(2, d);
                 linkID = pkey1 + "_" + getValueN("SeqPos", 1, d) + "-" + pkey2 + "_" + getValueN("SeqPos", 2, d);
                 crossLink = crossLinks.get(linkID);
             }
@@ -640,8 +644,7 @@ CLMSUI.modelUtils = {
                         matchedCrossLink.setMeta(entry.key, val.toString());
                     }
                 });
-            })
-        ;
+            });
 
         var registry = clmsModel.get("crossLinkMetaRegistry") || d3.set();
         columns.forEach(function(column) {
@@ -672,7 +675,7 @@ CLMSUI.modelUtils = {
             }
         });
     },
-    
+
 
     updateProteinMetadata: function(metaDataFileContents, clmsModel) {
         var proteins = clmsModel.get("participants");
@@ -684,7 +687,7 @@ CLMSUI.modelUtils = {
         var dontStoreSet = d3.set(dontStoreArray);
         var matchedProteinCount = 0;
 
-        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
 
         d3.csv.parse(metaDataFileContents, function(d) {
             if (first) {
@@ -696,7 +699,7 @@ CLMSUI.modelUtils = {
             }
 
             var proteinIDValue = d.proteinID || d.ProteinID || d.Accession || d.accession;
-            var proteinID = protMap.get (CLMSUI.modelUtils.parseProteinID (protMap, proteinIDValue));
+            var proteinID = protMap.get(CLMSUI.modelUtils.parseProteinID(protMap, proteinIDValue));
             if (proteinID !== undefined) {
                 var protein = proteins.get(proteinID);
 
@@ -750,7 +753,7 @@ CLMSUI.modelUtils = {
         var first = true;
         var columns = [];
 
-        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
         var newAnnotations = [];
         var annotationMap = d3.map();
         var proteinSet = d3.set();
@@ -769,7 +772,7 @@ CLMSUI.modelUtils = {
                 dl[key.toLocaleLowerCase()] = d[key];
             });
 
-            var proteinID = protMap.get (CLMSUI.modelUtils.parseProteinID (protMap, dl.proteinid));
+            var proteinID = protMap.get(CLMSUI.modelUtils.parseProteinID(protMap, dl.proteinid));
             if (proteinID !== undefined) {
                 var protein = proteins.get(proteinID);
 
@@ -807,134 +810,112 @@ CLMSUI.modelUtils = {
             source: "file"
         });
     },
-
-
-    updateGafAnnotationsMetadata: function(gafFileContents, clmsModel) {
-
-        var url = "./go.obo";
-
-        d3.text(url, function(error, txt) {
+    
+    
+    convertGO_OBOtoJson: function (url) {
+        d3.text (url, function(error, txt) {
             if (error) {
                 console.log("error", error, "for", url, arguments);
             } else {
-                var go = new Map();
-                var lines = txt.split('\n');
-                var term;
-
-                // var termType = "cellular_component";
-
-                //term.id = term.id.replace(":", "")
-                for (var l = 0; l < lines.length; l++) {
-                    //console.log(lines[l]);
-                    var line = lines[l];
-                    if (line.trim() != "") {
-                        if (line.trim() == "[Term]" || line.trim() == "[Typedef]") {
-                            if (term){//} && term.namespace == termType) {
-                                go.set(term.id, term);
-                            }
-                            term = new CLMSUI.GoTerm();
-                        } else if (term) {
-                            var parts = line.split(":");
-                            if (parts[0] == "is_a" || parts[0] == "intersection_of" || parts[0] == "relationship") {
-                                term[parts[0]].add(parts.slice(1, parts.length).join("").trim());
-                            } else {
-                              term[parts[0]] = parts.slice(1, parts.length).join("").trim();
-                            }
-                        }
-                    }
-                }
-                // if (term.namespace == termType) {
-                    go.set(term.id, term);
-                // }
-                console.log("go size:" + go.size)
-                CLMSUI.compositeModelInst.set("go", go);
-
-                var tempMap = new Map();
-                var goTrees = {};
-
-                function checkTerm(goTerm) {
-                    if (!tempMap.has(goTerm.id)) {
-                        if (goTerm.is_a.size > 0) {
-                          var is_aValues = goTerm.is_a.values();
-                          for (var potentialParent of is_aValues) {
-                              var parentId = potentialParent.split(" ")[0];
-                              var parentTerm = go.get(parentId);
-                              if (goTerm.namespace = parentTerm.namespace) {
-                                goTerm.parents.push(parentTerm);
-                                checkTerm(parentTerm);
-                                parentTerm.children.push(goTerm);
-                              }
-                          }
-                        }
-                        else if (goTerm.id == "GO0008150") {
-                            goTrees.biological_process = goTerm;
-                        } else if (goTerm.id == "GO0003674") {
-                            goTrees.molecular_function = goTerm;
-                        } else if (goTerm.id == "GO0005575") {
-                            goTrees.cellular_component = goTerm;
-                        }
-                        tempMap.set(goTerm.id, goTerm);
-                        return goTerm;
-                    } else {
-                        return tempMap.get(goTerm.id);
-                    }
-                    return null;
-                };
-
-                for (var t of go.values()) {
-                    // if (t.namespace == termType) {
-                        checkTerm(t);
-                    // }
-                }
-
-                CLMSUI.compositeModelInst.set("goTrees", goTrees);
-
-                var proteins = clmsModel.get("participants");
-                var protMap = d3.map();
-                proteins.forEach(function(value, key) {
-                    protMap.set(value.accession, key);
-                });
-
-                var gafLines = gafFileContents.split('\n');
-                //var groups = new Map();
-                for (var g = 0; g < gafLines.length; g++) {
-                    line = gafLines[g];
-                    if (line.startsWith("!") == false) {
-                        var fields = line.split("\t");
-                        var goId = fields[4].replace(":", "");
-                        var goTerm = go.get(goId);
-                        if (goTerm) {
-                            var proteinId = protMap.get(fields[1]);
-                            var protein = proteins.get(proteinId);
-                            goTerm.interactors.add(protein);
-                            if (protein) {
-                                if (!protein.go) {
-                                    protein.go = new Set();
-                                }
-                                //console.log(">>"+goId);
-                                protein.go.add(goId);
-                                // if (!groups.has(goId)) {
-                                //     var accs = new Set();
-                                //     accs.add(proteinId);
-                                //     groups.set(goId, accs);
-                                // } else {
-                                //     groups.get(goId).add(proteinId);
-                                // }
-                            }
-                        }
-                    }
-                }
-
-                // update groups
-
-                CLMSUI.vent.trigger("goAnnotationsUpdated", {
-                    // groups: groups
-                }, {
-                    source: "file"
-                });
-
+                CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+                CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
             }
         });
+    },
+
+
+    loadGOAnnotations: function (txt) {
+        console.log ("parsing go obo");
+        var z = performance.now();
+        var go = new Map();
+        //var lines = txt.split('\n');
+        var term;
+        var i = 0, l = 0;
+        var first = true;
+        
+        //for (var l = 0; l < lines.length; l++) {
+        while (i !== 0 || first) {
+            first = false;
+            var endi = txt.indexOf("\n", i);
+            var line = txt.slice(i, endi !== -1 ? endi : undefined);
+            //not having ':' in go ids, so valid html id later, maybe a mistake, (do trim here to get rid of '/r's too - mjg)
+            line = line.trim().replace (/:/g, '');
+            //var line = lines[l].trim().replace (/:/g, '');
+
+            if (line) {
+                if (line === "[Term]" || line === "[Typedef]") {
+                    if (term) {
+                        go.set(term.id, term);
+                    }
+                    term = new CLMSUI.GoTerm();
+                } else if (term) {
+                    //var parts = line.split(" ");  // speed up by avoiding split if humanly possible as free text lines are space heavy
+                    var tag = line.slice (0, line.indexOf(" "));
+                    var value = line.slice (tag.length + 1);
+                    if (tag === "is_a") {
+                        var vi = value.indexOf(" ");
+                        var valuewc = vi >= 0 ? value.slice(0, vi) : value; // remove comment portion
+                        term.is_a = term.is_a || new Set();
+                        term.is_a.add (valuewc);
+                    } else if (tag === "intersection_of" || tag === "relationship") {
+                        var parts = value.split(" ", 2);    // split to first 2 only, avoid parsing comments
+                        if (parts[0] === "part_of") {
+                            // console.log(term.namespace, line);
+                            term.part_of = term.part_of || new Set();
+                            term.part_of.add (parts[1]);
+                        }
+                    } else {
+                        term[tag] = value;   // quicker in chrome at least
+                    }
+                }
+            }
+            i = endi + 1;
+            l++;
+        } 
+        go.set(term.id, term); // last one left over
+
+        var zz = performance.now();
+        //populate subclasses and parts
+        for (term of go.values()) {
+            if (term.is_a) {
+                for (let superclassId of term.is_a){
+                    //console.log ("go", go, superclassId, go.get(superclassId));
+                    var other = go.get(superclassId);
+                    other.subclasses = other.subclasses || new Set();
+                    other.subclasses.add(term.id);
+                }
+            }
+            if (term.part_of) {
+                for (let partOfId of term.part_of){
+                    var other = go.get(partOfId);
+                    other.parts = other.parts || new Set();
+                    other.parts.add(term.id);
+                }
+            }
+        }
+        console.log (zz-z, "ms. first pass (is_a, part_of)", performance.now() - zz, "ms. second pass (subclasses, parts)");
+        console.log ("for obo parsing", l, "lines into map size", go.size);
+        
+        return go;
+    },
+    
+    jsonifyGoMap (goMap) {
+        var json = {};
+        goMap.forEach (function (v, k) {
+            var newv = $.extend({}, v);
+            Object.keys(newv).forEach (function (key) {
+                if (newv[key] instanceof Set) {
+                    if (newv[key].size === 0) {
+                        delete newv[key];
+                    } else {
+                        newv[key] = [...newv[key]];
+                    }
+                }
+            });
+            json[k] = JSON.parse(JSON.stringify(newv));
+        });
+        
+        return json;
     },
 
 
@@ -1323,7 +1304,7 @@ CLMSUI.modelUtils = {
         return vals;
     },
 
-    getDistanceSquared: function(coords1, coords2) {
+    getDistanceSquared: function (coords1, coords2) {
         var d2 = 0;
         for (var n = 0; n < coords1.length; n++) {
             var diff = coords1[n] - coords2[n];
@@ -1344,15 +1325,14 @@ CLMSUI.modelUtils = {
             .x(accessorObj.x || octree.x())
             .y(accessorObj.y || octree.y())
             .z(accessorObj.z || octree.z())
-            .addAll(bigPointArr)
-        ;
+            .addAll(bigPointArr);
 
         maxDistance = maxDistance || 200;
-        
+
         var nearest = smallPointArr.map(function(point) {
             return octree.find(octree.x()(point), octree.y()(point), octree.z()(point), maxDistance, point, ignoreFunc);
         });
-        var dist = smallPointArr.map (function (point, i) {
+        var dist = smallPointArr.map(function(point, i) {
             return nearest[i] ? CLMSUI.modelUtils.getDistanceSquared(point.coords, nearest[i].coords) : undefined;
         });
 
@@ -1427,14 +1407,14 @@ CLMSUI.modelUtils = {
         });
     },
 
-    getSearchGroups: function (clmsModel) {
-        var searchArr = CLMS.arrayFromMapValues (clmsModel.get("searches"));
-        var uniqueGroups = _.uniq (_.pluck (searchArr, "group"));
+    getSearchGroups: function(clmsModel) {
+        var searchArr = CLMS.arrayFromMapValues(clmsModel.get("searches"));
+        var uniqueGroups = _.uniq(_.pluck(searchArr, "group"));
         //console.log ("SSS", searchArr, uniqueGroups);
-        uniqueGroups.sort (function (a,b) {
-            var an = Number.parseFloat (a);
-            var bn = Number.parseFloat (b);
-            return !Number.isNaN(an) && !Number.isNaN(bn) ? an - bn : a.localeCompare (b);
+        uniqueGroups.sort(function(a, b) {
+            var an = Number.parseFloat(a);
+            var bn = Number.parseFloat(b);
+            return !Number.isNaN(an) && !Number.isNaN(bn) ? an - bn : a.localeCompare(b);
         });
         return uniqueGroups;
     },

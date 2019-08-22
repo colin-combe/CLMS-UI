@@ -361,7 +361,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 var search = window.location.search.slice(1);
                 var nonFilterKeys = d3.set(["sid", "decoys", "unval", "lowestScore", "anon"]);
                 var nonFilterParts = search.split("&").filter(function(nfpart) {
-                    return nonFilterKeys.has(nfpart.split("=")[0]);
+                    return nonFilterKeys.has(nfpart.split("=",1)[0]);
                 });
                 // and queue them to be at the start of new url query string (before filter attributes)
                 parts = nonFilterParts.concat(parts);
