@@ -117,6 +117,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
         this.tree = d3.layout.tree().size(500, 500); //width, height);
 
+        this.update();  // can do this here as go terms are available on the view's initialisation
     },
 
     render: function() {

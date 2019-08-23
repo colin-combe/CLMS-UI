@@ -31,9 +31,12 @@ CLMSUI.init.postDataLoaded = function() {
     CLMSUI.compositeModelInst.set("go", CLMSUI.go); // add pre-parsed go terms to compositeModel from placeholder
     CLMSUI.go = null;
 
-    CLMSUI.blosumCollInst.trigger("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
+    // Now we have blosum models and sequences, we can set blosum defaults for alignment models
+    CLMSUI.compositeModelInst.get("alignColl").models.forEach (function (protAlignModel) {
+        protAlignModel.set("scoreMatrix", CLMSUI.blosumCollInst.get("Blosum100"));
+    });
 
-    //init annotation types
+    // init annotation types
     var annotationTypes = [
         new CLMSUI.BackboneModelTypes.AnnotationType({
             category: "AA",
@@ -65,29 +68,27 @@ CLMSUI.init.postDataLoaded = function() {
         })
     ];
 
-    //get uniprot feature types
+    //  make uniprot feature types - done here as need proteins parsed and ready from xi
     var uniprotFeatureTypes = new Map();
     var participantArray = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
-    var participantCount = participantArray.length;
-    for (var p = 0; p < participantCount; p++) {
-        var participant = participantArray[p];
+    participantArray.forEach (function (participant) {
         if (participant.uniprot) {
             var featureArray = Array.from(participant.uniprot.features);
-            var featureCount = featureArray.length;
-            for (var f = 0; f < featureCount; f++) {
-                var feature = featureArray[f];
+            featureArray.forEach (function (feature) {
                 var key = feature.category + "-" + feature.type;
-                if (uniprotFeatureTypes.has(key) === false) {
+                if (!uniprotFeatureTypes.has(key)) {
                     var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);
                     annotationType
                         .set("source", "Uniprot")
-                        .set("typeAlignmentID", "Canonical");
+                        .set("typeAlignmentID", "Canonical")
+                    ;
                     uniprotFeatureTypes.set(key, annotationType);
                 }
-            }
+            });
         }
-    }
-    //add uniprot feature types
+    });
+    
+    // add uniprot feature types
     annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
@@ -109,45 +110,41 @@ CLMSUI.init.pretendLoad = function() {
     allDataLoaded();
 };
 
+
+CLMSUI.init.blosumLoading = function (options) {
+    options = options || {};
+    
+    // Collection of blosum matrices that will be fetched from a json file
+    CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection (options); // options if we want to override defaults
+
+    // when the blosum Collection is fetched (an async process), we select one of its models as being selected
+    CLMSUI.blosumCollInst.listenToOnce (CLMSUI.blosumCollInst, "sync", function() {
+        console.log("ASYNC. blosum models loaded");
+        allDataLoaded();
+    });
+    
+    // Start the asynchronous blosum fetching after the above events have been set up
+    CLMSUI.blosumCollInst.fetch (options);
+};
+
 CLMSUI.init.models = function(options) {
 
     // define alignment model and listeners first, so they're ready to pick up events from other models
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.ProtAlignCollection();
     options.alignmentCollectionInst = alignmentCollectionInst;
 
-    alignmentCollectionInst.listenToOnce(CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
-        this.addNewProteins(CLMS.arrayFromMapValues(clmsModel.get("participants")));
+    alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
+        this.addNewProteins (CLMS.arrayFromMapValues(clmsModel.get("participants")));
         console.log("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
     });
-
-
-    // Collection of blosum matrices that will be fetched from a json file
-    CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection(); // options if we want to override defaults
-
-    // when the blosum Collection is fetched (an async process), we select one of its models as being selected
-    CLMSUI.blosumCollInst.listenToOnce(CLMSUI.blosumCollInst, "sync", function() {
-        console.log("ASYNC. blosum models loaded");
-        allDataLoaded();
-    });
-
-    // and when the blosum Collection fires a blosumModelGlobalSetevent (via bothSyncsDone) it is accompanied by the chosen blosum Model
-    // and we set the alignmentCollection to listen for this and set all its Models to use that blosum Model as the initial value
-    alignmentCollectionInst.listenToOnce(CLMSUI.blosumCollInst, "blosumModelGlobalSet", function(blosumModel) {
-        // sets alignmentModel's scoreMatrix, the change of which then triggers an alignment
-        // (done internally within alignmentModelInst)
-        this.models.forEach(function(protAlignModel) {
-            protAlignModel.set("scoreMatrix", blosumModel);
-        });
-    });
-
-
+    
     CLMSUI.init.modelsEssential(options);
 
     // following listeners require compositeModelInst etc to be set up in modelsEssential() so placed afterwards
 
     // this listener adds new sequences obtained from pdb files to existing alignment sequence models
-    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst, "3dsync", function(sequences, removeThese) {
+    alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst, "3dsync", function(sequences, removeThese) {
         if (!_.isEmpty(sequences)) { // if sequences passed and it has a non-zero length...
             console.log("3dsync", arguments);
             // remove before add so if someone decides to reload the same file/code (why, but possible) we don't end up removing what we've just added
@@ -174,7 +171,7 @@ CLMSUI.init.models = function(options) {
 
     // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
     // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
-    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
+    alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
         this.addNewProteins(CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants")));
         // this triggers an event to say loads has changed in the alignment collection
         // more efficient to listen to that then redraw/recalc for every seq addition
@@ -185,9 +182,6 @@ CLMSUI.init.models = function(options) {
 
     // Set up colour models, some (most) of which depend on data properties
     CLMSUI.linkColour.setupColourModels();
-
-    // Start the asynchronous blosum fetching after the above events have been set up
-    CLMSUI.blosumCollInst.fetch(options.blosumOptions || {});
 
     // Start asynchronous GO term fetching
     //CLMSUI.modelUtils.loadGOAnnotations(); // it will call allDataLoaded when done
