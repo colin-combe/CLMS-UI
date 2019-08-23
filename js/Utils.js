@@ -1071,6 +1071,11 @@ CLMSUI.utils = {
             return this;
         },
         
+        // called when reshown (visible set to true) - use for updating calcs before rendering
+        reshow: function () {
+            return this;
+        },
+        
         _makeDetachedSVG : function (thisSVG) {
             var keyHeight = 0;
             if (this.options.exportKey) {
@@ -1345,6 +1350,7 @@ CLMSUI.utils = {
 
             if (show) {
                 this
+                    .reshow()
                     .relayout() // need to resize first sometimes so render gets correct width/height coords
                     .render();
                 this.bringToTop();
