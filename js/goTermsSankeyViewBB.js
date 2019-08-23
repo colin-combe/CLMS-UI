@@ -27,7 +27,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     initialize: function(viewOptions) {
-        CLMSUI.DistanceMatrixViewBB.__super__.initialize.apply(this, arguments);
+        CLMSUI.GoTermsViewBB.__super__.initialize.apply(this, arguments);
 
         var self = this;
 
@@ -47,8 +47,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .text("Term Type ►")
             .append("select")
             .attr("id", mainDivSel.attr("id") + "goTermSelect")
-            .on("change", function(d) {
-                self.update();
+            .on("change", function() {
+                self.updateThenRender();
             });
 
         var termSelectData = ["cellular_component", "biological_process", "molecular_function"];
@@ -79,7 +79,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 // self.model.trigger("groupedGoTermsChanged");
             })
             .on("contextmenu", function(d) {
-                d3.event.preventDefault();
+                //d3.event.preventDefault();
                 // react on right-clicking
                 //self.fixed = [];
                 //self.render();
@@ -89,8 +89,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.backgroundGroup = this.vis.append("g");
         // this.linkGroup = vis.append("g");
         this.foregroundGroup = this.vis.append("g");
-        this.listenTo(this.model.get("clmsModel"), "change:matches", this.render); // New matches added (via csv generally)
-        this.listenTo(this.model, "hiddenChanged", this.render);
+        this.listenTo(this.model.get("clmsModel"), "change:matches", this.updateThenRender); // New matches added (via csv generally)
+        this.listenTo(this.model, "hiddenChanged", this.updateThenRender);
         this.sankey = d3.sankey().nodeWidth(15);
         //this.fixed = [];
 
@@ -137,17 +137,22 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             })
             .attr('transform', function(d) {
                 return d.transform;
-            });
+            })
+        ;
+        
+        // initial update done via hiddenChanged trigger above - which is called after all views are set up
+        //this.update();  // can do this here as go terms are available on the view's initialisation
     },
 
     update: function() {
-        var termType = d3.select("#goTermsPanelgoTermSelect").selectAll("option")
-            .filter(function(d) {
-                return d3.select(this).property("selected");
-            })
-            .datum().trim();
+        var termType = d3.select("#goTermsPanelgoTermSelect")
+            .selectAll("option")
+            .filter(function() { return d3.select(this).property("selected"); })
+            .datum()
+            .trim()
+        ;
 
-        var go = CLMSUI.compositeModelInst.get("go");
+        var go = this.model.get("go");
         //associate go terms with proteins (clear them first)
         for (var g of go.values()) {
             var gints = g.interactors;
@@ -156,13 +161,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             }
         }
 
-        var proteins = CLMSUI.compositeModelInst.get("clmsModel").get("participants").values();
+        var proteins = this.model.get("clmsModel").get("participants").values();
         for (var protein of proteins) {
             if (protein.uniprot) {
                 for (var goId of protein.uniprot.go) {
                     var goTerm = go.get(goId);
                     if (goTerm) {
-                        goTerm.interactors = goTerm.interactors || new Set ();
+                        goTerm.interactors = goTerm.interactors || new Set ();  // Lazy instantiation
                         goTerm.interactors.add(protein);
                     }
                 }
@@ -194,12 +199,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                         var partOfTerm = go.get(partOfId);
                         if (partOfTerm.namespace == goTerm.namespace) {
                             var linkId = partOfId + "_" + node.id;
-                            var link = {};
-                            link.source = sankeyNode(partOfId);
-                            link.target = node;
-                            link.value = goTerm.getInteractors().size;
-                            link.id = linkId;
-                            link.partOf = true;
+                            var link = {
+                                source: sankeyNode(partOfId),
+                                target: node,
+                                value: goTerm.getInteractors().size,
+                                id: linkId,
+                                partOf: true
+                            };
                             linksMap.set(linkId, link);
                         }
                     }
@@ -209,12 +215,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                         var superclassTerm = go.get(superclassId);
                         if (superclassTerm.namespace == goTerm.namespace) {
                             var linkId = superclassId + "_" + node.id;
-                            var link = {};
-                            link.source = sankeyNode(superclassId);
-                            link.target = node;
-                            link.value = goTerm.getInteractors().size;
-                            link.id = linkId;
-                            link.partOf = false;
+                            var link = {
+                                source: sankeyNode(superclassId),
+                                target: node,
+                                value: goTerm.getInteractors().size,
+                                id: linkId,
+                                partOf: false
+                            };
                             linksMap.set(linkId, link);
                         }
                     }
@@ -239,17 +246,19 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             } else {
                 return nodes.get(goId);
             }
-        };
+        }
 
         this.data = {
             "nodes": Array.from(nodes.values()),
             "links": Array.from(linksMap.values())
         };
+        
+        return this;
     },
 
     render: function() {
         if (this.isVisible()) {
-            this.update();
+            //this.update();
             if (this.data) {
 
                 //console.log("RENDERING GO TERMS");
@@ -270,6 +279,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
                 var path = this.sankey.link();
                 var self = this;
+                
+                
 
                 var linkSel = self.backgroundGroup.selectAll(".goLink")
                     .data(this.data.links,
@@ -294,6 +305,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 // .text(function(d) {
                 //     return d.target.name + (d.partOf ? " is part of " : " is a ") + d.source.name + "\n" + d.value;
                 // });
+                
+                var clipSel = this.svg.select("defs").selectAll("clipPath.column");
 
 
                 var nodeSel = this.foregroundGroup.selectAll(".node")
@@ -340,8 +353,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                         self.model.setHighlightedProteins([]);
                     })
                     .on("contextmenu", function(d) {
-                        d3.event.preventDefault();
-                        d3.event.stopPropagation();
+                        //d3.event.preventDefault();
+                        //d3.event.stopPropagation();
                         // react on right-clicking
                         //self.fixed.push(d.id);
 
@@ -372,6 +385,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     });
 
                 nodeSel.attr("transform", function(d) {
+                    //console.log ("SD", d);
                     return "translate(" + (d.x ? d.x : 0) + "," + (d.y ? d.y : 0) + ")";
                 });
                 nodeSel.select("rect")
@@ -405,18 +419,21 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             }
         }
 
+        return this;
+    },
+    
+    updateThenRender: function () {
+        return this.update().render();  
     },
 
     relayout: function() {
-        this.resize();
-        return this;
+        return this.resize();
     },
 
     // called when things need repositioned, but not re-rendered from data
     // gets called before render
     resize: function() {
-        this.render();
-        return this;
+        return this.render();
     },
 
     identifier: "Go Terms View",

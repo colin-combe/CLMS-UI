@@ -194,6 +194,7 @@ d3.sankey = function() {
 
   function scaleNodeBreadths(kx) {
     nodes.forEach(function(node) {
+        node.depth = node.x;
       node.x *= kx;
     });
   }
