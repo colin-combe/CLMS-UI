@@ -91,6 +91,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.foregroundGroup = this.vis.append("g");
         this.listenTo(this.model.get("clmsModel"), "change:matches", this.updateThenRender); // New matches added (via csv generally)
         this.listenTo(this.model, "hiddenChanged", this.updateThenRender);
+
         this.sankey = d3.sankey().nodeWidth(15);
         //this.fixed = [];
 
@@ -423,11 +424,18 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
     
     updateThenRender: function () {
-        return this.update().render();  
+        if (this.isVisible()) {
+            return this.update().render();  
+        }
+        return this;
+    },
+    
+    relayout: function () {
+        return this.render();
     },
 
-    relayout: function() {
-        return this.resize();
+    reshow: function() {
+        return this.update();
     },
 
     // called when things need repositioned, but not re-rendered from data
