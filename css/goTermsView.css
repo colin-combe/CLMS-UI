@@ -35,3 +35,14 @@ div.goTermsView > div > div.panelInner {
   pointer-events: none;
   text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white;
 }
+
+.highlightedGOTerm rect {
+    stroke: #111;
+    stroke-width: 3;
+}
+
+.highlightedGOTerm text {
+    stroke: black;
+    transform: scale(1.2);
+    transform-origin: 20px 16px;
+}
