@@ -660,7 +660,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             var linkDistances = _.pluck(linkWrappers, "distanceFixed");
 
             this.model.get("tooltipModel")
-                .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList(crossLinks.length - 1))
+                .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList(crossLinks.length))
                 .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList(crossLinks, {
                     "Distance (Å)": linkDistances
                 }))

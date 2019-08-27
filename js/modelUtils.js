@@ -196,9 +196,9 @@ CLMSUI.modelUtils = {
 
         goTerm: function(goTerm) {
             return [
-                ["ID", goTerm.id],
+                //["ID", goTerm.id],
                 ["Name", goTerm.name],
-                ["Namespace", goTerm.namespace],
+                //["Namespace", goTerm.namespace],
                 ["Definition", goTerm.def],
                 // ["Synonym", goTerm.synomym],
                 // ["is_a", Array.from(goTerm.is_a.values()).join(", ")],

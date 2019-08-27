@@ -9,19 +9,20 @@ CLMSUI.GoTerm = function() {
     //this.interactors = new Set();
 }
 
-CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
+CLMSUI.GoTerm.prototype.getInteractors = function (interactorSet, storeTree) {
     var go = CLMSUI.compositeModelInst.get("go");
+    CLMSUI.GoTerm.prototype.getCount++;
     if (!interactorSet) {
         interactorSet = new Set();
     }
     if (this.parts) {
         for (let partId of this.parts) {
-            go.get(partId).getInteractors(interactorSet);
+            go.get(partId).getInteractors(interactorSet, storeTree);
         }
     }
     if (this.subclasses) {
         for (let subclassId of this.subclasses) {
-            go.get(subclassId).getInteractors(interactorSet);
+            go.get(subclassId).getInteractors(interactorSet, storeTree);
         }
     }
     if (this.interactors) {
@@ -31,6 +32,24 @@ CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
             }
         }
     }
+    if (storeTree) {
+        if (interactorSet.size) {
+            if (this.id === "GO0000124") {
+                console.log ("GO0000124A", this.interactors, interactorSet.values(), this.treeInteractorSet);
+            }
+            if (!this.treeInteractorSet) {
+                this.treeInteractorSet = new Set (interactorSet);
+            } else {
+                interactorSet.forEach (function (val) {
+                    this.treeInteractorSet.add (val);
+                }, this);
+            }
+            if (this.id === "GO0000124") {
+                console.log ("GO0000124B", this.interactors, interactorSet.values(), this.treeInteractorSet.values());
+            }
+        }
+    }
+    
     return interactorSet;
 }
 
