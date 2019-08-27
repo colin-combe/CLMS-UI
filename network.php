@@ -261,7 +261,7 @@
 				allDataLoaded ();
 			} catch (err) {
 				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
-				console.error ("Error");
+				console.error ("Error", err);
 			}
 		};
 
@@ -270,7 +270,7 @@
         console.log ("TIME t1", performance.now());
 
         if (window.location.search) {
-            // Load spectrum matches
+            // 1. Load spectrum matches
             var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
             d3.json (url, function (error, json) {
                 spinner.stop(); // stop spinner on request returning
@@ -283,7 +283,7 @@
                 }
             });
             
-            // Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
+            // 2. Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
             url = "./go.obo";
             d3.text (url, function(error, txt) {
                 if (error) {
@@ -294,6 +294,9 @@
                     allDataLoaded ();
                 }
             });
+            
+            // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation
+            CLMSUI.init.blosumLoading ();
             
             /*
             url = "./goObj.json";

@@ -1303,7 +1303,7 @@ function testSetupNew (cbfunc) {
 			console.log ("here");
 		});
 		
-		options.blosumOptions = {url: "../R/blosums.json"};
+        CLMSUI.init.blosumLoading ({url: "../R/blosums.json"});
 		CLMSUI.init.pretendLoad();	// add 2 to allDataLoaded bar (we aren't loading views or GO terms here)
 		CLMSUI.init.models (options);
 	});
