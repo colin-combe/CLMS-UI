@@ -46,3 +46,7 @@ div.goTermsView > div > div.panelInner {
     transform: scale(1.2);
     transform-origin: 20px 16px;
 }
+
+.goTextResult {
+    margin-left: 1em;
+}
