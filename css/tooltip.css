@@ -20,7 +20,7 @@
 }
 
 .CLMStooltip p {
-    padding: 6px 4px 4px 4px;
+    padding-bottom: 0.2em;
     margin: 0px;
     font-size: 10pt;
     color: #222;
@@ -50,6 +50,8 @@
 .CLMStooltip table tr td {
     font-weight: bold;
     max-width: 200px;  /* stop one column stealing all the space */
+    padding-top: 0.2em;
+    vertical-align: top;
 }
 
 .CLMStooltip table tr td:first-child, .CLMStooltip table tr th:first-child {

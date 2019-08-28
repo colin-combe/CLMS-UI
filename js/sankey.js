@@ -142,7 +142,8 @@ d3.sankey = function() {
       //   d3.sum(node.sourceLinks, value),
       //   d3.sum(node.targetLinks, value)
       // );
-      node.value = node.term.getInteractors().size;
+      //node.value = node.term.getInteractors().size;
+        node.value = node.term.filtInteractorCount;
       // console.log("*!", node.value);
     });
   }

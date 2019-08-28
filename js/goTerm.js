@@ -7,32 +7,52 @@ CLMSUI.GoTerm = function() {
     //this.part_of = new Set();
     //this.parts = new Set();
     //this.interactors = new Set();
-}
+    this.filtInteractorCount = 0;
+};
 
-CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
+CLMSUI.GoTerm.prototype.getInteractors = function (storeCount) {
     var go = CLMSUI.compositeModelInst.get("go");
-    if (!interactorSet) {
-        interactorSet = new Set();
-    }
-    if (this.parts) {
-        for (let partId of this.parts) {
-            go.get(partId).getInteractors(interactorSet);
-        }
-    }
-    if (this.subclasses) {
-        for (let subclassId of this.subclasses) {
-            go.get(subclassId).getInteractors(interactorSet);
-        }
-    }
-    if (this.interactors) {
-        for (let i of this.interactors) {
-            if (i.hidden == false) {
-              interactorSet.add(i);
+    CLMSUI.GoTerm.prototype.getCount++;
+    
+    var subTreeSet; // = new Set();
+    
+    if (this.parts || this.subclasses || this.interactors) {
+        subTreeSet = new Set();
+        
+        if (this.parts) {
+            for (let partId of this.parts) {
+                var sub = go.get(partId).getInteractors(storeCount);
+                if (sub) {
+                    sub.forEach (subTreeSet.add, subTreeSet);
+                }
             }
         }
+        if (this.subclasses) {
+            for (let subclassId of this.subclasses) {
+                var sub = go.get(subclassId).getInteractors(storeCount);
+                if (sub) {
+                    sub.forEach (subTreeSet.add, subTreeSet);
+                }
+            }
+        }
+
+        if (this.interactors) {
+            for (let i of this.interactors) {
+                if (i.hidden == false) {
+                    subTreeSet.add(i);
+                }
+            }
+        }
+        
+        if (subTreeSet.size === 0) { subTreeSet = null; }
     }
-    return interactorSet;
-}
+    if (storeCount) {
+        this.filtInteractorCount = subTreeSet ? subTreeSet.size : 0;
+        //if (subTreeSet.size) { console.log ("sub", subTreeSet, this.id); }
+    }
+    
+    return subTreeSet;
+};
 
 
 CLMSUI.GoTerm.prototype.isDirectRelation = function(anotherGoTerm) {
