@@ -76,6 +76,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .attr ("placeholder", "Search Go Term Names...")
             .attr ("class", "btn-1 goTextMatch")
         ;
+        
+        controlDiv.append("span").attr("class", "goTextResult");
 
         this.chartDiv = flexWrapperPanel.append("div")
             .attr("class", "panelInner")
@@ -163,10 +165,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var textPos = this.textPos.bind(this);
 
         var allInteractorSet = new Set();
+        var goMatchCount = 0;
+        
         var nodes = this.foregroundGroup.selectAll(".node")
             .each (function (d) {
                 d.strMatch = val && val.length > 1 && d.name.match(regex);
                 if (d.strMatch) {
+                    goMatchCount++;
                     var interactorSet = d.term.getInteractors ();
                     if (interactorSet) {
                         interactorSet.forEach (allInteractorSet.add, allInteractorSet);
@@ -189,6 +194,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         ;
 
         var interactors = Array.from (allInteractorSet.values());
+        var msg = (!val || val.length < 2) ? "Enter at least 2 characters" : (goMatchCount ? goMatchCount+" matching GO terms, mapping to "+interactors.length+" proteins" : "No matches");
+        d3.select(this.el).select(".goTextResult").text(msg);
         this.model[evt.key === "Enter" || evt.keyCode === 13 || evt.which === 13 ? "setSelectedProteins" : "setHighlightedProteins"](interactors, false);    
     },
 
@@ -207,10 +214,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             if (gints && gints.size > 0) {
                 gints.clear();
             }
-            var gints2 = g.treeInteractorSet;
-            if (gints2 && gints2.size > 0) {
-                gints2.clear();
-            }
+            g.filtInteractorCount = 0;
         }
 
         var proteins = this.model.get("clmsModel").get("participants").values();
@@ -567,7 +571,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
     
     relayout: function(descriptor) {
         if (descriptor && descriptor.dragEnd) { // avoids doing two renders when view is being made visible
-            this.render({iterations: 1});
+            this.render({iterations: 6});
         }
         return this;
     },

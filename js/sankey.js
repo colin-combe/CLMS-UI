@@ -221,6 +221,8 @@ d3.sankey = function() {
       var ky = d3.min(nodesByBreadth, function(nodes) {
         return (size[1] - (nodes.length - 1) * nodePadding) / d3.sum(nodes, value);
       });
+        
+        ky = Math.max (ky, 0.1);  // mjg
 
       nodesByBreadth.forEach(function(nodes) {
         nodes.forEach(function(node, i) {
