@@ -157,6 +157,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                             .updateAssemblyType()
                         ;
                         self.setAssemblyChains();
+                        self.model.getCrossLinkDistances (CLMS.arrayFromMapValues (self.model.get("clmsModel").get("crossLinks")));
                     }
                 },
                 initialSelectionFunc: function(d) {
@@ -1164,13 +1165,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     var origFullLinks = crosslinkData.getOriginalCrossLinks (pdtrans.links);
                     var halfLinks = crosslinkData.getHalfLinksByResidueID (residue.residueId);
                     var origHalfLinks = crosslinkData.getOriginalCrossLinks (halfLinks);
-                    var distances = origFullLinks.map (function (xlink) {
-                        var dist = crosslinkData.getModel().getSingleCrosslinkDistance (xlink);
-                        if (dist) {
-                            dist = d3.format(".2f")(dist);
-                        }
-                        return dist;
-                    });
+                    
+                    var distances = crosslinkData.getModel().getCrossLinkDistances(origFullLinks)
+                        .map (function (dist) { return dist ? d3.format(".2f")(dist) : dist; })
+                    ;
+                    
                     pdtrans.xlinks = origFullLinks.concat (origHalfLinks);
 
                     var cp = this.structureComp.structure.getChainProxy (residue.chainIndex);

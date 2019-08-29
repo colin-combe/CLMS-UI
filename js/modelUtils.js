@@ -65,10 +65,18 @@ CLMSUI.modelUtils = {
             extraEntries.forEach(function(entry) {
                 info.push([entry.key, entry.value]);
             });
+            
+            var noFormat = function (v) { return v; };
+            var formats = {distance: d3.format(".2f")};
+            var units = {distance: " Å"};
+            var unknownText = {distance : "Unknown"};
 
             d3.entries(xlink.getMeta()).forEach(function(entry) {
                 if (entry.value !== undefined && !_.isObject(entry.value)) {
-                    info.push([entry.key, entry.value]);
+                    var format = formats[entry.key] || noFormat;
+                    var unit = units[entry.key];
+                    var unknown = unknownText[entry.key];
+                    info.push([entry.key, entry.value !== undefined ? (format (entry.value) + (unit || "")) : unknown]);
                 }
             });
             return info;

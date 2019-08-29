@@ -565,19 +565,22 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 */
     getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
         if (xlink.toProtein){
-        // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
-        distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
-        protAlignCollection = protAlignCollection || this.get("alignColl");
-        options = options || {
-            average: false
-        };
-        options.allowInterModelDistances = options.allowInterModel || (this.get("stageModel") ? this.get("stageModel").get("allowInterModelDistances") : false);
-        if (options.calcDecoyProteinDistances) {
-            options.realFromPid = xlink.fromProtein.is_decoy ? xlink.fromProtein.targetProteinID : undefined;
-            options.realToPid = xlink.toProtein.is_decoy ? xlink.toProtein.targetProteinID : undefined;
-        }
+            // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
+            distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
+            protAlignCollection = protAlignCollection || this.get("alignColl");
+            options = options || {
+                average: false
+            };
+            options.allowInterModelDistances = options.allowInterModel || (this.get("stageModel") ? this.get("stageModel").get("allowInterModelDistances") : false);
+            if (options.calcDecoyProteinDistances) {
+                options.realFromPid = xlink.fromProtein.is_decoy ? xlink.fromProtein.targetProteinID : undefined;
+                options.realToPid = xlink.toProtein.is_decoy ? xlink.toProtein.targetProteinID : undefined;
+            }
+            
+            var distance = distancesObj ? distancesObj.getXLinkDistance(xlink, protAlignCollection, options) : undefined;
+            xlink.setMeta ("distance", distance ? distance.distance || distance : distance);
 
-        return distancesObj ? distancesObj.getXLinkDistance(xlink, protAlignCollection, options) : undefined;
+            return distance;
         } else {
             return;
         }

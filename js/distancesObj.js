@@ -31,33 +31,33 @@ CLMSUI.DistancesObj.prototype = {
         return d;
     },
 
-    getShortestLinks: function (linkWrappers, angstromAccuracy) {
+    getShortestLinkAlternatives: function (nglLinkWrappers, angstromAccuracy) {
         angstromAccuracy = angstromAccuracy || 1;
         var self = this;
 
-        linkWrappers.forEach (function (link) {
+        nglLinkWrappers.forEach (function (linkWrapper) {
             var distance = this.getXLinkDistanceFromChainCoords (
-                this.matrices, link.residueA.seqIndex, link.residueB.seqIndex, link.residueA.chainIndex, link.residueB.chainIndex
+                this.matrices, linkWrapper.residueA.seqIndex, linkWrapper.residueB.seqIndex, linkWrapper.residueA.chainIndex, linkWrapper.residueB.chainIndex
             );
-            link.distance = CLMSUI.utils.toNearest (distance, angstromAccuracy);
+            linkWrapper.distance = CLMSUI.utils.toNearest (distance, angstromAccuracy);
         }, this);
 
         var nestedLinks = d3.nest()
-            .key(function(d) {
-                return d.origId;
+            .key (function (linkWrapper) {
+                return linkWrapper.origId;
             })
-            .sortValues(function(link1, link2) {
-                var d = link1.distance - link2.distance;
-                return (d < 0 ? -1 : (d > 0 ? 1 : self.tieBreaker (link1.residueA, link1.residueB, link2.residueA, link2.residueB)));
+            .sortValues (function (linkWrapper1, linkWrapper2) {
+                var d = linkWrapper1.distance - linkWrapper2.distance;
+                return (d < 0 ? -1 : (d > 0 ? 1 : self.tieBreaker (linkWrapper1.residueA, linkWrapper1.residueB, linkWrapper2.residueA, linkWrapper2.residueB)));
             })
-            .entries(linkWrappers)
+            .entries(nglLinkWrappers)
         ;
 
         var shortestLinks = nestedLinks.map(function(group) {
             return group.values[0];
         });
 
-        CLMSUI.utils.xilog("nestedLinks", linkWrappers, nestedLinks, shortestLinks);
+        CLMSUI.utils.xilog("nestedLinks", nglLinkWrappers, nestedLinks, shortestLinks);
 
         return shortestLinks;
     },
@@ -145,6 +145,7 @@ CLMSUI.DistancesObj.prototype = {
 
         // allocate distance variable to average or smallest distance depending on 'average' flag
         var distance = average ? (distCount ? totalDist / distCount : undefined) : minDist;
+        
         // if chaininfo asked for then return an object else just return the distance
         return returnChainInfo ? {
             distance: distance,
