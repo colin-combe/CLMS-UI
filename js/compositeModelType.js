@@ -115,6 +115,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 if (crossLink.fromProtein.manuallyHidden != true && (!crossLink.toProtein || crossLink.toProtein.manuallyHidden != true)) {
                     crossLink.ambiguous = true;
                     crossLink.confirmedHomomultimer = false;
+                    
                     var matches_pp = crossLink.matches_pp;
                     var matchCount = matches_pp.length;
                     for (var m = 0; m < matchCount; m++) {
@@ -152,14 +153,22 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         var a = performance.now();
 
+        var homomultiSwitchers = [];
         for (var i = 0; i < clCount; ++i) {
             var crossLink = crossLinksArr[i];
+            var oldHM = crossLink.confirmedHomomultimer;
             if (filterModel) {
                 filterCrossLink(crossLink);
             } else { // no filter model, let everything thru
                 crossLink.filteredMatches_pp = crossLink.matches_pp;
             }
+
+            // If homomultimer state changes, then sensible minimum distance will generally change
+            if (oldHM !== crossLink.confirmedHomomultimer) {
+                homomultiSwitchers.push (crossLink);
+            }
         }
+        this.getCrossLinkDistances (homomultiSwitchers);
 
         var b = performance.now();
         console.log("ser filtering time", (b - a), "ms");
@@ -563,21 +572,30 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
     },
 */
+    // Things that can cause a cross-link's minimum distance to change:
+    // 1. New PDB File loaded
+    // 2. Change in alignment
+    // 3. Change in PDB assembly
+    // 4. Change in interModelDistances allowed flag
+    // 5. Change in link's homomultimer status - due to match filtering
     getSingleCrosslinkDistance: function (xlink, distancesObj, protAlignCollection, options) {
         if (xlink.toProtein){
-        // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
-        distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
-        protAlignCollection = protAlignCollection || this.get("alignColl");
-        options = options || {
-            average: false
-        };
-        options.allowInterModelDistances = options.allowInterModel || (this.get("stageModel") ? this.get("stageModel").get("allowInterModelDistances") : false);
-        if (options.calcDecoyProteinDistances) {
-            options.realFromPid = xlink.fromProtein.is_decoy ? xlink.fromProtein.targetProteinID : undefined;
-            options.realToPid = xlink.toProtein.is_decoy ? xlink.toProtein.targetProteinID : undefined;
-        }
+            // distancesObj and alignCollection can be supplied to function or, if not present, taken from model
+            distancesObj = distancesObj || this.get("clmsModel").get("distancesObj");
+            protAlignCollection = protAlignCollection || this.get("alignColl");
+            options = options || {
+                average: false
+            };
+            options.allowInterModelDistances = options.allowInterModel || (this.get("stageModel") ? this.get("stageModel").get("allowInterModelDistances") : false);
+            if (options.calcDecoyProteinDistances) {
+                options.realFromPid = xlink.fromProtein.is_decoy ? xlink.fromProtein.targetProteinID : undefined;
+                options.realToPid = xlink.toProtein.is_decoy ? xlink.toProtein.targetProteinID : undefined;
+            }
+            
+            var distance = distancesObj ? distancesObj.getXLinkDistance(xlink, protAlignCollection, options) : undefined;
+            xlink.setMeta ("distance", distance ? distance.distance || distance : distance);
 
-        return distancesObj ? distancesObj.getXLinkDistance(xlink, protAlignCollection, options) : undefined;
+            return distance;
         } else {
             return;
         }

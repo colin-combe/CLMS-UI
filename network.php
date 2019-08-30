@@ -282,48 +282,25 @@
                     console.error ("Error", error);
                 }
             });
-            
-            // 2. Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
-            url = "./go.obo";
-            d3.text (url, function(error, txt) {
-                if (error) {
-                    console.log("error", error, "for", url, arguments);
-                } else {
-                    CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
-                    //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
-                    allDataLoaded ();
-                }
-            });
-            
-            // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation
-            CLMSUI.init.blosumLoading ();
-            
-            /*
-            url = "./goObj.json";
-            d3.json (url, function(error, json) {
-                if (error) {
-                    console.log("error", error, "for", url, arguments);
-                } else {
-                    CLMSUI.jsongo = json;
-                    var z = performance.now();
-                    var terms = d3.values (json);
-                    terms.forEach (function (t) {
-                        var entries = d3.entries(t);
-                        entries.forEach (function (entry) {
-                            if (entry.value instanceof Array) {
-                                t[entry.key] = new Set (entry.value);
-                            }
-                        });
-                    });
-                    console.log (performance.now() - z, "ms for json sets");
-                    //allDataLoaded ();
-                }
-            });
-            */
         } else {
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches
         }
+        
+        // 2. Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
+        url = "./go.obo";
+        d3.text (url, function(error, txt) {
+            if (error) {
+                console.log("error", error, "for", url, arguments);
+            } else {
+                CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+                //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
+                allDataLoaded ();
+            }
+        });
+
+        // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation
+        CLMSUI.init.blosumLoading ();
     
     //]]>
     </script>

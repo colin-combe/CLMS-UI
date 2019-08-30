@@ -392,6 +392,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         }); // if colour model changes internally, or is swapped for new one
         this.listenTo(this.model, "change:selection", this.showSelectedLinks);
         this.listenTo(this.model, "change:highlights", this.showHighlightedLinks);
+        //this.listenTo(CLMSUI.vent, "PDBPermittedChainSetsUpdated", this.showHighlightedLinks);
 
         this.listenTo(this.model, "change:stageModel", function(model, newStageModel) {
             // swap out stage models and listeners
@@ -426,7 +427,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                         this.reportLinks();
                     }
                 })
-                .listenTo (newStageModel, "change:allowInterModelDistances", function (stageModel, value) {
+                // listen to CLMSUI.vent's version rather than newStageModel's allowInterModelDistances as we need to recalc distances before informing views
+                .listenTo (CLMSUI.vent, "changeAllowInterModelDistances", function (stageModel, value) {
                     this.options.allowInterModelDistances = value;
                     d3.select(this.el).selectAll(".allowInterModelDistancesCB input").property("checked", value);
                     if (this.xlRepr) {
@@ -479,6 +481,11 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     setAssemblyChains: function() {
+        var self = this;
+        this.listenToOnce (CLMSUI.vent, "recalcLinkDistances", function () {
+            console.log ("RECALCING LINK DISTANCES");
+            self.model.getCrossLinkDistances (CLMS.arrayFromMapValues (self.model.get("clmsModel").get("crossLinks")));
+        });
         this.model.get("clmsModel").get("distancesObj").setAssemblyChains(this.model.get("stageModel").get("structureComp").structure, this.options.defaultAssembly);
         return this;
     },
@@ -1164,13 +1171,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     var origFullLinks = crosslinkData.getOriginalCrossLinks (pdtrans.links);
                     var halfLinks = crosslinkData.getHalfLinksByResidueID (residue.residueId);
                     var origHalfLinks = crosslinkData.getOriginalCrossLinks (halfLinks);
-                    var distances = origFullLinks.map (function (xlink) {
-                        var dist = crosslinkData.getModel().getSingleCrosslinkDistance (xlink);
-                        if (dist) {
-                            dist = d3.format(".2f")(dist);
-                        }
-                        return dist;
-                    });
+                    var distances = origFullLinks.map (function (xlink) { return xlink.getMeta("distance"); });
+                    
                     pdtrans.xlinks = origFullLinks.concat (origHalfLinks);
 
                     var cp = this.structureComp.structure.getChainProxy (residue.chainIndex);
@@ -1178,11 +1180,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     //console.log ("cp", cp, pdtrans, this, this.structureComp);
                     crosslinkData.getModel().get("tooltipModel")
                         .set("header", "Cross-Linked with " + CLMSUI.modelUtils.makeTooltipTitle.residue(protein, srindex, ":" + cp.chainname+"/"+cp.modelIndex))
-                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks(pdtrans.xlinks, protein.id, srindex, {
-                            "Distance (Å)": distances
-                        }))
-                        .set("location", this.makeTooltipCoords(pickingData.canvasPosition));
-                    crosslinkData.getModel().get("tooltipModel").trigger("change:location");
+                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks(pdtrans.xlinks, protein.id, srindex, {"Distance": distances}))
+                        .set("location", this.makeTooltipCoords(pickingData.canvasPosition))
+                    ;
                 }
             } else if (link3d !== undefined) {
                 // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
@@ -1201,15 +1201,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                     pdtrans.links = crosslinkData.getSharedLinks(residueA, residueB);
                     pdtrans.xlinks = crosslinkData.getOriginalCrossLinks(pdtrans.links);
 
-                    var distance = crosslinkData.getModel().getSingleCrosslinkDistance(pdtrans.xlinks[0]);
-
                     crosslinkData.getModel().get("tooltipModel")
                         .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
-                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.link(pdtrans.xlinks[0], distance ? {
-                            distance: d3.format(".2f")(distance) + " Å"
-                        } : {}))
-                        .set("location", this.makeTooltipCoords(pickingData.canvasPosition));
-                    crosslinkData.getModel().get("tooltipModel").trigger("change:location");
+                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.link(pdtrans.xlinks[0]))
+                        .set("location", this.makeTooltipCoords(pickingData.canvasPosition))
+                    ;
                 }
             }
         }

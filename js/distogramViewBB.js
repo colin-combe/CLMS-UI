@@ -321,12 +321,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         pattern.append("line").attr("x1", "5").attr("y1", "0").attr("x2", "5").attr("y2", "10");
 
         function distancesAvailable() {
-            console.log("DISTOGRAM RAND DISTANCES CALCULATED");
+            //console.log("DISTOGRAM RAND DISTANCES MARKED FOR RECALCULATION");
             this.options.reRandom = true;
-            this
-                .render()
-                .handleExtraOptions()   // hide random choice button if only 1 protein
-            ;
+            var funcMeta = this.getSelectedOption("X");
+            if (funcMeta.id === "Distance") {
+                //console.log ("DISTOGRAM RERENDERED DUE TO DISTANCE CHANGES");
+                this.render();
+            }
         }
 
         this.listenTo(this.model, "filteringDone", this.render); // listen for custom filteringDone event from model

@@ -17,6 +17,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         // possibly changes links and distances in 3d model
         // this is in case 3d stuff has been set up before main model (used to happen that pdb's were autoloaded for some searches)
         this.listenToOnce (this, "change:masterModel", function() { // only do this once (should only happen once anyways but better safe than sorry)
+            // alignment change may mean distances are different so recalc
             this.listenTo(this.getModel().get("alignColl"), "bulkAlignChange", function() {
                 console.log("SET UP LINKS");
                 this.setupLinks();
@@ -24,6 +25,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         });
         
         this.listenTo (this, "change:allowInterModelDistances", function (model, val) {
+            var compModel = this.get("masterModel");
+            compModel.getCrossLinkDistances (CLMS.arrayFromMapValues (compModel.get("clmsModel").get("crossLinks")));  // regenerate distances for all crosslinks
             CLMSUI.vent.trigger ("changeAllowInterModelDistances", val);
         });
     },
@@ -43,16 +46,14 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
         // The point of this is to build a distances cache so we don't have to keep asking the ngl components for them
         // For very large structures we just store the distances that map to crosslinks, so we have to get other distances by reverting to the ngl stuff
-        // generally at CLMSUI.modelUtils.get3DDistance
         var distances = this.getChainDistances(chainInfo.resCount > this.defaults.fullDistanceCalcCutoff);
         var distancesObj = new CLMSUI.DistancesObj (distances, this.get("chainMap"), this.getStructureName());
 
         var clmsModel = this.getModel().get("clmsModel");
         // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically (as it generates an identical distance matrix)
-        clmsModel
-            .set("distancesObj", distancesObj, {silent: true})
-            .trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"))
-        ;
+        clmsModel.set("distancesObj", distancesObj, {silent: true});
+        this.getModel().getCrossLinkDistances (CLMS.arrayFromMapValues (clmsModel.get("crossLinks")));  // regenerate distances for all crosslinks
+        clmsModel.trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"));
         return this;
     },
     
@@ -65,7 +66,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var linkDataObj = this.makeLinkList (crossLinks);
         var distanceObj = this.getModel().get("clmsModel").get("distancesObj");
         if (this.get("showShortestLinksOnly") && distanceObj) {
-            linkDataObj.fullLinkList = distanceObj.getShortestLinks(linkDataObj.fullLinkList);
+            linkDataObj.fullLinkList = distanceObj.getShortestLinkAlternatives(linkDataObj.fullLinkList);
         }
         this.setLinkListWrapped (linkDataObj);
         return this;

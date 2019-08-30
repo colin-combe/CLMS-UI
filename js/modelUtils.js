@@ -51,6 +51,23 @@ CLMSUI.modelUtils = {
         residueString: function(singleLetterCode) {
             return singleLetterCode + " (" + CLMSUI.modelUtils.amino1to3Map[singleLetterCode] + ")";
         },
+        
+        formatDictionary: {
+            formats: {distance: d3.format(".2f")},
+            units: {distance: " Å"},
+            unknownText: {distance : "Unknown"}
+        },
+        
+        niceFormat: function (key, value) {
+            var fd = CLMSUI.modelUtils.makeTooltipContents.formatDictionary;
+            var noFormat = function (v) { return v; };
+            
+            var format = fd.formats[key] || noFormat;
+            var unit = fd.units[key] || "";
+            var unknown = fd.unknownText[key] || "";
+            
+            return value !== undefined ? (format (value) + (unit || "")) : unknown;
+        },
 
         link: function(xlink, extras) {
             var linear = xlink.isLinearLink();
@@ -67,15 +84,17 @@ CLMSUI.modelUtils = {
             });
 
             d3.entries(xlink.getMeta()).forEach(function(entry) {
-                if (entry.value !== undefined && !_.isObject(entry.value)) {
-                    info.push([entry.key, entry.value]);
+                var val = entry.value;
+                var key = entry.key.toLocaleLowerCase();
+                if (val !== undefined && !_.isObject(val)) {
+                    info.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
                 }
             });
             return info;
         },
 
         interactor: function(interactor) {
-            contents = [
+            var contents = [
                 ["ID", interactor.id],
                 ["Accession", interactor.accession],
                 ["Size", interactor.size],
@@ -104,11 +123,13 @@ CLMSUI.modelUtils = {
                     return [linear ? "Linear" : xlink.toProtein.name, linear ? "---" : xlink.toResidue, residueCode, xlink.filteredMatches_pp.length];
                 }
             });
-
+            
             var extraEntries = d3.entries(extras);
             extraEntries.forEach(function(extraEntry) {
+                var key = extraEntry.key.toLocaleLowerCase();
+
                 extraEntry.value.forEach(function(val, i) {
-                    ttinfo[i].push(val);
+                    ttinfo[i].push (CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val));
                 });
             });
 
@@ -164,6 +185,7 @@ CLMSUI.modelUtils = {
         linkList: function(linkList, extras) {
             var extraEntries = d3.entries(extras);
             var fromProtein, toProtein;
+            
             var details = linkList.map(function(crossLink, i) {
                 var from3LetterCode = CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(crossLink, false));
                 var to3LetterCode = CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(crossLink, true));
@@ -171,7 +193,9 @@ CLMSUI.modelUtils = {
                 toProtein = crossLink.toProtein.name;
                 var row = [crossLink.fromResidue + " " + from3LetterCode, crossLink.toResidue + " " + to3LetterCode];
                 extraEntries.forEach(function(entry) {
-                    row.push(entry.value[i]);
+                    var key = entry.key.toLocaleLowerCase();
+                    var val = entry.value[i];
+                    row.push (CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val));
                 });
                 return row;
             });
