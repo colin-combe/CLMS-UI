@@ -278,7 +278,8 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo(this.model, "selectionMatchesLinksChanged change:linkColourAssignment currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo(this.model, "highlightsMatchesLinksChanged", this.rehighlightCrossLinks);
         this.listenTo(this.model, "filteringDone", function() { this.renderCrossLinks({isFiltering: true}); });
-        this.listenTo(this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
+        this.listenTo(this.model.get("clmsModel"), "change:distancesObj", this.ifADistanceAxisRerender);
+        this.listenTo(CLMSUI.vent, "distancesAdjusted PDBPermittedChainSetsUpdated changeAllowInterModelDistances", this.ifADistanceAxisRerender);
         this.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaMetaData) {
             //console.log ("HELLO", arguments);
             var columns = metaMetaData.columns;
@@ -307,6 +308,16 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
     
     takeImage: function(event, thisSVG) {
         return this.downloadSVGWithCanvas ();
+    },
+    
+    ifADistanceAxisRerender: function () {
+        var distanceAxes = this.getBothAxesMetaData().filter(function (axis) {
+            return axis.id === "Distance";
+        });
+        if (distanceAxes.length) {
+            console.log ("RERENDER SCATTERPLOT ON DISTANCE CHANGE");
+            this.axisChosen().render();
+        }
     },
 
     setMultipleSelectControls: function(elem, options, keepOld) {
@@ -473,7 +484,8 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
             })
             .each(function(d) {
                 funcMeta = d;
-            });
+            })
+        ;
 
         return funcMeta;
     },

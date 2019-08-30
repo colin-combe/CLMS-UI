@@ -167,7 +167,7 @@ CLMSUI.DistancesObj.prototype = {
                 dist = sm ? sm.getSingleDistanceBetween2Residues(seqIndex1, seqIndex2, chainIndex1, chainIndex2) : 0;
             }
         } else {
-            dist = Number.POSITIVE_INFINITY;
+            dist = undefined;//Number.POSITIVE_INFINITY;
         }
 
         //CLMSUI.utils.xilog ("dist", dist);
@@ -475,12 +475,11 @@ CLMSUI.DistancesObj.prototype = {
     },
 
     setAssemblyChains: function(nglPdbStructure, assemblyKey) {
-        var biomolDict = nglPdbStructure.biomolDict;
-        var dictEntry = biomolDict[assemblyKey];
+        var dictEntry = nglPdbStructure.biomolDict[assemblyKey];
         var chainNames = dictEntry ? d3.merge(dictEntry.partList.map(function(part) {
             return part.chainList;
         })) : [];
-        if (!chainNames.length) {
+        if (!chainNames.length) {   // default - if chainNames empty, make chainNames all chains
             nglPdbStructure.eachChain(function(cp) {
                 chainNames.push(cp.chainname);
             });
@@ -507,6 +506,7 @@ CLMSUI.DistancesObj.prototype = {
         console.log("PCIS", this.permittedChainIndicesSet);
         if (!isNewObj) {
             // if changing existing object fire an event, otherwise hold off. Fire an event once whole new distancesObj object is installed.
+            CLMSUI.vent.trigger("recalcLinkDistances"); // this needs listened to and link distances updated before views listen to next trigger
             CLMSUI.vent.trigger("PDBPermittedChainSetsUpdated", this.permittedChainIndicesSet);
         }
 

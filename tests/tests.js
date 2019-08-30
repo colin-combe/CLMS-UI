@@ -1144,7 +1144,8 @@ function callback (model) {
 		var testColumnNameIndexPair = [{name: "cat", index: 0}, {name: "dog", index: 1}];
 		CLMSUI.modelUtils.updateMetaDataWithTheseColumns (testZScores, testColumnNameIndexPair);
 		
-		var actualValue = testLinks.map (function (testLink) { return testLink.getMeta(); });
+		var actualValue = testLinks.map (function (testLink) { return $.extend({}, testLink.getMeta()); });
+        actualValue.forEach (function (val) { delete val.distance; });                                                      
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as updated metadata values, Passed!");
 	});
@@ -1172,7 +1173,8 @@ function callback (model) {
 		CLMSUI.vent.listenToOnce (CLMSUI.vent, "linkMetadataUpdated", function (actualValue) {
 			assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as linkmetadata event data, Passed!");
 			
-			var actualValue2 = clmsModel.get("crossLinks").get("P02768-A_415-P02768-A_497").getMeta();
+			var actualValue2 = $.extend ({}, clmsModel.get("crossLinks").get("P02768-A_415-P02768-A_497").getMeta());
+            delete actualValue2.distance;
 			var expectedValue2 = {cat: 2, dog: 4};
 			assert.deepEqual (actualValue2, expectedValue2, "Expected "+JSON.stringify(expectedValue2)+" as link meta value, Passed!");
 		});

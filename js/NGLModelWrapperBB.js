@@ -25,6 +25,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         });
         
         this.listenTo (this, "change:allowInterModelDistances", function (model, val) {
+            var compModel = this.get("masterModel");
+            compModel.getCrossLinkDistances (CLMS.arrayFromMapValues (compModel.get("clmsModel").get("crossLinks")));  // regenerate distances for all crosslinks
             CLMSUI.vent.trigger ("changeAllowInterModelDistances", val);
         });
     },
@@ -50,7 +52,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var clmsModel = this.getModel().get("clmsModel");
         // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically (as it generates an identical distance matrix)
         clmsModel.set("distancesObj", distancesObj, {silent: true});
-        this.getModel().getCrossLinkDistances (CLMS.arrayFromMapValues (clmsModel.get("crossLinks")));  // generate distances for all crosslinks
+        this.getModel().getCrossLinkDistances (CLMS.arrayFromMapValues (clmsModel.get("crossLinks")));  // regenerate distances for all crosslinks
         clmsModel.trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"));
         return this;
     },

@@ -649,23 +649,20 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     invokeTooltip: function(evt, linkWrappers) {
         if (this.options.matrixObj) {
-            linkWrappers.forEach(function(linkWrapper) {
-                linkWrapper.distance = this.getSingleLinkDistances(linkWrapper.crossLink);
-                linkWrapper.distanceFixed = linkWrapper.distance ? linkWrapper.distance.toFixed(2) : "Unknown";
-            }, this);
-            linkWrappers.sort(function(a, b) {
-                return b.distance - a.distance;
-            });
             var crossLinks = _.pluck(linkWrappers, "crossLink");
-            var linkDistances = _.pluck(linkWrappers, "distanceFixed");
+            crossLinks.sort (function (a, b) {
+                return a.getMeta("distance") - b.getMeta("distance");
+            });
+            var linkDistances = crossLinks.map (function (crossLink) {
+                return crossLink.getMeta("distance");
+            });
 
             this.model.get("tooltipModel")
                 .set("header", CLMSUI.modelUtils.makeTooltipTitle.linkList(crossLinks.length))
-                .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList(crossLinks, {
-                    "Distance (Å)": linkDistances
-                }))
-                .set("location", evt);
-            this.trigger("change:location", this.model, evt); // necessary to change position 'cos d3 event is a global property, it won't register as a change
+                .set("contents", CLMSUI.modelUtils.makeTooltipContents.linkList(crossLinks, {"Distance": linkDistances}))
+                .set("location", evt)
+            ;
+            //this.trigger("change:location", this.model, evt); // necessary to change position 'cos d3 event is a global property, it won't register as a change
         }
     },
     // end of tooltip functions
