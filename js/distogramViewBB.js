@@ -55,6 +55,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 }], // TT, TD then DD
                 showRandoms: true,
                 showY2Axis: true,
+                showDistMaxInput: true,
             }
         };
 
@@ -139,6 +140,18 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
             }
         });
+        
+        var maxid = this.el.id + "MaxXValue";
+        var maxElem = toolbar.append("p").attr("id", maxid);
+        maxElem.append("span").text("Axis Extent (X)");
+        maxElem.append("input").attr("type", "number").attr("min", 40).attr("max", 500)
+            .on ("change", function () {
+                self.getSelectedOption("X").maxVal = +d3.event.target.value;
+                self.options.reRandom = true;
+                self.render();
+            })
+        ;
+        
 
         // Add a select widget for picking axis data type
         this.setMultipleSelectControls(toolbar, this.options.attributeOptions, false);
@@ -872,6 +885,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         var d3el = d3.select(this.el);
         d3el.select("#distoPanelRandomOptions")
             .style("display", /*self.model.get("clmsModel").targetProteinCount > 1 && */ extras.showRandoms ? null : "none")
+        ;
+        d3el.select("#distoPanelMaxXValue")
+            .style("display", extras.showDistMaxInput ? null : "none")
         ;
         d3el.selectAll(".c3-axis-y2,c3-axis-y2-label").style("display", extras.showY2Axis ? null : "none");
         return this;
