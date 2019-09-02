@@ -41,9 +41,16 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     this.set("matchScoreCutoff", [0, 100]);
                     // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
                 }
-                
                 // scoreExtent used to restrain text input values
                 this.scoreExtent = (secondarySettings ? secondarySettings.scoreExtent : undefined) || this.get("matchScoreCutoff").slice(0);
+                
+                /*
+                if (!this.get("distanceCutoff")) {
+                    this.set("distanceCutoff", [0, 100]);
+                }
+                this.distanceExtent = [0, 100];
+                */
+                
                 // possibleSearchGroups used to restrain searchGroup options
                 this.possibleSearchGroups = (secondarySettings ? secondarySettings.possibleSearchGroups : undefined) || this.get("searchGroups").slice(0);
                 //this.scoreExtent = this.matches.extent (fu)
