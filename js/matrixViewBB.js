@@ -643,10 +643,6 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    getSingleLinkDistances: function(crossLink) {
-        return this.model.getSingleCrosslinkDistance(crossLink);
-    },
-
     invokeTooltip: function(evt, linkWrappers) {
         if (this.options.matrixObj) {
             var crossLinks = _.pluck(linkWrappers, "crossLink");
