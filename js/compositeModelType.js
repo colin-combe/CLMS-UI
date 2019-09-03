@@ -69,15 +69,17 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             crossLink.filteredMatches_pp = [];
             if (filterModel.get("fdrMode")) {
                 // FDR mode
-                var pass;
+                crossLink.confirmedHomomultimer = false;
+                
+                var linkPass = false;
                 var mms = crossLink.getMeta("meanMatchScore");
                 if (mms !== undefined) {
                     var self = crossLink.isSelfLink();
                     var cut = self ? result[1].fdr : result[0].fdr;
-                    pass = mms >= cut;
+                    linkPass = mms >= cut;
                 }
 
-                if (pass) {
+                if (linkPass) {
                     var filteredMatches_pp = crossLink.matches_pp.filter(
                         function(value) {
                             return filterModel.subsetFilter(value.match);
@@ -94,18 +96,26 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
                         //var fm_pp = filteredMatches_pp[fm_pp];
                         var fm = filteredMatches_pp[fm_pp];
+                        var match = fm.match;
                         //set its fdr pass att to true even though it may not be in final results
-                        fm.match.fdrPass = true;
-                        //check its not manually hidden and meets navigation filter
-                        if (crossLink.fromProtein.manuallyHidden != true &&
+                        match.fdrPass = true;
+                        var pass = crossLink.fromProtein.manuallyHidden != true &&
                             (!crossLink.toProtein || crossLink.toProtein.manuallyHidden != true) &&
-                            filterModel.navigationFilter(fm.match) &&
-                            filterModel.groupFilter(fm.match)) {
+                            filterModel.navigationFilter(match) &&
+                            filterModel.groupFilter(match);
+                        
+                        if (pass) {
                             crossLink.filteredMatches_pp.push(fm);
+                            // TODO: match reporting as homomultimer if ambiguous and one associated crosslink is homomultimeric
+                            if (match.confirmedHomomultimer && crossLink.isSelfLink()) {
+                                crossLink.confirmedHomomultimer = true;
+                            }
                         }
                     }
-                } else {
-                    crossLink.filteredMatches_pp = [];
+                    
+                    if (!filterModel.distanceFilter (crossLink)) {
+                        crossLink.filteredMatches_pp = [];
+                    }
                 }
                 //~ else {
                 //~ alert("i just failed fdr check");
@@ -116,35 +126,41 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                     crossLink.ambiguous = true;
                     crossLink.confirmedHomomultimer = false;
                     
-                    var matches_pp = crossLink.matches_pp;
-                    var matchCount = matches_pp.length;
-                    for (var m = 0; m < matchCount; m++) {
-                        var matchAndPepPos = matches_pp[m];
-                        var match = matchAndPepPos.match;
-                        var pass = filterModel.subsetFilter(match) &&
-                            filterModel.validationStatusFilter(match) &&
-                            filterModel.scoreFilter(match) &&
-                            filterModel.decoyFilter(match);
+                    //if (filterModel.distanceFilter (crossLink)) {
+                        var matches_pp = crossLink.matches_pp;
+                        var matchCount = matches_pp.length;
+                        for (var m = 0; m < matchCount; m++) {
+                            var matchAndPepPos = matches_pp[m];
+                            var match = matchAndPepPos.match;
+                            var pass = filterModel.subsetFilter(match) &&
+                                filterModel.validationStatusFilter(match) &&
+                                filterModel.scoreFilter(match) &&
+                                filterModel.decoyFilter(match);
 
-                        // Either 1.
-                        // this beforehand means navigation filters do affect ambiguous state of crosslinks
-                        // pass = pass && filterModel.navigationFilter(match);
+                            // Either 1.
+                            // this beforehand means navigation filters do affect ambiguous state of crosslinks
+                            // pass = pass && filterModel.navigationFilter(match);
 
-                        if (pass && match.crossLinks.length === 1) {
-                            crossLink.ambiguous = false;
-                        }
+                            if (pass && match.crossLinks.length === 1) {
+                                crossLink.ambiguous = false;
+                            }
 
-                        // Or 2.
-                        // this afterwards means navigation filters don't affect ambiguous state of crosslinks
-                        pass = pass && filterModel.navigationFilter(match) && filterModel.groupFilter(match);
+                            // Or 2.
+                            // this afterwards means navigation filters don't affect ambiguous state of crosslinks
+                            pass = pass && filterModel.navigationFilter(match) && filterModel.groupFilter(match);
 
-                        if (pass) {
-                            crossLink.filteredMatches_pp.push(matchAndPepPos);
-                            // TODO: match reporting as homomultimer if ambiguous and one associated crosslink is homomultimeric
-                            if (match.confirmedHomomultimer && crossLink.isSelfLink()) {
-                                crossLink.confirmedHomomultimer = true;
+                            if (pass) {
+                                crossLink.filteredMatches_pp.push(matchAndPepPos);
+                                // TODO: match reporting as homomultimer if ambiguous and one associated crosslink is homomultimeric
+                                if (match.confirmedHomomultimer && crossLink.isSelfLink()) {
+                                    crossLink.confirmedHomomultimer = true;
+                                }
                             }
                         }
+                    //} 
+                    
+                    if (!filterModel.distanceFilter (crossLink)) {
+                        crossLink.filteredMatches_pp = [];
                     }
                 }
             }

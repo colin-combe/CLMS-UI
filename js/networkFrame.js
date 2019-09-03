@@ -218,7 +218,7 @@ CLMSUI.init.modelsEssential = function(options) {
     var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString(window.location.search.slice(1));
 
     // Anonymiser for screen shots / videos. MJG 17/05/17, add &anon to url for this
-    if (urlChunkMap["anon"]) {
+    if (urlChunkMap.anon) {
         clmsModelInst.get("participants").forEach(function(prot, i) {
             prot.name = "Protein " + (i + 1);
             prot.description = "Protein " + (i + 1) + " Description";
@@ -245,6 +245,7 @@ CLMSUI.init.modelsEssential = function(options) {
         //matchScoreCutoff: [undefined, undefined],
         //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined, Math.ceil(clmsModelInst.get("maxScore")) || undefined],
         matchScoreCutoff: scoreExtentInstance.slice(),
+        distanceCutoff: [0, 250],
         searchGroups: CLMSUI.modelUtils.getSearchGroups(clmsModelInst),
     };
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
@@ -252,6 +253,7 @@ CLMSUI.init.modelsEssential = function(options) {
     console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
         scoreExtent: scoreExtentInstance,
+        distanceExtent: [0, 250],
         possibleSearchGroups: CLMSUI.modelUtils.getSearchGroups(clmsModelInst),
     });
 
@@ -571,6 +573,7 @@ CLMSUI.init.viewsEssential = function(options) {
         d3.select("#filterModeDiv").style("display", "none");
     }
 
+    // Score minigram set-up
     var miniMod = filterModel.get("matchScoreCutoff");
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel({
         domainStart: miniMod[0] || 0,
@@ -587,7 +590,7 @@ CLMSUI.init.viewsEssential = function(options) {
     }, this);
 
     new CLMSUI.MinigramViewBB({
-            el: "#filterPlaceholderSliderHolder",
+            el: "#filterPlaceholdermatchScoreSliderHolder",
             model: miniDistModelInst,
             myOptions: {
                 maxX: 0, // let data decide
@@ -610,7 +613,47 @@ CLMSUI.init.viewsEssential = function(options) {
                 domainEnd: newCutoff[1]
             });
             //console.log ("cutoff changed");
-        });
+        })
+    ;
+    
+      
+    // Distance minigram set-up
+    miniMod = filterModel.get("distanceCutoff");
+    miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel({
+        domainStart: miniMod[0] || 0,
+        domainEnd: miniMod[1] || 1,
+    });
+    miniDistModelInst.data = function() { return [compModel.getCrossLinkDistances (CLMS.arrayFromMapValues (compModel.get("clmsModel").get("crossLinks")))]; };
+
+    // When the range changes on the mini histogram model pass the values onto the filter model
+    filterModel.listenTo(miniDistModelInst, "change", function(model) {
+        this.set("distanceCutoff", [model.get("domainStart"), model.get("domainEnd")]);
+    }, this);
+
+    new CLMSUI.MinigramViewBB({
+            el: "#filterPlaceholderdistanceFilterSliderHolder",
+            model: miniDistModelInst,
+            myOptions: {
+                maxX: 250, // let data decide
+                seriesNames: ["Distances"],
+                //scaleOthersTo: "Matches",
+                xlabel: "Score",
+                ylabel: "Count",
+                height: 65,
+                colours: {
+                    Distances: "blue",
+                }
+            }
+        })
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render();}) // if the matches change (likely?) need to re-render the view too
+        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function() { this.render(); }) // if the distances change (likely?) need to re-render the view too
+        .listenTo(filterModel, "change:distanceCutoff", function(filterModel, newCutoff) {
+            this.model.set({
+                domainStart: newCutoff[0],
+                domainEnd: newCutoff[1]
+            });
+        })
+    ;
 
 
     // World of code smells vol.1
@@ -964,10 +1007,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         displayEventName: "nglShow",
     });
 
+    var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString(window.location.search.slice(1));
     new CLMSUI.PDBFileChooserBB({
         el: "#pdbPanel",
         model: compModel,
         displayEventName: "pdbShow",
+        initPDBs: urlChunkMap.pdb,
     });
 
     new CLMSUI.ScatterplotViewBB({

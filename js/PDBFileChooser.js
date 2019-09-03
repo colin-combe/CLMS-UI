@@ -171,12 +171,22 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             msg += success ? "✓ Success! " + count + " sequence" + (count > 1 ? "s" : "") + " mapped between this search and the PDB file." :
                 sanitise((newSequences.failureReason || "No sequence matches found between this search and the PDB file") +
                     ". Please check the PDB file or code is correct.");
+            if (success && this.loadRoute === "pdb") {
+                this.model.get("filterModel").pdbCode = sanitise(pdbString);
+            }
             this.setStatusText(msg, success);
         });
 
         this.listenTo (CLMSUI.vent, "alignmentProgress", function(msg) {
             this.setStatusText(msg);
         });
+        
+        // Pre-load pdb if requested
+        if (viewOptions.initPDBs) {
+            d3.select(this.el).select(".inputPDBCode").property("value", viewOptions.initPDBs);
+            this.loadPDBCode();
+        }
+        console.log ("PDBFC", this, viewOptions);
     },
     
     // Return selected proteins, or all proteins if nothing selected
@@ -284,6 +294,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         evt.target.value = null;    // reset value so same file can be chosen twice in succession
         
         CLMSUI.modelUtils.loadUserFile(fileObj, function(pdbFileContents) {
+            self.loadRoute = "file";
             var blob = new Blob([pdbFileContents], {
                 type: 'application/text'
             });
@@ -311,6 +322,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
     loadPDBCode: function() {
         var pdbCode = d3.select(this.el).select(".inputPDBCode").property("value");
+        this.loadRoute = "pdb";
         this.setWaitingEffect();
         CLMSUI.NGLUtils.repopulateNGL({
             pdbCode: pdbCode,
