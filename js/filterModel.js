@@ -373,24 +373,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return str;
             },
 
-            generateUrlString: function() {
+            getURLQueryPairs: function() {
                 // make url parts from current filter attributes
-                var parts = CLMSUI.modelUtils.makeURLQueryString (this.attributes, "F");
-                if (this.pdbCode) {
-                    var pdbParts = CLMSUI.modelUtils.makeURLQueryString ({pdb: this.pdbCode}, "");
-                    parts = pdbParts.concat(parts);
-                }
-
-                // return parts of current url query string that aren't filter flags or values
-                var search = window.location.search.slice(1);
-                var nonFilterKeys = d3.set(["sid", "decoys", "unval", "lowestScore", "anon"]);
-                var nonFilterParts = search.split("&").filter(function(nfpart) {
-                    return nonFilterKeys.has(nfpart.split("=",1)[0]);
-                });
-                // and queue them to be at the start of new url query string (before filter attributes)
-                parts = nonFilterParts.concat(parts);
-
-                return window.location.origin + window.location.pathname + "?" + parts.join("&");
+                return CLMSUI.modelUtils.makeURLQueryPairs (this.attributes, "F");
             },
 
             getFilterUrlSettings: function(urlChunkMap) {

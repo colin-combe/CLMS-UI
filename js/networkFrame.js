@@ -519,7 +519,7 @@ CLMSUI.init.views = function() {
 
     new CLMSUI.URLSearchBoxViewBB({
         el: "#urlSearchBox",
-        model: compModel.get("filterModel"),
+        model: compModel,
         displayEventName: "shareURL",
         myOptions: {}
     });
@@ -847,7 +847,7 @@ CLMSUI.init.viewsEssential = function(options) {
             }, {
                 name: "Online Videos",
                 func: function() {
-                    window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/xiview-videos", "_blank");
+                    window.open("https://vimeo.com/user64900020", "_blank");
                 },
                 tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"
             }, {

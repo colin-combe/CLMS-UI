@@ -171,8 +171,8 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             msg += success ? "✓ Success! " + count + " sequence" + (count > 1 ? "s" : "") + " mapped between this search and the PDB file." :
                 sanitise((newSequences.failureReason || "No sequence matches found between this search and the PDB file") +
                     ". Please check the PDB file or code is correct.");
-            if (success && this.loadRoute === "pdb") {
-                this.model.get("filterModel").pdbCode = sanitise(pdbString);
+            if (success) {
+                this.model.set("pdbCode", this.loadRoute === "pdb" ? sanitise(pdbString) : undefined);
             }
             this.setStatusText(msg, success);
         });
@@ -183,10 +183,10 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         
         // Pre-load pdb if requested
         if (viewOptions.initPDBs) {
+            this.setVisible (true);
             d3.select(this.el).select(".inputPDBCode").property("value", viewOptions.initPDBs);
             this.loadPDBCode();
         }
-        console.log ("PDBFC", this, viewOptions);
     },
     
     // Return selected proteins, or all proteins if nothing selected

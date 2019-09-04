@@ -1175,7 +1175,7 @@ CLMSUI.utils = {
                 var link = this.model.get("filterModel") ? 
                     tempSVG.append("a")
                         .attr ("class", "imageOrigin")
-                        .attr ("xlink:href", this.model.get("filterModel").generateUrlString())
+                        .attr ("xlink:href", this.model.generateUrlString())
                         .attr ("target", "_blank")
                     : tempSVG
                 ;
