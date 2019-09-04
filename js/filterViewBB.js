@@ -365,8 +365,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         function initScoreFilterGroup (config) {
             if (config && config.attr) {
                 var cutoffDivSel = makeFilterControlDiv (config);
-                cutoffDivSel.style ("display", config.hide ? "none" : null);
-                //~ cutoffDivSel.append("span").attr("class", "sideOn").text("CUTOFF");
 
                 var sliderSection = cutoffDivSel.append("div").attr("class", "scoreSlider");
                 // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
@@ -623,7 +621,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         initResetGroup.call(this);
         initFilterModeGroup.call(this);
         initLinkPropertyGroup.call(this);
-        initScoreFilterGroup.call(this, {attr: "distanceCutoff", extentProperty: "distanceExtent", label: "Distance", id: "distanceFilter", expandable: true, groupName: "Distances", tooltipIntro: "Filter out crosslinks with distance", hide: true});
+        initScoreFilterGroup.call(this, {attr: "distanceCutoff", extentProperty: "distanceExtent", label: "Distance", id: "distanceFilter", expandable: true, groupName: "Distances", tooltipIntro: "Filter out crosslinks with distance", hide: false});
         initValidationGroup.call(this);
         initScoreFilterGroup.call(this, {attr: "matchScoreCutoff", extentProperty: "scoreExtent", label: "Match Score", id: "matchScore", expandable: true, groupName: "Scores", tooltipIntro: "Filter out matches with scores"});
         initFDRPlaceholder.call(this);

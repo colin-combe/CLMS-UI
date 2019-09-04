@@ -215,7 +215,7 @@ CLMSUI.init.modelsEssential = function(options) {
         prot.size = prot.size || 1;
     });
 
-    var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString(window.location.search.slice(1));
+    var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
 
     // Anonymiser for screen shots / videos. MJG 17/05/17, add &anon to url for this
     if (urlChunkMap.anon) {
@@ -634,7 +634,7 @@ CLMSUI.init.viewsEssential = function(options) {
             el: "#filterPlaceholderdistanceFilterSliderHolder",
             model: miniDistModelInst,
             myOptions: {
-                maxX: 250, // let data decide
+                maxX: 0, // let data decide
                 seriesNames: ["Distances"],
                 //scaleOthersTo: "Matches",
                 xlabel: "Score",
@@ -646,7 +646,15 @@ CLMSUI.init.viewsEssential = function(options) {
             }
         })
         .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render();}) // if the matches change (likely?) need to re-render the view too
-        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function() { this.render(); }) // if the distances change (likely?) need to re-render the view too
+        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) { 
+            //console.log ("minigram arguments", arguments, this);
+            filterModel.distanceExtent = [0, Math.ceil(distObj.maxDistance)];
+            this.model.set({
+                domainStart: this.model.get("domainStart"),
+                domainEnd: Math.min (Math.ceil(distObj.maxDistance), this.model.get("domainEnd"))
+            });
+            this.render(); 
+        }) // if the distances change (likely?) need to re-render the view too
         .listenTo(filterModel, "change:distanceCutoff", function(filterModel, newCutoff) {
             this.model.set({
                 domainStart: newCutoff[0],
