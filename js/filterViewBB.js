@@ -847,7 +847,8 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
         this.allTemplate = _.template(targetTemplateString + " ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)");
 
         this.listenTo(this.model, "filteringDone", this.render)
-            .render();
+            .render()
+        ;
     },
 
     render: function() {
@@ -881,7 +882,8 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
         this.pctFormat = d3.format("%");
 
         this.listenTo(this.model, "filteringDone", this.render)
-            .render();
+            .render()
+        ;
     },
 
     render: function() {
