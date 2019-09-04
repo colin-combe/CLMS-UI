@@ -1056,7 +1056,7 @@ function callback (model) {
 	QUnit.test ("Make URL Query String", function (assert) {
 		var testObj = {sid: "10003-secret", decoys: 1, unval: 1, linear: 1, cats: true, anon: ""};
 		var expectedValue = ["sid=10003-secret", "decoys=1", "unval=1", "linear=1", "cats=1", "anon="];	// true gets turned to 1, false to 0
-		var actualValue = CLMSUI.modelUtils.makeURLQueryString (testObj, "");
+		var actualValue = CLMSUI.modelUtils.makeURLQueryPairs (testObj, "");
 		
 		// stringify turns undefined to null for printout, but it's a match
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as constructed URL query string, Passed!");

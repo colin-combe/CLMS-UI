@@ -38,18 +38,17 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
             initialize: function(options, secondarySettings) {
                 if (!this.get("matchScoreCutoff")) {
-                    this.set("matchScoreCutoff", [0, 100]);
+                    this.set("matchScoreCutoff", [undefined, undefined]);
                     // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
                 }
                 // scoreExtent used to restrain text input values
                 this.scoreExtent = (secondarySettings ? secondarySettings.scoreExtent : undefined) || this.get("matchScoreCutoff").slice(0);
                 
-                /*
+                
                 if (!this.get("distanceCutoff")) {
-                    this.set("distanceCutoff", [0, 100]);
+                    this.set("distanceCutoff", [undefined, undefined]);
                 }
-                this.distanceExtent = [0, 100];
-                */
+                this.distanceExtent = (secondarySettings ? secondarySettings.distanceExtent : undefined) || this.get("distanceCutoff").slice(0);
                 
                 // possibleSearchGroups used to restrain searchGroup options
                 this.possibleSearchGroups = (secondarySettings ? secondarySettings.possibleSearchGroups : undefined) || this.get("searchGroups").slice(0);
@@ -147,16 +146,26 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             },
 
             scoreFilter: function(match) {
-                var msc = this.get("matchScoreCutoff");
+                var score = match.score();
                 //defend against not having a score (from a CSV file without such a column)
-                if (match.score() === undefined) {
+                if (score === undefined) {
                     return true;
                 }
-                return (msc[0] == undefined || match.score() >= msc[0]) && (msc[1] == undefined || match.score() <= msc[1]); // == undefined cos shared links get undefined json'ified to null
+                var msc = this.get("matchScoreCutoff");
+                return (msc[0] == undefined || score >= msc[0]) && (msc[1] == undefined || score <= msc[1]); // == undefined cos shared links get undefined json'ified to null
             },
 
             decoyFilter: function(match) {
                 return !match.isDecoy() || this.get("decoys");
+            },
+            
+            distanceFilter: function (crossLink) {
+                var dsc = this.get("distanceCutoff");
+                var dist = crossLink.getMeta("distance");
+                if (dist === undefined) {
+                    return true;
+                }
+                return (dsc[0] == undefined || dist >= dsc[0]) && (dsc[1] == undefined || dist <= dsc[1]); // == undefined cos shared links get undefined json'ified to null 
             },
 
             validationStatusFilter: function(match) {
@@ -332,6 +341,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     pepLength: "PEPLEN",
                     fdrThreshold: "THR",
                     matchScoreCutoff: "MATCHSCORES",
+                    distanceCutoff: "DIST",
                     aaApart: "APART",
                     crosslinks: "XLINKS",
                     homomultimericLinks: "HOMOM",
@@ -352,6 +362,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     if (this.get("matchScoreCutoff")[1] == undefined) { // ignore matchscorecutoff if everything allowed
                         antiFields.push("matchScoreCutoff");
                     }
+                    if (this.get("distanceCutoff")[1] == undefined) { // ignore distancecutoff if everything allowed
+                        antiFields.push("distanceCutoff");
+                    }
                     fields = d3.keys(_.omit(this.attributes, antiFields));
                     //console.log ("filter fieldset", this.attributes, fields);
                 }
@@ -360,20 +373,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return str;
             },
 
-            generateUrlString: function() {
+            getURLQueryPairs: function() {
                 // make url parts from current filter attributes
-                var parts = CLMSUI.modelUtils.makeURLQueryString (this.attributes, "F");
-
-                // return parts of current url query string that aren't filter flags or values
-                var search = window.location.search.slice(1);
-                var nonFilterKeys = d3.set(["sid", "decoys", "unval", "lowestScore", "anon"]);
-                var nonFilterParts = search.split("&").filter(function(nfpart) {
-                    return nonFilterKeys.has(nfpart.split("=",1)[0]);
-                });
-                // and queue them to be at the start of new url query string (before filter attributes)
-                parts = nonFilterParts.concat(parts);
-
-                return window.location.origin + window.location.pathname + "?" + parts.join("&");
+                return CLMSUI.modelUtils.makeURLQueryPairs (this.attributes, "F");
             },
 
             getFilterUrlSettings: function(urlChunkMap) {
@@ -385,7 +387,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     filterUrlSettingsMap[key.slice(1)] = urlChunkMap[key];
                 });
                 var allowableFilterKeys = d3.keys(this.defaults);
-                allowableFilterKeys.push("matchScoreCutoff", "searchGroups");
+                allowableFilterKeys.push("matchScoreCutoff", "searchGroups", "distanceCutoff", "pdb");
                 var intersectingKeys = _.intersection(d3.keys(filterUrlSettingsMap), allowableFilterKeys);
                 var filterChunkMap = _.pick(filterUrlSettingsMap, intersectingKeys);
                 console.log("FCM", filterChunkMap);

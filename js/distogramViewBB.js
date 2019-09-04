@@ -59,7 +59,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             }
         };
 
-        this.options.attributeOptions = CLMSUI.compositeModelInst.get("clmsModel").attributeOptions;
+        this.options.attributeOptions = this.model.get("clmsModel").attributeOptions;
 
         this.precalcedDistributions = {
             Random: {
@@ -124,7 +124,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         toolbar.append("p").attr("id", optid);
         new CLMSUI.DropDownMenuViewBB({
             el: "#" + optid,
-            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            model: self.model.get("clmsModel"),
             myOptions: {
                 title: "Random Scope ▼",
                 menu: toggleButtonData.map(function(d) {
@@ -137,14 +137,14 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     header: "Random Scope",
                     contents: "Decide scope of random distances."
                 },
-                tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+                tooltipModel: self.model.get("tooltipModel"),
             }
         });
         
         var maxid = this.el.id + "MaxXValue";
         var maxElem = toolbar.append("p").attr("id", maxid);
         maxElem.append("span").text("Axis Extent (X)");
-        maxElem.append("input").attr("type", "number").attr("min", 40).attr("max", 500)
+        maxElem.append("input").attr("type", "number").attr("class", "xAxisMax").attr("min", 40).attr("max", 500)
             .on ("change", function () {
                 self.getSelectedOption("X").maxVal = +d3.event.target.value;
                 self.options.reRandom = true;
@@ -336,8 +336,19 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         function distancesAvailable() {
             //console.log("DISTOGRAM RAND DISTANCES MARKED FOR RECALCULATION");
             this.options.reRandom = true;
-            var funcMeta = this.getSelectedOption("X");
-            if (funcMeta.id === "Distance") {
+            
+            // Reset distance attribute max value according to max cross-link distance
+            var distAttr = this.options.attributeOptions.filter (function (attr) { return attr.id === "Distance"; });
+            if (distAttr.length === 1) {
+                var userMax = +mainDivSel.select(".xAxisMax").property("value");
+                var distObj = this.model.get("clmsModel").get("distancesObj");
+                if (!userMax) {
+                    distAttr[0].maxVal = CLMSUI.utils.niceRound (distObj.maxDistance * 1.5) + 1;
+                }
+                //console.log ("MAX VAL", distObj.maxDistance, distAttr[0].maxVal);
+            }
+            
+            if (this.getSelectedOption("X").id === "Distance") {
                 //console.log ("DISTOGRAM RERENDERED DUE TO DISTANCE CHANGES");
                 this.render();
             }
