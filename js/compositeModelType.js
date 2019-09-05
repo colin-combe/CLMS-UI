@@ -31,6 +31,38 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         this.calcAndStoreTTCrossLinkCount();
     },
+    
+    // Set cross-link homomultimer states to true if any constituent matches are homomultimer
+    // This means when we grab distances we get the worst-case distance (useful for setting ranges)
+    // Another call to applyFilter will set them back to normal
+    calcWorstCaseHomomultimerStates: function () {
+        var crossLinksArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("crossLinks"));
+        crossLinksArr.forEach (function (clink) {
+            clink.confirmedHomomultimer = false;
+            if (clink.isSelfLink()) {
+                clink.confirmedHomomultimer = _.any (clink.matches_pp, function (m) { return m.match.confirmedHomomultimer;});
+            };
+        });
+        return this;
+    },
+    
+    // Get distances if links are made homomultimr if possible, needed to generate initial distance range
+    getHomomDistances: function (crossLinkArr) {
+        // Store current homo states
+        var oldHom = _.pluck (crossLinkArr, "confirmedHomomultimer");
+        
+        // Calculate
+        this.calcWorstCaseHomomultimerStates();
+        var dists = this.getCrossLinkDistances (crossLinkArr);  // regenerate distances for all crosslinks
+        
+        // Restore original homom states and distances
+        crossLinkArr.forEach (function (clink, i) {
+            clink.confirmedHomomultimer = oldHom[i];    
+        });
+        this.getCrossLinkDistances (crossLinkArr);
+        
+        return dists;
+    },
 
     applyFilter: function() {
         var filterModel = this.get("filterModel");
@@ -67,6 +99,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         function filterCrossLink(crossLink) {
             crossLink.filteredMatches_pp = [];
+            var isSelf = crossLink.isSelfLink();
+            
             if (filterModel.get("fdrMode")) {
                 // FDR mode
                 crossLink.confirmedHomomultimer = false;
@@ -74,8 +108,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 var linkPass = false;
                 var mms = crossLink.getMeta("meanMatchScore");
                 if (mms !== undefined) {
-                    var self = crossLink.isSelfLink();
-                    var cut = self ? result[1].fdr : result[0].fdr;
+                    var cut = isSelf ? result[1].fdr : result[0].fdr;
                     linkPass = mms >= cut;
                 }
 
@@ -107,7 +140,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                         if (pass) {
                             crossLink.filteredMatches_pp.push(fm);
                             // TODO: match reporting as homomultimer if ambiguous and one associated crosslink is homomultimeric
-                            if (match.confirmedHomomultimer && crossLink.isSelfLink()) {
+                            if (match.confirmedHomomultimer && isSelf) {
                                 crossLink.confirmedHomomultimer = true;
                             }
                         }
@@ -152,7 +185,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                             if (pass) {
                                 crossLink.filteredMatches_pp.push(matchAndPepPos);
                                 // TODO: match reporting as homomultimer if ambiguous and one associated crosslink is homomultimeric
-                                if (match.confirmedHomomultimer && crossLink.isSelfLink()) {
+                                if (match.confirmedHomomultimer && isSelf) {
                                     crossLink.confirmedHomomultimer = true;
                                 }
                             }
@@ -285,9 +318,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.trigger("hiddenChanged");
         this.trigger("filteringDone");
 
-
         return this;
-
     },
 
     getFilteredCrossLinks: function(type) { // if type of crosslinks not declared, make it 'targets' by default

@@ -410,7 +410,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                         //console.log ("newVals", newVals);
                         newVals = newVals.slice((newVals.length / 2) - 1, (newVals.length / 2) + 1);
 
-                        self.model.set(config.attr, newVals);
+                        self.model.set (config.attr, newVals);
                     })
                 ;
                 

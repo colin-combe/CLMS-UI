@@ -173,10 +173,7 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         this.chart.internal.main.style("display", "none");
 
         var brush = d3.select(this.el).selectAll("svg .c3-brush");
-        var flip = {
-            "e": 1,
-            "w": -1
-        };
+        var flip = {e: 1, w: -1};
         brush.selectAll(".resize").append("path")
             .attr("transform", function(d) {
                 return "translate(0,0) scale(" + (flip[d]) + ",1)";
@@ -247,8 +244,13 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         accessor = accessor || function(d) {
             return d;
         }; // return object/variable/number as is as standard accessor
+        
+        var seriesCopy = series.slice();
+        if (this.model.get("extent")) {
+            seriesCopy.push (this.model.get("extent"));
+        }
         // get extents of all arrays, concatenate them, then get extent of that array
-        var extent = d3.extent([].concat.apply([], series.map(function(singleSeries) {
+        var extent = d3.extent([].concat.apply([], seriesCopy.map(function(singleSeries) {
             return singleSeries ? d3.extent(singleSeries, accessor) : [0, 1];
         })));
         var min = d3.min([0, Math.floor(extent[0])]);
@@ -294,11 +296,13 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         //CLMSUI.utils.xilog ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
         // Have to go via c3 chart internal properties as it isn't exposed via API
 
-        this.chart.internal.brush
-            .clamp(true)
-            .extent([this.model.get("domainStart"), this.model.get("domainEnd")])
-            .update()
-        ;
+        if (this.model.get("domainStart") !== undefined) {
+            this.chart.internal.brush
+                .clamp(true)
+                .extent([this.model.get("domainStart"), this.model.get("domainEnd")])
+                .update()
+            ;
+        }
         //CLMSUI.utils.xilog ("extent", this.chart.internal.brush.extent());
     },
 
