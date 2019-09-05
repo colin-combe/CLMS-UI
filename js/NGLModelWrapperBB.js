@@ -51,8 +51,10 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
         var clmsModel = this.getModel().get("clmsModel");
         // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically (as it generates an identical distance matrix)
+        // Also want to recalculate link distances with this object, before informing views the object is new (otherwise may draw with old data)
         clmsModel.set("distancesObj", distancesObj, {silent: true});
-        this.getModel().getCrossLinkDistances (CLMS.arrayFromMapValues (clmsModel.get("crossLinks")));  // regenerate distances for all crosslinks
+        var dists = this.getModel().getCrossLinkDistances (CLMS.arrayFromMapValues (clmsModel.get("crossLinks")));  // regenerate distances for all crosslinks
+        distancesObj.maxDistance = d3.max(dists);
         clmsModel.trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"));
         return this;
     },
@@ -670,7 +672,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             ap1.index = pair[0];
             ap2.index = pair[1];
             if (ap1.index !== undefined && ap2.index !== undefined) {
-                pair[3] = this.getAtomProxyDistance (ap1, ap2);
+                pair.push (this.getAtomProxyDistance (ap1, ap2));
             }
         }, this);
         

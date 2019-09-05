@@ -163,7 +163,8 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
         ;
     },
     getValue: function(crossLink) {
-        return CLMSUI.compositeModelInst.getSingleCrosslinkDistance(crossLink);
+        return crossLink.getMeta("distance");
+        //return CLMSUI.compositeModelInst.getSingleCrosslinkDistance(crossLink);
     },
 });
 

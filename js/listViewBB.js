@@ -140,9 +140,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         var selfModel = this.model;
 
         function setupD3Table() {
-            var physDistanceFunc = function(d) {
-                return selfModel.getSingleCrosslinkDistance(d);
-            };
+            var physDistanceFunc = function(d) { return d.getMeta("distance"); };
 
             // first column is hidden column which has fixed filter later on to only show filtered cross-links
             var columnSettings = {

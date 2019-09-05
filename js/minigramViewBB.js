@@ -124,18 +124,21 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
                     // a variation on http://stackoverflow.com/questions/23965326/backbone-js-prevent-listener-event-from-firing-when-model-changes
                     self.stopRebounds = true;
                     self.model.set({
-                        "domainStart": roundDomain[0],
-                        "domainEnd": roundDomain[1]
+                        domainStart: roundDomain[0],
+                        domainEnd: roundDomain[1]
                     });
                     self.stopRebounds = false;
                 },
                 size: {
                     height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars
                 },
-                /*
+                    /*
                     axis: {
                         x: {
                             show: true,
+                            tick: {
+                                fit: true
+                            }
                         }
                     }
 					*/
@@ -294,7 +297,8 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         this.chart.internal.brush
             .clamp(true)
             .extent([this.model.get("domainStart"), this.model.get("domainEnd")])
-            .update();
+            .update()
+        ;
         //CLMSUI.utils.xilog ("extent", this.chart.internal.brush.extent());
     },
 

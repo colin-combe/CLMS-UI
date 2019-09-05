@@ -192,7 +192,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         function makeFilterControlDiv (options) {
             options = options || {};
-            var div = mainDivSel.append("div").attr("class", "filterControlGroup");
+            var div = mainDivSel.append("div").attr("class", "filterControlGroup").style("display", options.hide ? "none" : null);
             if (options.id) { div.attr("id", options.id); }
             
             if (options.expandable) {
@@ -343,12 +343,14 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 .attr("title", function(d) {
                     return d.tooltip ? d.tooltip : undefined;
                 })
-                .append("label");
+                .append("label")
+            ;
 
             validationElems.append("span")
                 .text(function(d) {
                     return d.label;
-                });
+                })
+            ;
 
             validationElems.append("input")
                 .attr("class", function(d) {
@@ -360,56 +362,63 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         }
 
 
-        function initScoreFilterGroup() {
-            var cutoffDivSel = makeFilterControlDiv ({id: "matchScore", expandable: true, groupName: "Scores"});
-            //~ cutoffDivSel.append("span").attr("class", "sideOn").text("CUTOFF");
+        function initScoreFilterGroup (config) {
+            if (config && config.attr) {
+                var cutoffDivSel = makeFilterControlDiv (config);
 
-            var sliderSection = cutoffDivSel.append("div").attr("class", "scoreSlider");
-            // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
-            var tpl = _.template("<div><p>Match score</p><P class='vmin cutoffLabel'><span>&gt;</span></P><P>Min</P></div><div id='<%= eid %>'></div><div><p>Match score</p><P class='cutoffLabel vmax'><span>&lt;</span></P><P>Max</P></div>");
-            sliderSection.html(tpl({
-                eid: self.el.id + "SliderHolder"
-            }));
-            // sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
-            sliderSection.selectAll("p.cutoffLabel")
-                .attr("title", function() {
-                    var isMinInput = d3.select(this).classed("vmin");
-                    return "Filter out matches with scores " + (isMinInput ? "less than" : "greater than") + " X e.g. " + (isMinInput ? "8.0" : "20.0");
-                })
-                .append("input")
-                .attr({
-                    type: "number",
-                    step: 0.1,
-                    //min: 0,
-                })
-                .property("value", function() {
-                    var isMinInput = d3.select(this.parentNode).classed("vmin");
-                    var cutoff = self.model.get("matchScoreCutoff");
-                    var val = cutoff[isMinInput ? 0 : 1];
-                    return val !== undefined ? val : "";
-                })
-                .on("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
-                    //console.log ("model", self.model);
-                    var val = +this.value;
-                    var isMinInput = d3.select(this.parentNode).classed("vmin");
-                    var cutoff = self.model.get("matchScoreCutoff");
-                    var scoreExtent = self.model.scoreExtent;
-                    // take new values, along with score extents, sort them and discard extremes for new cutoff settings
-                    var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : scoreExtent[0]),
-                            isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : scoreExtent[1]) : val,
-                            scoreExtent[0], scoreExtent[1]
-                        ]
-                        .filter(function(v) {
-                            return v !== undefined;
-                        })
-                        .sort(function(a, b) {
-                            return a - b;
-                        });
-                    //console.log ("newVals", newVals);
-                    newVals = newVals.slice((newVals.length / 2) - 1, (newVals.length / 2) + 1);
+                var sliderSection = cutoffDivSel.append("div").attr("class", "scoreSlider");
+                // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
+                var tpl = _.template("<div><p>"+config.label+"</p><P class='vmin cutoffLabel'><span>&gt;</span></P><P>Min</P></div><div id='<%= eid %>'></div><div><p>"+config.label+"</p><P class='cutoffLabel vmax'><span>&lt;</span></P><P>Max</P></div>");
+                sliderSection.html(tpl({
+                    eid: self.el.id + config.id + "SliderHolder"
+                }));
+                // sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
+                sliderSection.selectAll("p.cutoffLabel")
+                    .attr("title", function() {
+                        var isMinInput = d3.select(this).classed("vmin");
+                        return config.tooltipIntro+" " + (isMinInput ? "less than" : "greater than") + " X e.g. " + (isMinInput ? "8.0" : "20.0");
+                    })
+                    .append("input")
+                    .attr({
+                        type: "number",
+                        step: config.step || 0.1,
+                        //min: 0,
+                    })
+                    .property("value", function() {
+                        var isMinInput = d3.select(this.parentNode).classed("vmin");
+                        var cutoff = self.model.get(config.attr);
+                        var val = cutoff[isMinInput ? 0 : 1];
+                        return val !== undefined ? val : "";
+                    })
+                    .on("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
+                        //console.log ("model", self.model);
+                        var val = +this.value;
+                        var isMinInput = d3.select(this.parentNode).classed("vmin");
+                        var cutoff = self.model.get(config.attr);
+                        var extent = self.model[config.extentProperty];
+                        // take new values, along with score extents, sort them and discard extremes for new cutoff settings
+                        var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : extent[0]),
+                                isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : extent[1]) : val,
+                                extent[0], extent[1]
+                            ]
+                            .filter(function(v) {
+                                return v !== undefined;
+                            })
+                            .sort(function(a, b) {
+                                return a - b;
+                            });
+                        //console.log ("newVals", newVals);
+                        newVals = newVals.slice((newVals.length / 2) - 1, (newVals.length / 2) + 1);
 
-                    self.model.set("matchScoreCutoff", newVals);
+                        self.model.set(config.attr, newVals);
+                    })
+                ;
+                
+                this.listenTo (this.model, "change:"+config.attr, function (model, val) {
+                    sliderSection.select(".vmin input").property("value", val[0]); // min label
+                    sliderSection.select(".vmax input").property("value", val[1]); // max label
                 });
+            }
         }
 
 
@@ -612,8 +621,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         initResetGroup.call(this);
         initFilterModeGroup.call(this);
         initLinkPropertyGroup.call(this);
+        initScoreFilterGroup.call(this, {attr: "distanceCutoff", extentProperty: "distanceExtent", label: "Distance", id: "distanceFilter", expandable: true, groupName: "Distances", tooltipIntro: "Filter out crosslinks with distance", hide: false});
         initValidationGroup.call(this);
-        initScoreFilterGroup.call(this);
+        initScoreFilterGroup.call(this, {attr: "matchScoreCutoff", extentProperty: "scoreExtent", label: "Match Score", id: "matchScore", expandable: true, groupName: "Scores", tooltipIntro: "Filter out matches with scores"});
         initFDRPlaceholder.call(this);
         initNavigationGroup.call(this);
         initMassSpecNavigationGroup.call(this);
@@ -637,11 +647,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         }
 
         this.displayEventName = viewOptions.displayEventName;
-
-        this.listenTo(this.model, "change:matchScoreCutoff", function(model, val) {
-            mainDivSel.select(".vmin input").property("value", val[0]); // min label
-            mainDivSel.select(".vmax input").property("value", val[1]); // max label
-        });
 
         this.listenTo(this.model, "change", this.setInputValuesFromModel);
 
@@ -840,7 +845,8 @@ CLMSUI.FilterSummaryViewBB = Backbone.View.extend({
         this.allTemplate = _.template(targetTemplateString + " ( + <%= decoysTD %> TD; <%= decoysDD %> DD Decoys)");
 
         this.listenTo(this.model, "filteringDone", this.render)
-            .render();
+            .render()
+        ;
     },
 
     render: function() {
@@ -874,7 +880,8 @@ CLMSUI.FDRSummaryViewBB = Backbone.View.extend({
         this.pctFormat = d3.format("%");
 
         this.listenTo(this.model, "filteringDone", this.render)
-            .render();
+            .render()
+        ;
     },
 
     render: function() {

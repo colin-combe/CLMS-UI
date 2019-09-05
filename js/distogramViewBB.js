@@ -55,10 +55,11 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 }], // TT, TD then DD
                 showRandoms: true,
                 showY2Axis: true,
+                showDistMaxInput: true,
             }
         };
 
-        this.options.attributeOptions = CLMSUI.compositeModelInst.get("clmsModel").attributeOptions;
+        this.options.attributeOptions = this.model.get("clmsModel").attributeOptions;
 
         this.precalcedDistributions = {
             Random: {
@@ -123,7 +124,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         toolbar.append("p").attr("id", optid);
         new CLMSUI.DropDownMenuViewBB({
             el: "#" + optid,
-            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            model: self.model.get("clmsModel"),
             myOptions: {
                 title: "Random Scope ▼",
                 menu: toggleButtonData.map(function(d) {
@@ -136,9 +137,21 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     header: "Random Scope",
                     contents: "Decide scope of random distances."
                 },
-                tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+                tooltipModel: self.model.get("tooltipModel"),
             }
         });
+        
+        var maxid = this.el.id + "MaxXValue";
+        var maxElem = toolbar.append("p").attr("id", maxid);
+        maxElem.append("span").text("Axis Extent (X)");
+        maxElem.append("input").attr("type", "number").attr("class", "xAxisMax").attr("min", 40).attr("max", 500)
+            .on ("change", function () {
+                self.getSelectedOption("X").maxVal = +d3.event.target.value;
+                self.options.reRandom = true;
+                self.render();
+            })
+        ;
+        
 
         // Add a select widget for picking axis data type
         this.setMultipleSelectControls(toolbar, this.options.attributeOptions, false);
@@ -323,8 +336,19 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         function distancesAvailable() {
             //console.log("DISTOGRAM RAND DISTANCES MARKED FOR RECALCULATION");
             this.options.reRandom = true;
-            var funcMeta = this.getSelectedOption("X");
-            if (funcMeta.id === "Distance") {
+            
+            // Reset distance attribute max value according to max cross-link distance
+            var distAttr = this.options.attributeOptions.filter (function (attr) { return attr.id === "Distance"; });
+            if (distAttr.length === 1) {
+                var userMax = +mainDivSel.select(".xAxisMax").property("value");
+                var distObj = this.model.get("clmsModel").get("distancesObj");
+                if (!userMax) {
+                    distAttr[0].maxVal = CLMSUI.utils.niceRound (distObj.maxDistance * 1.5) + 1;
+                }
+                //console.log ("MAX VAL", distObj.maxDistance, distAttr[0].maxVal);
+            }
+            
+            if (this.getSelectedOption("X").id === "Distance") {
                 //console.log ("DISTOGRAM RERENDERED DUE TO DISTANCE CHANGES");
                 this.render();
             }
@@ -872,6 +896,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         var d3el = d3.select(this.el);
         d3el.select("#distoPanelRandomOptions")
             .style("display", /*self.model.get("clmsModel").targetProteinCount > 1 && */ extras.showRandoms ? null : "none")
+        ;
+        d3el.select("#distoPanelMaxXValue")
+            .style("display", extras.showDistMaxInput ? null : "none")
         ;
         d3el.selectAll(".c3-axis-y2,c3-axis-y2-label").style("display", extras.showY2Axis ? null : "none");
         return this;

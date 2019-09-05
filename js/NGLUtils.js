@@ -418,6 +418,18 @@ CLMSUI.NGLUtils = {
         return sel;
     },
     
+    getReasonableDistanceLimit: function (nglStageModel) {
+        //var showableChains = nglStageModel.getShowableChains (false);
+        var chainSele;  // = nglStageModel.getChainSelection(showableChains);
+        var boundingBox = nglStageModel.get("structureComp").getBoxUntransformed(chainSele);
+        function xyzToArray (xyz) {
+            return [xyz.x, xyz.y, xyz.z];
+        }
+        var dist = CLMSUI.modelUtils.getDistanceSquared (xyzToArray (boundingBox.min), xyzToArray (boundingBox.max));
+        
+        return Math.sqrt (dist);
+    },
+    
     // test to ignore short chains and those that aren't polymer chains (such as water molecules)
     isViableChain: function(chainProxy) {
         //console.log ("cp", chainProxy.entity, chainProxy.residueCount, chainProxy);
