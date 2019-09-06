@@ -604,7 +604,7 @@ CLMSUI.init.viewsEssential = function(options) {
             }
         })
         // If the ClmsModel matches attribute changes then tell the mini histogram view
-        .listenTo(compModel.get("clmsModel"), "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
         .listenTo(filterModel, "change:matchScoreCutoff", function(filterModel, newCutoff) {
             this.model.set({
                 domainStart: newCutoff[0],
@@ -651,19 +651,18 @@ CLMSUI.init.viewsEssential = function(options) {
                 }
             }
         })
-        .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render();}) // if the matches change (likely?) need to re-render the view too
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
         .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) { 
             //console.log ("minigram arguments", arguments, this);
             var max = Math.ceil(distObj.maxDistance);
             filterModel.distanceExtent = [0, max];
             this.model.set("extent", [0, max + 1]);
-            console.log ("MM", this.model);
-            this.model.set({
-                domainStart: this.model.get("domainStart"),
-                domainEnd: this.model.get("domainEnd")
-            });
-            this.render();
-            compModel.applyFilter();
+            //console.log ("MM", this.model);
+            filterModel
+                .trigger ("change:distanceCutoff", filterModel, [this.model.get("domainStart"), this.model.get("domainEnd")])
+                .trigger ("change", filterModel, {showHide: true})
+            ;
+            this.render().redrawBrush();
         }) // if the distances change (likely?) need to re-render the view too
         .listenTo(filterModel, "change:distanceCutoff", function(filterModel, newCutoff) {
             this.model.set({

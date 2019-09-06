@@ -621,7 +621,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         initResetGroup.call(this);
         initFilterModeGroup.call(this);
         initLinkPropertyGroup.call(this);
-        initScoreFilterGroup.call(this, {attr: "distanceCutoff", extentProperty: "distanceExtent", label: "Distance", id: "distanceFilter", expandable: true, groupName: "Distances", tooltipIntro: "Filter out crosslinks with distance", hide: false});
+        initScoreFilterGroup.call(this, {attr: "distanceCutoff", extentProperty: "distanceExtent", label: "Distance", id: "distanceFilter", expandable: true, groupName: "Distances", tooltipIntro: "Filter out crosslinks with distance"});
         initValidationGroup.call(this);
         initScoreFilterGroup.call(this, {attr: "matchScoreCutoff", extentProperty: "scoreExtent", label: "Match Score", id: "matchScore", expandable: true, groupName: "Scores", tooltipIntro: "Filter out matches with scores"});
         initFDRPlaceholder.call(this);
@@ -630,7 +630,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         initNavigationGroup2.call(this);
         initGroupGroup.call(this);
         addScrollRightButton.call(this);
-        
 
         // hide toggle options if no point in them being there (i.e. no between / self link toggle if only 1 protein)
         if (this.options.hide) {
@@ -752,15 +751,17 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         // hide parts of the filter panel if mode (manual/fdr) setting has changed, or if setInputValuesFromModelcalled directly (change is empty)
         if (options.showHide || model.changed.manualMode !== undefined || model.changed.fdrMode !== undefined) {
             var fdrMode = model.get("fdrMode");
-            d3.selectAll("#validationStatus, #matchScore").style("display", fdrMode ? "none" : null);
-            d3.selectAll("#fdrPanelHolder").style("display", fdrMode ? null : "none");
+            var d3el = d3.select(this.el);
+            d3el.selectAll("#validationStatus, #matchScore").style("display", fdrMode ? "none" : null);
+            d3el.selectAll("#fdrPanelHolder").style("display", fdrMode ? null : "none");
             if (fdrMode == true) {
                 this.model.set("ambig", false);
             }
-            d3.select("#ambig").property("disabled", fdrMode == true);
+            d3el.select("#ambig").property("disabled", fdrMode == true);
             
             // hide groups control if only 1 group
-            d3.select("#groupFilters").style ("display", this.model.possibleSearchGroups && this.model.possibleSearchGroups.length < 2 ? "none" : null);
+            d3el.select("#groupFilters").style ("display", this.model.possibleSearchGroups && this.model.possibleSearchGroups.length < 2 ? "none" : null);
+            d3el.select("#distanceFilter").style ("display", this.model.distanceExtent[0] === undefined ? "none" : null);
         }
     },
 

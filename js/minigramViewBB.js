@@ -181,7 +181,6 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
             .attr("d", "M 1 0 V 20 L 10 10 Z");
 
         this.listenTo(this.model, "change", this.redrawBrush);
-        this.listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", this.render);
 
         this.render();
 
@@ -304,12 +303,14 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
             ;
         }
         //CLMSUI.utils.xilog ("extent", this.chart.internal.brush.extent());
+        return this;
     },
 
     redrawBrush: function() {
         if (!this.stopRebounds) {
             this.brushRecalc();
         }
+        return this;
     },
 
     relayout: function() {

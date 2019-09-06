@@ -244,7 +244,7 @@ CLMSUI.utils = {
     niceRoundMap: {
         1: 1,
         2: 2,
-        3: 3,
+        3: 5,
         4: 5,
         5: 5,
         6: 10,
@@ -387,6 +387,7 @@ CLMSUI.utils = {
         ;
     },
 
+    // Hide overlapping d3 axis labels
     declutterAxis: function(d3AxisElem) {
         var lastBounds = {
             left: -100,
@@ -403,6 +404,22 @@ CLMSUI.utils = {
                 if (!overlap) {
                     lastBounds = bounds;
                 }
+            });
+    },
+    
+    // Hide non-round d3 axis labels
+    niceValueAxis: function(d3AxisElem, maxVal) {
+        var u = Math.round (Math.log10 (maxVal + 3)) - 1;
+        var m = Math.pow (10, u);
+        d3AxisElem.selectAll(".tick")
+            .each(function() {
+                var tick = d3.select(this);
+                var text = tick.select("text");
+                var val = text.text().replace(",", "");
+                var num = Number.parseFloat(val);
+                var nice = (num % m === 0);
+                text.style("visibility", nice ? null : "hidden").style("display", nice ? "block" : "none");
+                tick.style("stroke-width", nice ? 2 : 1);
             });
     },
 
