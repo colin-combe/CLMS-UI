@@ -399,7 +399,7 @@ CLMSUI.utils = {
             .each(function() {
                 var text = d3.select(this);
                 var bounds = this.getBoundingClientRect();
-                var overlap = !(bounds.right <= lastBounds.left || bounds.left >= lastBounds.right || bounds.bottom <= lastBounds.top || bounds.top >= lastBounds.bottom);
+                var overlap = !(bounds.right < lastBounds.left || bounds.left > lastBounds.right || bounds.bottom < lastBounds.top || bounds.top > lastBounds.bottom);
                 text.style("visibility", overlap ? "hidden" : null);
                 if (!overlap) {
                     lastBounds = bounds;
