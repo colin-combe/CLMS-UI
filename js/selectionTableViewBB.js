@@ -22,7 +22,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             this.render();
             //~ }
         });
-
+        this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", this.updateSwatchesOnly);
         // redraw datable on protein metadata change (possible protein name change)
         this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", this.render);
 
@@ -44,7 +44,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var tableDataPropOrder = [
             "id", "ambiguity", "protein1", /*"pos1",*/ "pepPos1", "pepSeq1raw", "linkPos1",
             "protein2", /*"pos2",*/ "pepPos2", "pepSeq2raw", "linkPos2", "score",
-            "autovalidated", "validated", "group", "searchId", "runName", "scanNumber",
+            "autovalidated", "validated", "homom", "group", "searchId", "runName", "scanNumber",
             "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
             "precursorIntensity", "elutionStart", "elutionEnd", "expMissedCleavages",
             "searchMissedCleavages",
@@ -66,6 +66,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             score: "Score",
             autovalidated: "Auto",
             validated: "Manual",
+            homom: "Homom",
             group: "Group",
             searchId: "Search Id",
             runName: "Run Name",
@@ -153,6 +154,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             },
             group: function(d) {
                 return d.group();
+            },
+            homom: function (d) {
+                return d.confirmedHomomultimer === undefined ? "?" : d.confirmedHomomultimer;
             },
             searchId: function(d) {
                 return d.searchId;
@@ -393,7 +397,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 })
                 .classed("minWidth", function(d) {
                     return self.minWidthColumns.has(d);
-                });
+                })
             ;
 
             this.setPage(this.page);
@@ -488,6 +492,14 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var totalSelectedFilteredMatches = mci.length ? _.last(mci).runningTotalEnd : 0;
         return Math.floor(totalSelectedFilteredMatches / this.pageSize) + 1;
     },
+    
+    makeColourSwatch: function (elem, colourScheme) {
+        elem.attr("class", "colourSwatchSquare")
+            .style("background", function(d) {
+                return colourScheme.getColour (d.link);
+            })
+        ;
+    },
 
     // code that maintains the rows in the table
     addRows: function(selectedLinkArray, filteredProps, firstLastLinkMatchBounds) {
@@ -506,7 +518,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             var matchCount = crosslink.runningTotalEnd - crosslink.runningTotalStart;
             crosslink = crosslink.link;
             return /*(i+1)+". "+*/ matchCount + " Selected Match" + (matchCount > 1 ? "es" : "") + " for " + crosslink.fromProtein.name + ", " +
-                (crosslink.isLinearLink() ? "linear peptides" : (crosslink.fromResidue + " --- " +
+                (crosslink.isLinearLink() ? "linear peptides" : (crosslink.fromResidue + " - " +
                     crosslink.toProtein.name + ", " + crosslink.toResidue));
         };
 
@@ -516,17 +528,23 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             .data(selectedLinkArray, identityFunc);
 
         xlinkTBodyJoin.exit().remove();
-        xlinkTBodyJoin.enter()
+        var newLinks = xlinkTBodyJoin.enter()
             .append("TBODY")
             .append("TR")
             .append("TD")
-            .attr("colspan", colspan);
+            .attr("colspan", colspan)
+        ;
+        newLinks.append("span").attr("class", "colourSwatchSquare");
+        newLinks.append("span").attr("class", "niceCrossLinkName");
         xlinkTBodyJoin.order(); // reorder existing dom elements so they are in same order as data (selectedLinkArray)
 
         // all tbody
-        xlinkTBodyJoin
-            .select("TR>TD")
-            .text(niceCrossLinkName);
+        var allLinks = xlinkTBodyJoin.select("TR>TD");
+        allLinks.select(".niceCrossLinkName").text(niceCrossLinkName);
+        var colourScheme = this.model.get("linkColourAssignment");
+        allLinks.each (function (d) {
+            self.makeColourSwatch (d3.select(this).select(".colourSwatchSquare"), colourScheme);    
+        });
 
 
         // Within each tbody section, match table rows up to matches within each crosslink
@@ -549,13 +567,15 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             }) // since we key the rows on d.id this won't change, so we can set it for all time in enter()
             .on("click", function(d) {
                 self.select(d);
-            });
+            })
+        ;
         tjoin.order();
         tjoin
             .classed("spectrumShown2", function(d) {
                 var lsm = self.model.get("lastSelectedMatch");
                 return lsm && lsm.match ? lsm.match.id === d.id : false;
-            });
+            })
+        ;
 
 
         // Within each row, match cells up to individual pieces of match information
@@ -637,6 +657,16 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                     d3this.attr("title", getText.call(this, d));
                 }
             });
+    },
+    
+    updateSwatchesOnly: function () {
+        var colourScheme = this.model.get("linkColourAssignment");
+        var self = this;
+        d3.select(this.el).selectAll(".colourSwatchSquare")
+            .each (function () {
+                self.makeColourSwatch (d3.select(this), colourScheme);    
+            })
+        ;
     },
 
     setVisible: function(show) {
