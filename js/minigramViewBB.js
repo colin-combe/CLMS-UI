@@ -14,7 +14,8 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
             maxX: 80,
             height: 60,
             width: 180,
-            xAxisHeight: 20
+            xAxisHeight: 20,
+            maxBars: 50,
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -234,8 +235,22 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate(" + halfBarW + ",0)");
 
         d3.select(this.el).select(".c3-brush").attr("clip-path", "");
+        
+        this.tidyXAxis();
 
         //CLMSUI.utils.xilog ("data", distArr, binnedData);
+        return this;
+    },
+    
+    getAxisRange: function () {
+        return this.options.gapX * this.chart.internal.orgXDomain[1];
+    },
+    
+    // make x tick text values the rounder numbers, and remove any that overlap afterwards
+    tidyXAxis: function () {
+        var xaxis = d3.select(this.el).selectAll(".c3-axis-x");
+        CLMSUI.utils.niceValueAxis (xaxis, this.getAxisRange());
+        CLMSUI.utils.declutterAxis (xaxis);
         return this;
     },
 
@@ -254,7 +269,7 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         })));
         var min = d3.min([0, Math.floor(extent[0])]);
         var max = d3.max([1, this.options.maxX || Math.ceil(extent[1])]);
-        var step = Math.max(1, CLMSUI.utils.niceRound((max - min) / 100));
+        var step = Math.max(1, CLMSUI.utils.niceRound((max - min) / this.options.maxBars));
         var thresholds = d3.range(min, max + (step * 2), step);
         //CLMSUI.utils.xilog ("thresholds", thresholds, extent, min, max, step, this.options.maxX, series);
 
@@ -284,6 +299,9 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         }, this);
 
         CLMSUI.utils.xilog("ca", countArrays);
+        
+        this.options.minX = thresholds[0];
+        this.options.gapX = thresholds[1] - thresholds[0];
 
         return {
             counts: countArrays,
@@ -320,6 +338,7 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         // kill brush clip so we can see brush arrows at chart extremeties
         d3.select(this.el).select(".c3-brush").attr("clip-path", "");
         this.chart.resize();
+        this.tidyXAxis();
         return this;
     },
 
@@ -334,6 +353,7 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
                 this.chart.legend.hide(); // hides labels, but not legend background
                 this.chart.legend.hide([]); // hides legend background, not labels
             }
+            this.tidyXAxis();
         }
         return this;
     },
