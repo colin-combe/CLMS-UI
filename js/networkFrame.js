@@ -215,7 +215,7 @@ CLMSUI.init.modelsEssential = function(options) {
         prot.size = prot.size || 1;
     });
 
-    var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString(window.location.search.slice(1));
+    var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
 
     // Anonymiser for screen shots / videos. MJG 17/05/17, add &anon to url for this
     if (urlChunkMap.anon) {
@@ -243,9 +243,8 @@ CLMSUI.init.modelsEssential = function(options) {
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
         //matchScoreCutoff: [undefined, undefined],
-        //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined, Math.ceil(clmsModelInst.get("maxScore")) || undefined],
         matchScoreCutoff: scoreExtentInstance.slice(),
-        distanceCutoff: [0, 250],
+        //distanceCutoff: [0, 250],
         searchGroups: CLMSUI.modelUtils.getSearchGroups(clmsModelInst),
     };
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
@@ -253,7 +252,7 @@ CLMSUI.init.modelsEssential = function(options) {
     console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
         scoreExtent: scoreExtentInstance,
-        distanceExtent: [0, 250],
+        //distanceExtent: [0, 250],
         possibleSearchGroups: CLMSUI.modelUtils.getSearchGroups(clmsModelInst),
     });
 
@@ -275,7 +274,7 @@ CLMSUI.init.modelsEssential = function(options) {
     // and then tell the views that filtering has occurred via a custom event ("filtering Done") in applyFilter().
     // This ordering means the views are only notified once the changed data is ready.
     CLMSUI.compositeModelInst.listenTo(filterModelInst, "change", function() {
-        //console.log("filterChange");
+        console.log("filterChange");
         this.applyFilter();
     });
 
@@ -585,7 +584,6 @@ CLMSUI.init.viewsEssential = function(options) {
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo(miniDistModelInst, "change", function(model) {
-        console.log("MSC change", [model.get("domainStart"), model.get("domainEnd")]);
         this.set("matchScoreCutoff", [model.get("domainStart"), model.get("domainEnd")]);
     }, this);
 
@@ -606,7 +604,7 @@ CLMSUI.init.viewsEssential = function(options) {
             }
         })
         // If the ClmsModel matches attribute changes then tell the mini histogram view
-        .listenTo(compModel.get("clmsModel"), "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
         .listenTo(filterModel, "change:matchScoreCutoff", function(filterModel, newCutoff) {
             this.model.set({
                 domainStart: newCutoff[0],
@@ -620,10 +618,18 @@ CLMSUI.init.viewsEssential = function(options) {
     // Distance minigram set-up
     miniMod = filterModel.get("distanceCutoff");
     miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel({
-        domainStart: miniMod[0] || 0,
-        domainEnd: miniMod[1] || 1,
+        domainStart: miniMod[0],// || 0,
+        domainEnd: miniMod[1],// || 1,
     });
-    miniDistModelInst.data = function() { return [compModel.getCrossLinkDistances (CLMS.arrayFromMapValues (compModel.get("clmsModel").get("crossLinks")))]; };
+    miniDistModelInst.data = function() {
+        console.log ("MINI DATA ASKED FOR"); 
+        var crossLinks = CLMS.arrayFromMapValues (compModel.get("clmsModel").get("crossLinks"));
+        var distances = crossLinks
+            .map (function (clink) { return clink.getMeta("distance"); })
+            .filter (function (dist) { return dist !== undefined; })
+        ;
+        return [distances];
+    };
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo(miniDistModelInst, "change", function(model) {
@@ -634,7 +640,7 @@ CLMSUI.init.viewsEssential = function(options) {
             el: "#filterPlaceholderdistanceFilterSliderHolder",
             model: miniDistModelInst,
             myOptions: {
-                maxX: 250, // let data decide
+                maxX: 0, // let data decide
                 seriesNames: ["Distances"],
                 //scaleOthersTo: "Matches",
                 xlabel: "Score",
@@ -645,8 +651,19 @@ CLMSUI.init.viewsEssential = function(options) {
                 }
             }
         })
-        .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render();}) // if the matches change (likely?) need to re-render the view too
-        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function() { this.render(); }) // if the distances change (likely?) need to re-render the view too
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
+        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) { 
+            //console.log ("minigram arguments", arguments, this);
+            var max = Math.ceil(distObj.maxDistance);
+            filterModel.distanceExtent = [0, max];
+            this.model.set("extent", [0, max + 1]);
+            //console.log ("MM", this.model);
+            filterModel
+                .trigger ("change:distanceCutoff", filterModel, [this.model.get("domainStart"), this.model.get("domainEnd")])
+                .trigger ("change", filterModel, {showHide: true})
+            ;
+            this.render().redrawBrush();
+        }) // if the distances change (likely?) need to re-render the view too
         .listenTo(filterModel, "change:distanceCutoff", function(filterModel, newCutoff) {
             this.model.set({
                 domainStart: newCutoff[0],
@@ -859,7 +876,7 @@ CLMSUI.init.viewsEssential = function(options) {
             }, {
                 name: "About Xi View",
                 func: function() {
-                    window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/", "_blank");
+                    window.open("https://rappsilberlab.org/software/xiview/", "_blank");
                 },
                 tooltip: "About Xi View (opens external web page)"
             }, ],

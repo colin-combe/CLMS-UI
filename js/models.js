@@ -12,6 +12,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             data: function() {
                 return [1, 2, 3, 4];
             },
+            extent: [0,4],
         }),
 
         TooltipModel: Backbone.Model.extend({

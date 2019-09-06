@@ -343,7 +343,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 var userMax = +mainDivSel.select(".xAxisMax").property("value");
                 var distObj = this.model.get("clmsModel").get("distancesObj");
                 if (!userMax) {
-                    distAttr[0].maxVal = CLMSUI.utils.niceRound (distObj.maxDistance * 1.5) + 1;
+                    distAttr[0].maxVal = CLMSUI.utils.niceRound (distObj.maxDistance * 1.3) + 1;
                 }
                 //console.log ("MAX VAL", distObj.maxDistance, distAttr[0].maxVal);
             }
@@ -619,7 +619,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     withUpdateOrgXDomain: true,
                     withUpdateXDomain: true
                 });
-                CLMSUI.utils.declutterAxis(d3.select(this.el).select(".c3-axis-x"));
+                this.tidyXAxis();
             }
 
             //console.log ("data", distArr, binnedData);
@@ -642,6 +642,17 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             });
             this.chart.internal.y2.domain([0, maxY / this.y2Rescale]);
         }
+        return this;
+    },
+    
+    getAxisRange: function () {
+        return this.options.gapX * this.chart.internal.orgXDomain[1];
+    },
+    
+    // make x tick text values the rounder numbers, and remove any that overlap afterwards
+    tidyXAxis: function () {
+        CLMSUI.utils.niceValueAxis(d3.select(this.el).select(".c3-axis-x"), this.getAxisRange());
+        CLMSUI.utils.declutterAxis(d3.select(this.el).select(".c3-axis-x"));
         return this;
     },
 
@@ -913,7 +924,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             .style("position", null);
         //this.redrawColourRanges();
         this.chart.resize();
-        CLMSUI.utils.declutterAxis(d3el.select(".c3-axis-x"));
+        this.tidyXAxis();
         //this.makeBarsSitBetweenTicks (this.chart.internal);
         return this;
     },
@@ -952,9 +963,11 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 }, this)
                 .map(function(seriesBin) {
                     return seriesBin.bin[c3MouseData.index];
-                });
+                })
+                .filter(function(bin) { return bin !== undefined; })
+            ;
             var bin = d3.merge(bins);
-            //console.log ("bins", bins, bin);
+            
 
             var ev = d3.event || {};
             if (matchBasedSelection) {
