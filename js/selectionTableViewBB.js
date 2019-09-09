@@ -496,7 +496,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     makeColourSwatch: function (elem, colourScheme) {
         elem.attr("class", "colourSwatchSquare")
             .style("background", function(d) {
-                return colourScheme.getColour (d.link);
+                return colourScheme ? colourScheme.getColour (d.link) : "transparent";
             })
         ;
     },
