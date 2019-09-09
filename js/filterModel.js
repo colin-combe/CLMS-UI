@@ -35,6 +35,25 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 scanNumber: "",
                 urpPpi: 1,
             },
+            
+            extents: {
+                aaApart: {
+                    min: 0,
+                    max: 999
+                },
+                pepLength: {
+                    min: 1,
+                    max: 99
+                },
+                urpPpi: {
+                    min: 1,
+                    max: 99
+                }
+            },
+            
+            patterns: {
+                pepSeq: "[A-Za-z]+-?[A-Za-z]*",
+            },
 
             initialize: function(options, secondarySettings) {
                 if (!this.get("matchScoreCutoff")) {
