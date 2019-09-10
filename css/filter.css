@@ -55,19 +55,19 @@ div.filterControlGroup label:hover {
 }
 
 
-div.textFilters, div.toggles, div.scoreSlider > div, div.navNumberFilterDiv {
+div.filterItem, div.scoreSlider > div {
     display: inline-block;
     vertical-align: top;
 }
 
 
-.textFilters span:after, .toggles span:after, .scoreSlider span:after, .navNumberFilterDiv span:after {
+.filterItem span:after, .scoreSlider span:after {
     content: ' ';
     display: block;
 }
 
 
-.subsetNumberFilter {
+.filterTypeNumber {
     width: 4em;
 }
 

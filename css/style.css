@@ -853,12 +853,6 @@ image.sharpImage {
     image-rendering: pixelated;
 }
 
-.textFilters.chargeFilterControl {
-    /* hide charge control here */
-    display: none;
-}
-
-
 div#gafAnnotationsMetaLoadPanel > div > div.expectedFormatPanel {
   display:none;
 }

@@ -12,8 +12,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     events: {
         "change input.modeToggle": "processModeChanged",
         "input input.filterTypeText": "processTextFilter",
-        "keyup input.subsetNumberFilter": "processNumberFilter",
-        "mouseup input.subsetNumberFilter": "processNumberFilter",
+        "keyup input.filterTypeNumber": "processNumberFilter",
+        "mouseup input.filterTypeNumber": "processNumberFilter",
         "click input.filterTypeToggle": "processBooleanFilter",
         "click input.groupToggleFilter": "processGroupToggleFilter",
         "dblclick button.filterReset": function() {
@@ -23,64 +23,60 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
     initialize: function(viewOptions) {
         var defaultOptions = {
-            modes: [{
-                    "label": "Manual",
-                    "id": "manualMode",
+            config: [
+                {
+                    label: "Manual",
+                    id: "manualMode",
                     tooltip: "Filter using cross-link metadata",
                 },
                 {
-                    "label": "FDR",
-                    "id": "fdrMode",
+                    label: "FDR",
+                    id: "fdrMode",
                     tooltip: "Filter using a False Discovery Rate cutoff",
                 },
-            ],
-            subsetToggles: [{
-                    "label": "Linear",
-                    "id": "linears",
+                {
+                    label: "Linear",
+                    id: "linears",
                     tooltip: "Show linear peptides",
                 },
                 {
-                    "label": "Cross-links",
-                    "id": "crosslinks",
+                    label: "Cross-links",
+                    id: "crosslinks",
                     tooltip: "Show cross-links",
                 },
                 {
-                    "label": "Ambig.",
-                    "id": "ambig",
+                    label: "Ambig.",
+                    id: "ambig",
                     tooltip: "Show ambiguous cross-links",                  
                 },
                 {
-                    "label": "Between",
-                    "id": "betweenLinks",
+                    label: "Between",
+                    id: "betweenLinks",
                     tooltip: "Show cross-links between different proteins",
                 },
                 {
-                    "label": "Self",
-                    "id": "selfLinks",
+                    label: "Self",
+                    id: "selfLinks",
                     tooltip: "Show cross-links between the same protein",
                 },
                 {
-                    "label": "Homomult.",
-                    "id": "homomultimericLinks",
+                    label: "Homomult.",
+                    id: "homomultimericLinks",
                     tooltip: "Show cross-links with overlapping linked peptides",
                 },
-            ],
-            subsetNumberFilters: [{
-                    "label": "AA apart",
-                    "id": "aaApart",
+                {
+                    label: "AA apart",
+                    id: "aaApart",
                     tooltip: "Only show cross-links separated by at least N amino acids e.g. 10",
                     inequality: "&ge;",
-                    class: "toggles subsetNumberFilterDiv",
                 },
                 {
-                    "label": "Pep. length",
-                    "id": "pepLength",
+                    label: "Pep. length",
+                    id: "pepLength",
                     tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4",
                     inequality: "&ge;",
-                    class: "toggles subsetNumberFilterDiv",
                 },
-            ],
-            validationStatusToggles: [{
+                {
                     label: "A",
                     id: "A"
                 },
@@ -111,74 +107,60 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     id: "decoys",
                     tooltip: "Show decoy cross-links"
                 },
-            ],
-            navigationFilters: [{
-                    "label": "Peptide",
-                    "id": "pepSeq",
-                    "chars": 7,
+                {
+                    label: "Peptide",
+                    id: "pepSeq",
+                    chars: 7,
                     tooltip: "Filter to cross-links with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE",
                 },
                 {
-                    "label": "Protein",
-                    "id": "protNames",
-                    "chars": 7,
+                    label: "Protein",
+                    id: "protNames",
+                    chars: 7,
                     tooltip: "Filter to cross-links involving a protein name/identifier/description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
-            ],
-            navigationMassSpecFilters: [{
-                    "label": "Run",
-                    "id": "runName",
-                    "chars": 5,
+                {
+                    label: "Run",
+                    id: "runName",
+                    chars: 5,
                     tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"
                 },
                 {
-                    "label": "Scan",
-                    "id": "scanNumber",
-                    "chars": 5,
+                    label: "Scan",
+                    id: "scanNumber",
+                    chars: 5,
                     tooltip: "Filter to cross-links with matches with this scan number e.g. 44565",
-                    type: "number"
                 },
-            ],
-            navigationNumberFilters: [{
-                "label": "Residue Pairs per PPI",
-                "id": "urpPpi",
-                inequality: "&ge;",
-                class: "navNumberFilterDiv",
-                tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"
-            }]
+                {
+                    label: "Residue Pairs per PPI",
+                    id: "urpPpi",
+                    inequality: "&ge;",
+                    tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"
+                }
+            ]
         };
-        defaultOptions.modes.forEach (function (config) {
-            config.class = "toggles";
-            config.type = "radio";
-            config.inputClass = "modeToggle";
-            config.name = "modeSelect";
-        });
-        defaultOptions.subsetToggles.forEach (function (config) {
-            config.class = "toggles subsetToggles";
-        });
-        defaultOptions.validationStatusToggles.forEach (function (config) {
-            config.class = "toggles validationToggles";
-        });
         defaultOptions.searchGroupToggles = this.model.possibleSearchGroups.map (function (group) {
             return {
                 id: group,
                 label: group,
                 tooltip: "Group "+group,
-                class: "toggles",
                 inputClass: "groupToggleFilter",
+                type: "boolean",
             };
         });
+        defaultOptions.config.push.apply (defaultOptions.config, defaultOptions.searchGroupToggles);
         
+        // Make options into a map referenced by filter attribute id
+        this.configMap = d3.map (defaultOptions.config, function(d) { return d.id; });
+        
+        ["manualMode", "fdrMode"].forEach (function (item) {
+            var entry = this.configMap.get(item);
+            entry.overrideType = "radio";
+            entry.inputClass = "modeToggle";
+            entry.name = "modeSelect";
+        }, this);
+  
         this.options = _.extend(defaultOptions, viewOptions.myOptions || {});
-        /*
-        var subsets = d3.merge ([this.options.subsetToggles, this.options.subsetNumberFilters]);
-        var subsetNest = d3.nest().key(function(d) { return d.group; }).entries(subsets);
-        console.log ("subsetNest", subsetNest);
-        */
-        
-        
-        var uniqueGroups = this.model.get("searchGroups");
-        console.log ("UQ", uniqueGroups);
 
         var self = this;
 
@@ -191,7 +173,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             var div = mainDivSel.append("div").attr("class", "filterControlGroup").style("display", options.hide ? "none" : null);
             if (options.id) { div.attr("id", options.id); }
             
-            if (options.expandable) {
+            if (options.expandable !== false) {
                 var setPanelState = function (divSel, collapsed) {
                     divSel.select(".filterControlSpan").style ("display", collapsed ? "none" : null);
                     divSel
@@ -225,55 +207,38 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         
         
         function initResetGroup() {
-            var resetDivSel = makeFilterControlDiv ({class: "verticalFlexContainer"});
+            var resetDivSel = makeFilterControlDiv ({class: "verticalFlexContainer", expandable: false});
             resetDivSel.append("p").attr("class", "smallHeading").text("Filter Bar");
             resetDivSel.append("button")
                 .attr("class", "filterReset btn btn-1a btn-tight")
                 .attr("title", "Double-click to reset filter to originally set values")
-                .text("Reset");
-        }
-
-
-
-        function initLinkPropertyGroup() {
-            var dataSubsetDivSel = makeFilterControlDiv({expandable: true, groupName: "Crosslinks"}); 
-            var self = this;
-            
-            dataSubsetDivSel.selectAll("div.subsetToggles")
-                .data(this.options.subsetToggles, function(d) {
-                    return d.id;
-                })
-                .enter()
-                .append("div")
-                .each (function () {
-                    self.addBooleanFilter (d3.select(this));
-                })
-            ;
-
-            dataSubsetDivSel.selectAll("div.subsetNumberFilterDiv")
-                .data(this.options.subsetNumberFilters, function(d) {
-                    return d.id;
-                })
-                .enter()
-                .append("div")
-                .each (function () {
-                    self.addNumberFilter (d3.select(this));
-                })
+                .text("Reset")
             ;
         }
+
         
-        
-        function initBooleanGroup (config, filters) {
-            var validationDivSel = makeFilterControlDiv (config);
+        function addFilterGroup (config, filterIDs) {
+            var divSel = makeFilterControlDiv (config);
+            var filters = filterIDs.map (function (id) { return this.configMap.get(id); }, this);
             var self = this;
-            validationDivSel.selectAll("div."+config.filterClass)
+            divSel.selectAll("div.filterItem")
                 .data(filters, function(d) {
                     return d.id;
                 })
                 .enter()
                 .append("div")
-                .each (function () {
-                    self.addBooleanFilter (d3.select(this));
+                .attr ("class", "filterItem")
+                .each (function (d) {
+                    var type = d.type || self.model.types[d.id];
+                    if (type === "boolean") {
+                        self.addBooleanFilter (d3.select(this));
+                    }
+                    else if (type === "number") {
+                        self.addNumberFilter (d3.select(this));
+                    }
+                    else {
+                        self.addTextFilter (d3.select(this));
+                    }
                 })
             ;
         }
@@ -341,41 +306,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
         function initFDRPlaceholder() {
             //following may not be best practice, its here to get the placeholder divs in the right place in the filter div (the grey bar at bottom)
-            var fdrPanel = makeFilterControlDiv ({id: "fdrPanelHolder", expandable: true, groupName: "FDR"});
+            var fdrPanel = makeFilterControlDiv ({id: "fdrPanelHolder", groupName: "FDR"});
             fdrPanel.attr("id", "fdrPanel");
         }
         
-
-        function initTextFilterGroup (config, filters) {
-            var navDivSel = makeFilterControlDiv (config);
-
-            navDivSel.selectAll("div.textFilters")
-                .data(filters, function(d) {
-                    return d.id;
-                })
-                .enter()
-                .append("div")
-                .each (function () {
-                    self.addTextFilter (d3.select(this));
-                })
-            ;
-        }
-
-
-        function initNavigationGroup2() {
-            var navNumberDivSel = makeFilterControlDiv ({id: "navNumberFilters", expandable: true, groupName: "PPI"});
-
-            navNumberDivSel.selectAll("div.navNumberFilterDiv")
-                .data(this.options.navigationNumberFilters, function(d) {
-                    return d.id;
-                })
-                .enter()
-                .append("div")
-                .each (function () {
-                    self.addNumberFilter (d3.select(this));
-                })
-            ;
-        }
 
         function addScrollRightButton() {
             var fixedBox = mainDivSel
@@ -400,16 +334,16 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         }
 
         initResetGroup.call(this);
-        initBooleanGroup.call (this, {id: "filterModeDiv", expandable: true, groupName: "Mode", filterClass: "modeToggles"}, this.options.modes);
-        initLinkPropertyGroup.call(this);
-        initMinigramFilterGroup.call(this, {attr: "distanceCutoff", extentProperty: "distanceExtent", label: "Distance", id: "distanceFilter", expandable: true, groupName: "Distances", tooltipIntro: "Filter out crosslinks with distance"});
-        initBooleanGroup.call (this, {id: "validationStatus", expandable: true, groupName: "Auto Val", filterClass: "validationToggles"}, this.options.validationStatusToggles);
-        initMinigramFilterGroup.call(this, {attr: "matchScoreCutoff", extentProperty: "scoreExtent", label: "Match Score", id: "matchScore", expandable: true, groupName: "Scores", tooltipIntro: "Filter out matches with scores"});
+        addFilterGroup.call (this, {id: "filterModeDiv", groupName: "Mode"}, ["manualMode", "fdrMode"]);
+        addFilterGroup.call (this, {groupName: "Crosslinks"}, ["linears", "crosslinks", "ambig", "betweenLinks", "selfLinks", "homomultimericLinks", "aaApart", "pepLength"]);
+        initMinigramFilterGroup.call(this, {attr: "distanceCutoff", extentProperty: "distanceExtent", label: "Distance", id: "distanceFilter", groupName: "Distances", tooltipIntro: "Filter out crosslinks with distance"});
+        addFilterGroup.call (this, {id: "validationStatus", groupName: "Auto Val"}, ["A", "B", "C", "Q", "AUTO", "unval", "decoys"]);
+        initMinigramFilterGroup.call(this, {attr: "matchScoreCutoff", extentProperty: "scoreExtent", label: "Match Score", id: "matchScore", groupName: "Scores", tooltipIntro: "Filter out matches with scores"});
         initFDRPlaceholder.call(this);
-        initTextFilterGroup.call (this, {id: "navFilters", expandable: true, groupName: "Protein"}, this.options.navigationFilters);
-        initTextFilterGroup.call (this, {id: "navMassSpecFilters", expandable: true, groupName: "Mass Spec"}, this.options.navigationMassSpecFilters);
-        initNavigationGroup2.call(this);
-        initBooleanGroup.call (this, {id: "groupFilters", expandable: true, groupName: "Groups", filterClass: "toggles"}, this.options.searchGroupToggles);
+        addFilterGroup.call (this, {id: "navFilters", groupName: "Protein"}, ["pepSeq", "protNames"]);
+        addFilterGroup.call (this, {id: "navMassSpecFilters", groupName: "Mass Spec"}, ["runName", "scanNumber"]);
+        addFilterGroup.call (this, {id: "navNumberFilters", groupName: "PPI"}, ["urpPpi"]);
+        addFilterGroup.call (this, {id: "groupFilters", groupName: "Groups"}, _.pluck(defaultOptions.searchGroupToggles, "id"));
         addScrollRightButton.call(this);
         
 
@@ -420,7 +354,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 return entry.value;
             });
             var hideEntrySet = d3.set(_.pluck(hideEntries, "key"));
-            mainDivSel.selectAll(".subsetToggles,.validationToggles,.textFilters")
+            mainDivSel.selectAll(".filterItem")
                 .filter(function(d) {
                     return hideEntrySet.has(d.id);
                 })
@@ -442,9 +376,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     // Add a text-based filter widget to a d3 selection, using the attached data
     addTextFilter: function (d3sel) {
         var textFilter = d3sel
-            .attr("class", function(d) {   
-                return "textFilters" + (d.classType ? " "+ d.classType : "");
-            })
             .attr("title", function(d) {
                 return d.tooltip ? d.tooltip : undefined;
             })
@@ -457,7 +388,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         ;
         var tfilters = textFilter.append("input")
             .attr("class", "filterTypeText")
-            .attr("type", function (d) { return d.type || "text"; })
+            .attr("type", function (d) { return d.overrideType || "text"; })
             .attr("size", function(d) {
                 return d.chars;
             })
@@ -472,39 +403,34 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 return patterns[d.id];
             })
         ;
-        // add max-width to number inputs (cos size doesn't work for them)
-        tfilters.filter (function (d) {
-                return d.type === "number";
-            })
-            .style ("max-width", function (d) {
-                return d.chars+"em";   
-            })
-        ;
     },
     
     addNumberFilter: function (d3sel) {
-        var subsetNumberFilter = d3sel
-            .attr("class", function(d) { return d.class; })
+        var numberFilter = d3sel
             .attr("title", function(d) {
                 return d.tooltip ? d.tooltip : undefined;
             })
             .append("label")
         ;
-        subsetNumberFilter.append("span")
+        numberFilter.append("span")
             .text(function(d) {
                 return d.label;
             })
         ;
 
-        subsetNumberFilter.append("p").classed("cutoffLabel", true).append("span").html(function(d) { return d.inequality; });
+        numberFilter.append("p").classed("cutoffLabel", true).append("span").html(function(d) { return d.inequality; });
 
         var self = this;
-        subsetNumberFilter.append("input")
+        numberFilter.append("input")
             .attr({
-                class: "subsetNumberFilter",
+                class: "filterTypeNumber",
                 type: "number",
-                min: function(d) { return self.model.extents[d.id].min; },
-                max: function(d) { return self.model.extents[d.id].max; }
+                min: function(d) { return self.model.getMinExtent (d.id); },
+                max: function(d) { return self.model.getMaxExtent (d.id); },
+            })
+            .filter(function(d) { return d.chars !== undefined; })
+            .style ("width", function (d) {
+                return d.chars + "em";   
             })
         ;
     },
@@ -513,7 +439,6 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
     // toggle filter
     addBooleanFilter: function (d3sel) {
         var toggle = d3sel
-            .attr("class", function(d) { return d.class; })
             .attr("id", function(d) {
                 return "toggles_" + d.id;
             })
@@ -531,7 +456,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr("class", function(d) { 
                 return d.inputClass || "filterTypeToggle";
             })
-            .attr("type", function(d) { return d.type || "checkbox"; })
+            .attr("type", function(d) { return d.overrideType || "checkbox"; })
             .filter(function (d) { return d.name; })
             .attr("name", function (d) { return d.name; })
         ;
@@ -541,10 +466,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         return d3.select(target).datum() || {};    
     },
 
-    processBooleanFilter: function(evt) {
+    processBooleanFilter: function (evt) {
         var target = evt.target;
         var data = this.datumFromTarget (target);
-        console.log("filter set", data.id, target.checked);
         var id = data.id;
         if (id == "selfLinks") {
             d3.select("#aaApart").attr("disabled", target.checked ? null : "disabled");
@@ -552,11 +476,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         this.model.set (id, target.checked);
     },
 
-    processTextFilter: function(evt) {
+    processTextFilter: function (evt) {
         var target = evt.target;
         if (evt.target.checkValidity()) {
             var data = this.datumFromTarget (target);
-            console.log("filter set", data.id, target.value);
             this.model.set (data.id, target.value);
         }
     },
@@ -572,13 +495,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         }
     },
 
-    processNumberFilter: function(evt) {
+    processNumberFilter: function (evt) {
         var target = evt.target;
         var data = this.datumFromTarget (target);
         var id = data.id;
         var value = target.value;
         if (this.model.get(id) != value) {
-            console.log("subsetNumberFilter:", id, value);
             this.model.set(id, value);
         }
     },
@@ -594,13 +516,13 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         }
     },
 
-    setInputValuesFromModel: function(model, options) {
+    setInputValuesFromModel: function (model, options) {
         options = options || {};
         model = model || this.model;
 
         var mainDiv = d3.select(this.el);
 
-        mainDiv.selectAll("input.filterTypeText, input.subsetNumberFilter")
+        mainDiv.selectAll("input.filterTypeText, input.filterTypeNumber")
             .property("value", function(d) {
                 return model.get(d.id);
             })
@@ -679,8 +601,8 @@ CLMSUI.FDRViewBB = Backbone.View.extend({
             .text("Other %")
             .append("input")
             .attr("type", "number")
-            .attr("min", 0)
-            .attr("max", 100)
+            .attr("min", this.model.getMinExtent ("fdrThreshold"))
+            .attr("max", this.model.getMaxExtent ("fdrThreshold"))
             .attr("step", 1)
             .attr("class", "fdrValue")
             .on("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
