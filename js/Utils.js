@@ -398,11 +398,14 @@ CLMSUI.utils = {
         d3AxisElem.selectAll(".tick text")
             .each(function() {
                 var text = d3.select(this);
-                var bounds = this.getBoundingClientRect();
-                var overlap = !(bounds.right < lastBounds.left || bounds.left > lastBounds.right || bounds.bottom < lastBounds.top || bounds.top > lastBounds.bottom);
-                text.style("visibility", overlap ? "hidden" : null);
-                if (!overlap) {
-                    lastBounds = bounds;
+                var elemVis = text.style("visibility") !== "hidden";
+                if (elemVis) {
+                    var bounds = this.getBoundingClientRect();
+                    var overlap = !(bounds.right <= lastBounds.left + 1 || bounds.left >= lastBounds.right - 1 || bounds.bottom <= lastBounds.top + 1 || bounds.top >= lastBounds.bottom - 1);
+                    text.style("visibility", overlap ? "hidden" : null);
+                    if (!overlap) {
+                        lastBounds = bounds;
+                    }
                 }
             });
     },
