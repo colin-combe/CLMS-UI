@@ -236,19 +236,22 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
 
         d3.select(this.el).select(".c3-brush").attr("clip-path", "");
         
-        this.tidyXAxis();
+        window.setTimeout (function () { 
+            self.tidyXAxis();   // i think I'm having to wait for c3 to finish setting up before the size calculates properly
+        }, 500);
+        //this.tidyXAxis();
 
         //CLMSUI.utils.xilog ("data", distArr, binnedData);
         return this;
     },
     
     getAxisRange: function () {
-        return this.options.gapX * this.chart.internal.orgXDomain[1];
+        return 1 /*this.options.gapX*/ * (this.chart.internal.orgXDomain[1] - this.chart.internal.orgXDomain[0]);
     },
     
     // make x tick text values the rounder numbers, and remove any that overlap afterwards
     tidyXAxis: function () {
-        var xaxis = d3.select(this.el).selectAll(".c3-axis-x");
+        var xaxis = d3.select (d3.select(this.el).selectAll(".c3-axis-x").filter(function(d,i) { return i === 1; }).node());
         CLMSUI.utils.niceValueAxis (xaxis, this.getAxisRange());
         CLMSUI.utils.declutterAxis (xaxis);
         return this;
