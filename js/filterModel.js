@@ -35,6 +35,61 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 scanNumber: "",
                 urpPpi: 1,
             },
+            
+            extents: {
+                aaApart: {
+                    min: 0,
+                    max: 999
+                },
+                pepLength: {
+                    min: 1,
+                    max: 99
+                },
+                urpPpi: {
+                    min: 1,
+                    max: 99
+                },
+                fdrThreshold: {
+                    min: 0,
+                    max: 100
+                }
+            },
+            
+            patterns: {
+                pepSeq: "[A-Za-z]+-?[A-Za-z]*",
+            },
+            
+            types: {
+                manualMode: "boolean",
+                fdrMode: "boolean",
+                //subset
+                linears: "boolean",
+                crosslinks: "boolean",
+                betweenLinks: "boolean",
+                selfLinks: "boolean",
+                homomultimericLinks: "boolean",
+                ambig: "boolean",
+                aaApart: "number",
+                pepLength: "number",
+                //validation status
+                A: "boolean",
+                B: "boolean",
+                C: "boolean",
+                Q: "boolean",
+                unval: "boolean",
+                AUTO: "boolean",
+                decoys: "boolean",
+                //fdr
+                fdrThreshold: "number",
+                interFdrCut: "number",
+                intraFdrCut: "number",
+                //navigation
+                pepSeq: "text",
+                protNames: "text",
+                runName: "text",
+                scanNumber: "number",
+                urpPpi: "number",
+            },
 
             initialize: function(options, secondarySettings) {
                 if (!this.get("matchScoreCutoff")) {
@@ -68,6 +123,16 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     .set(this.resetValues);
                 
                 return this;
+            },
+            
+            getMinExtent: function (attrID) {
+                var extents = this.extents[attrID];
+                return extents ? extents.min : null;
+            },
+
+            getMaxExtent: function (attrID) {
+                var extents = this.extents[attrID];
+                return extents ? extents.max : null;
             },
 
             preprocessFilterInputValues: function (searchArray) {

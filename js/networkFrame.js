@@ -578,9 +578,17 @@ CLMSUI.init.viewsEssential = function(options) {
         domainStart: miniMod[0] || 0,
         domainEnd: miniMod[1] || 1,
     });
-    miniDistModelInst.data = function() {
-        return CLMSUI.modelUtils.flattenMatches(compModel.get("clmsModel").get("matches")); // matches is now an array of arrays - [matches, []];
-    };
+    miniDistModelInst
+        .listenTo(filterModel, "change:matchScoreCutoff", function(filterModel, newCutoff) {
+            this.set({
+                domainStart: newCutoff[0],
+                domainEnd: newCutoff[1]
+            });
+        })
+        .data = function() {
+            return CLMSUI.modelUtils.flattenMatches(compModel.get("clmsModel").get("matches")); // matches is now an array of arrays - [matches, []];
+        }
+    ;
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo(miniDistModelInst, "change", function(model) {
@@ -605,13 +613,6 @@ CLMSUI.init.viewsEssential = function(options) {
         })
         // If the ClmsModel matches attribute changes then tell the mini histogram view
         .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
-        .listenTo(filterModel, "change:matchScoreCutoff", function(filterModel, newCutoff) {
-            this.model.set({
-                domainStart: newCutoff[0],
-                domainEnd: newCutoff[1]
-            });
-            //console.log ("cutoff changed");
-        })
     ;
     
       
@@ -621,15 +622,23 @@ CLMSUI.init.viewsEssential = function(options) {
         domainStart: miniMod[0],// || 0,
         domainEnd: miniMod[1],// || 1,
     });
-    miniDistModelInst.data = function() {
-        console.log ("MINI DATA ASKED FOR"); 
-        var crossLinks = CLMS.arrayFromMapValues (compModel.get("clmsModel").get("crossLinks"));
-        var distances = crossLinks
-            .map (function (clink) { return clink.getMeta("distance"); })
-            .filter (function (dist) { return dist !== undefined; })
-        ;
-        return [distances];
-    };
+    miniDistModelInst
+        .listenTo(filterModel, "change:distanceCutoff", function(filterModel, newCutoff) {
+            this.set({
+                domainStart: newCutoff[0],
+                domainEnd: newCutoff[1]
+            });
+        })
+        .data = function() {
+            console.log ("MINI DATA ASKED FOR"); 
+            var crossLinks = CLMS.arrayFromMapValues (compModel.get("clmsModel").get("crossLinks"));
+            var distances = crossLinks
+                .map (function (clink) { return clink.getMeta("distance"); })
+                .filter (function (dist) { return dist !== undefined; })
+            ;
+            return [distances];
+        }
+    ;
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo(miniDistModelInst, "change", function(model) {
@@ -664,12 +673,6 @@ CLMSUI.init.viewsEssential = function(options) {
             ;
             this.render().redrawBrush();
         }) // if the distances change (likely?) need to re-render the view too
-        .listenTo(filterModel, "change:distanceCutoff", function(filterModel, newCutoff) {
-            this.model.set({
-                domainStart: newCutoff[0],
-                domainEnd: newCutoff[1]
-            });
-        })
     ;
 
 
