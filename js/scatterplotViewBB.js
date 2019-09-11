@@ -1033,11 +1033,13 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
     redrawAxes: function(sizeData) {
         this.vis.select(".x")
             .attr("transform", "translate(0," + (sizeData.height) + ")")
-            .call(this.xAxis);
+            .call(this.xAxis)
+        ;
 
         this.vis.select(".y")
             .attr("transform", "translate(-1,0)")
-            .call(this.yAxis);
+            .call(this.yAxis)
+        ;
 
         CLMSUI.utils.declutterAxis(this.vis.select(".x"));
         CLMSUI.utils.declutterAxis(this.vis.select(".y"));

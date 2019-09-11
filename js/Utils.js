@@ -388,42 +388,50 @@ CLMSUI.utils = {
     },
 
     // Hide overlapping d3 axis labels
-    declutterAxis: function(d3AxisElem) {
+    declutterAxis: function(d3AxisElem, keepHidden) {
         var lastBounds = {
             left: -100,
             right: -100,
             top: -100,
             bottom: -100
         };
+        d3AxisElem.selectAll(".tick text").style("visibility", "visible");
+        
         d3AxisElem.selectAll(".tick text")
-            .each(function() {
+            .each(function(d) {
                 var text = d3.select(this);
                 var elemVis = text.style("visibility") !== "hidden";
                 if (elemVis) {
                     var bounds = this.getBoundingClientRect();
-                    var overlap = !(bounds.right <= lastBounds.left + 1 || bounds.left >= lastBounds.right - 1 || bounds.bottom <= lastBounds.top + 1 || bounds.top >= lastBounds.bottom - 1);
-                    text.style("visibility", overlap ? "hidden" : null);
-                    if (!overlap) {
-                        lastBounds = bounds;
+                    if (bounds.width * bounds.height !== 0) {
+                        var overlap = !(bounds.right <= lastBounds.left + 1 || bounds.left >= lastBounds.right - 1 || bounds.bottom <= lastBounds.top + 1 || bounds.top >= lastBounds.bottom - 1);
+                        text.style("visibility", overlap ? "hidden" : "visible");
+                        if (!overlap) {
+                            lastBounds = bounds;
+                        }
                     }
                 }
             });
     },
     
-    // Hide non-round d3 axis labels
+    // Remove non-round d3 axis labels and associated ticks
     niceValueAxis: function(d3AxisElem, maxVal) {
         var u = Math.round (Math.log10 (maxVal + 3)) - 1;
         var m = Math.pow (10, u);
+        
         d3AxisElem.selectAll(".tick")
-            .each(function() {
+            .each (function (d) {
+                var nice = d % m === 0;
                 var tick = d3.select(this);
-                var text = tick.select("text");
-                var val = text.text().replace(",", "");
-                var num = Number.parseFloat(val);
-                var nice = (num % m === 0);
-                text.style("visibility", nice ? null : "hidden").style("display", nice ? "block" : "none");
                 tick.style("stroke-width", nice ? 2 : 1);
-            });
+                var text = tick.select("text");
+                if (!nice) {
+                    text.text("");
+                } else {
+                    text.style("display", "block");
+                }
+            })
+        ;
     },
 
     RadioButtonFilterViewBB: Backbone.View.extend({

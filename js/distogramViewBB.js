@@ -170,9 +170,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         this.chart = c3.generate({
             bindto: chartID,
             transition: {
-                duration: 0, // no animations, causes bugs in c3 when actions performed rapidly
+                duration: null, // no animations, causes bugs in c3 when actions performed rapidly
             },
             data: {
+                x: 'x',
                 columns: columnsAsNamesOnly,
                 type: 'bar',
                 colors: {
@@ -219,8 +220,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                         right: 1,
                     },
                     tick: {
-                        format: function(v, returnUnformattedToo) {
-                            var val = (v + (self.options.minX || 0)) * (self.options.gapX || 1);
+                        format: function(val, returnUnformattedToo) {
                             var formattedVal = self.options.xCurrentTickFormat(val);
                             return returnUnformattedToo ? {
                                 val: val,
@@ -314,6 +314,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     }
                 }
                 self.makeBarsSitBetweenTicks(this);
+                self.tidyXAxis.call(self);  // CAN WE SHORTCUT THIS IF NO XAXIS CHANGE?
             },
             onmouseout: function() {
                 self.model.setMarkedCrossLinks("highlights", [], false, false);
@@ -434,13 +435,15 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         if (this.isVisible()) {
             // Update X Label if necessary
             var funcMeta = this.getSelectedOption("X");
-            var curXLabel = this.chart.internal.config.axis_x_label;
+            var curXLabel = this.chart.internal.config.axis_x_label.text;
             var newX = (curXLabel !== funcMeta.label);
             if (newX) { // if a new attribute set on the x axis, change the x axis label and tick format if necessary
                 this.options.xCurrentTickFormat = funcMeta.valueFormat || this.options.xStandardTickFormat;
                 this.chart.axis.labels({
                     x: funcMeta.label
                 });
+                this.options.absX = this.model.getAttributeRange(funcMeta)[1];
+                //console.log ("ABSX", this.options.absX);
             }
             this.handleExtraOptions();
 
@@ -482,11 +485,12 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             
 
             //console.log ("seriesLengths", seriesLengths);
-            var removeCatchAllCategory = (this.options.maxX !== undefined);
-            var countArrays = this.aggregate(seriesData, this.precalcedDistributions, removeCatchAllCategory);
+            var removeCatchAllCategory = (funcMeta.maxVal !== undefined);
+            var aggregates = this.aggregate(seriesData, this.precalcedDistributions, removeCatchAllCategory);
+            var countArrays = aggregates.countArrays;
 
 
-            function removeSeries(seriesID, onlyIfEmpty) {
+            function removeSeries (seriesID, onlyIfEmpty) {
                 var seriesIndex = _.findIndex(seriesData, function(series) {
                     return series.name === seriesID;
                 });
@@ -517,17 +521,18 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             countArrays.forEach(function(countArray, i) {
                 countArray.unshift(seriesData[i].name);
             }, this);
+            var thresholds = aggregates.thresholds;
+            thresholds.unshift("x");
+            countArrays.push(thresholds);
             //console.log ("thresholds", thresholds);
-            //console.log ("countArrays", countArrays);
+            console.log ("countArrays", countArrays.slice(), seriesData.slice());
 
             if (this.isEmpty(seriesData)) {
                 countArrays = [[]];
             }
 
             var redoChart = function() {
-                // Remove 'Undefined' category if empty
-                removeSeries.call(this, colModel.get("undefinedLabel"), true);
-                removeSeries.call(this, "Selected", true);
+
 
                 var currentlyLoaded = _.pluck(this.chart.data(), "id");
                 var toBeLoaded = countArrays.map(function(arr) {
@@ -535,7 +540,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 });
                 var unload = _.difference(currentlyLoaded, toBeLoaded);
                 var newloads = _.difference(toBeLoaded, currentlyLoaded);
-                console.log("series", currentlyLoaded, toBeLoaded, unload, newloads);
 
                 this.options.subSeriesNames = seriesData
                     .filter(function(d) {
@@ -582,9 +586,15 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             var tempTitleHandle = c3.chart.internal.fn.redrawTitle;
             c3.chart.internal.fn.redrawTitle = function() {};
             var chartInternal = this.chart.internal;
+            
+            // Remove 'Undefined' category if empty
+            // need to detect if these two get removed to do compareNewOldData
+            removeSeries (colModel.get("undefinedLabel"), true);
+            removeSeries ("Selected", true);
             var shortcut = this.compareNewOldData(countArrays) && !newX;
             //console.log ("SHORTCUT", shortcut, this.chart);
 
+            console.log ("REDRAW TYPE", "noaxesrescale", options.noAxesRescale, "shortcut", shortcut);
             if (options.noAxesRescale) { // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
                 var seriesChanges = redoChart.call(this);
                 c3.chart.internal.fn.redraw = tempHandle;
@@ -619,7 +629,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     withUpdateOrgXDomain: true,
                     withUpdateXDomain: true
                 });
-                this.tidyXAxis();
             }
 
             //console.log ("data", distArr, binnedData);
@@ -646,14 +655,17 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
     },
     
     getAxisRange: function () {
-        return this.options.gapX * this.chart.internal.orgXDomain[1];
+        return this.chart.internal.orgXDomain[1] - this.chart.internal.orgXDomain[0];
     },
     
     // make x tick text values the rounder numbers, and remove any that overlap afterwards
     tidyXAxis: function () {
+        console.log ("TAXIS");
         var xaxis = d3.select(this.el).select(".c3-axis-x");
-        CLMSUI.utils.niceValueAxis (xaxis, this.getAxisRange());
-        CLMSUI.utils.declutterAxis (xaxis);
+        if (this.chart) {
+            CLMSUI.utils.niceValueAxis (xaxis, this.getAxisRange());
+            CLMSUI.utils.declutterAxis (xaxis, true);
+        }
         return this;
     },
 
@@ -671,12 +683,12 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
     compareNewOldData: function(newData) {
         var oldData = this.chart.data();
         //console.log ("oldData", this.chart, oldData, newData);
-        if (oldData.length !== newData.length) {
+        if (oldData.length !== newData.length - 1) {    // 'x' isn't in old data
             return false;
         }
         var oldNewMatch = newData.every(function(newSeries) {
             var oldSeries = this.chart.data.values(newSeries[0]);
-            return oldSeries && oldSeries.length === newSeries.length - 1;
+            return newSeries[0] === 'x' || (oldSeries && oldSeries.length === newSeries.length - 1);
         }, this);
 
         //console.log ("match", oldNewMatch);
@@ -802,7 +814,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
     getDataCount: function() {
         var funcMeta = this.getSelectedOption("X");
-        this.options.maxX = funcMeta.maxVal;
+        this.options.maxX = funcMeta.maxVal || this.options.absX;
         return this.getRelevantAttributeData.call(this, funcMeta);
     },
 
@@ -886,11 +898,12 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 array.pop();
             });
         }
-
-        this.options.minX = thresholds[0];
-        this.options.gapX = thresholds[1] - thresholds[0];
-
-        return countArrays;
+        
+        //console.log ("CA", countArrays, this.chart.internal);
+        return {
+            countArrays: countArrays,
+            thresholds: thresholds
+        };
     },
 
     reRandom: function(evt) {
@@ -922,10 +935,11 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         var d3el = d3.select(this.el);
         d3el.select(".c3")
             .style("max-height", "none")
-            .style("position", null);
+            .style("position", null)
+        ;
         //this.redrawColourRanges();
         this.chart.resize();
-        this.tidyXAxis();
+        //this.tidyXAxis();
         //this.makeBarsSitBetweenTicks (this.chart.internal);
         return this;
     },
