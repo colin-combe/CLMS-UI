@@ -979,9 +979,7 @@ CLMSUI.modelUtils = {
             value: d3.mean
         };
 
-        var groupIndices = valuesByColumn.map(function(zscore) {
-            return zscore.groupIndex;
-        });
+        var groupIndices = _.pluck (valuesByColumn, "groupIndex");
         var colRange = _.range(d3.max(groupIndices) + 1);
         var avgColumns = colRange.map(function() {
             return [];
@@ -1022,9 +1020,7 @@ CLMSUI.modelUtils = {
     // e.g. options.groups = d3.map({a: "cat", b: "cat", c: "dog"});
     // then a.groupIndex = 0, b.groupIndex = 0, c.groupIndex = 1, colNameGroups = [0: [a,b], 1: [c]]
     makeColumnGroupIndices: function(valuesByColumn, options) {
-        var columnNamesSet = d3.set(valuesByColumn.map(function(columnValues) {
-            return columnValues.colName;
-        }));
+        var columnNamesSet = d3.set(_.pluck (valuesByColumn, "colName"));
         var columnNameGroups = {};
         options.groups.forEach(function(k, v) {
             if (columnNamesSet.has(k)) {
@@ -1118,9 +1114,7 @@ CLMSUI.modelUtils = {
         var zGroupAvgScores = CLMSUI.modelUtils.averageGroups(zScoresByColumn, colNameGroups, options.averageFuncEntry);
         var allZScores = zScoresByColumn.concat(zGroupAvgScores);
         var allZScoresByLink = CLMSUI.modelUtils.reduceLinks(d3.transpose(allZScores), crossLinks);
-        var colNames = allZScores.map(function(col) {
-            return col.colName;
-        });
+        var colNames = _.pluck (allZScores, "colName");
         var groupColumns = zGroupAvgScores.map(function(avgColumn) {
             return {
                 name: avgColumn.colName,
@@ -1133,10 +1127,7 @@ CLMSUI.modelUtils = {
         CLMSUI.modelUtils.updateMetaDataWithTheseColumns(allZScoresByLink, groupColumns);
 
         // Then tell the world these meta attributes have changed
-        var newAndUpdatedColumns = groupColumns
-            .map(function(groupCol) {
-                return groupCol.name;
-            });
+        var newAndUpdatedColumns = _.pluck (groupColumns, "name");
         CLMSUI.vent.trigger("linkMetadataUpdated", {
             columns: newAndUpdatedColumns,
             columnTypes: _.object(newAndUpdatedColumns, _.range(newAndUpdatedColumns.length).map(function() {

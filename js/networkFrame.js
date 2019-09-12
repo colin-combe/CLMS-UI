@@ -631,7 +631,7 @@ CLMSUI.init.viewsEssential = function(options) {
         })
         .data = function() {
             console.log ("MINI DATA ASKED FOR"); 
-            var crossLinks = CLMS.arrayFromMapValues (compModel.get("clmsModel").get("crossLinks"));
+            var crossLinks = compModel.getAllCrossLinks();
             var distances = crossLinks
                 .map (function (clink) { return clink.getMeta("distance"); })
                 .filter (function (dist) { return dist !== undefined; })

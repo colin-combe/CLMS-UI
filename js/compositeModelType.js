@@ -731,7 +731,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             return attrVals;
         });
         var extent = d3.extent (d3.merge (vals));
-        console.log (vals, extent);
+        //console.log (vals, extent);
         return extent;
     },
     

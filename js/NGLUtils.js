@@ -320,9 +320,7 @@ CLMSUI.NGLUtils = {
         }
 
         function updateMatchMatrix(protID, alignResults) {
-            var uniqScores = alignResults.map(function(indRes) {
-                return indRes.avgBitScore;  //indRes.eScore;
-            });
+            var uniqScores = _.pluck (alignResults, "avgBitScore");  //eScore;
             matchMatrix[protID] = uniqScores;
         }
 

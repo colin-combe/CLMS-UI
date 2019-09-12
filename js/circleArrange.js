@@ -366,7 +366,5 @@ CLMSUI.utils.circleArrange = function(proteins, options) {
     };
     var combinedOptions = _.extend({}, defaults, options || {});
 
-    return sort(interLinks, combinedOptions).map(function(node) {
-        return node.id;
-    });
+    return _.pluck (sort(interLinks, combinedOptions), "id");
 };

@@ -254,9 +254,9 @@ function callback (model) {
             return this.CLMSUI.GotohAligner.align (test.seq, refSeq, scoringSystem, false, true, 1000);
         });
         var actualScores = actual.map (function (v) { return v.res[0]; });
-        var expectedScores = tests.map (function (v) { return v.expScore; });
+        var expectedScores = _.pluck (tests, "expScore");
         var fmts = actual.map (function (v) { return v.fmt[0]; });
-        var cigars = actual.map (function (v) { return v.cigar; });
+        var cigars = _.pluck (actual, "cigar");
 		assert.deepEqual (actualScores, expectedScores, "Expected "+JSON.stringify(expectedScores)+JSON.stringify(cigars)+JSON.stringify(fmts)+" when generating scores from bioseq32.js");
 	});
 	
@@ -300,7 +300,7 @@ function callback (model) {
 		var alignCollection = CLMSUI.compositeModelInst.get("alignColl");
 		var protAlignModel = alignCollection.get ("P02768-A");
         var actualValue = protAlignModel.alignWithoutStoring (
-			chainSequences.map (function (cs) { return cs.data; }), 
+			_.pluck (chainSequences, "data"), 
 			{semiLocal: true}
 		).map (function (res) { return res.str; });	
 		var expectedValue = ["score=5735; pos=0; cigar=4D578M3D\n", "score=5735; pos=0; cigar=4D578M3D\n"];
@@ -976,14 +976,14 @@ function callback (model) {
 	
 	
 	QUnit.test ("Crosslink count per protein pairing", function (assert) {
-		var crossLinks = CLMS.arrayFromMapValues (clmsModel.get("crossLinks"));
-		var expectedCrossLinkIDs = crossLinks.map (function (crossLink) { return crossLink.id; });
+		var crossLinks = model.getAllCrossLinks();
+		var expectedCrossLinkIDs = _.pluck (crossLinks, "id");
 		var expectedValue = {"P02768-A-P02768-A" : {crossLinks: expectedCrossLinkIDs, fromProtein: "P02768-A", toProtein: "P02768-A", label: "ALBU - ALBU"}};
 		var actualValue = CLMSUI.modelUtils.crosslinkCountPerProteinPairing (crossLinks);	
 		d3.values(actualValue).forEach (function (pairing) {	// do this as otherwise stringify will kick off about circular structures, so just match ids
 			pairing.fromProtein = pairing.fromProtein.id;
 			pairing.toProtein = pairing.toProtein.id;
-			pairing.crossLinks = pairing.crossLinks.map (function (crossLink) { return crossLink.id; });
+			pairing.crossLinks = _.pluck (pairing.crossLinks, "id");
 		});
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as crosslink protein pairing value, Passed!");
@@ -1093,7 +1093,7 @@ function callback (model) {
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as groups, Passed!");
 		
 		expectedValue = [0, 0, 1];
-		actualValue = testNumbers.map (function (arr) { return arr.groupIndex; });
+		actualValue = _.pluck (testNumbers, "groupIndex");
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as attached score group indices, Passed!");
 	});
 	
@@ -1138,7 +1138,7 @@ function callback (model) {
 	QUnit.test ("Update crosslink metadata with column data", function (assert) {
 		var expectedValue = [{cat: 1, dog: 2}, {cat: 3, dog: 4}];
 		
-		var testLinks = CLMS.arrayFromMapValues (CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks")).slice(0,2);
+		var testLinks = model.getAllCrossLinks().slice(0,2);
 		var testZScores = [[1, 2],[3, 4]];
 		testLinks.forEach (function (crossLink, i) { testZScores[i].clink = crossLink; });
 		var testColumnNameIndexPair = [{name: "cat", index: 0}, {name: "dog", index: 1}];

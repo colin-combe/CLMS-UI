@@ -439,9 +439,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             var newX = (curXLabel !== funcMeta.label);
             if (newX) { // if a new attribute set on the x axis, change the x axis label and tick format if necessary
                 this.options.xCurrentTickFormat = funcMeta.valueFormat || this.options.xStandardTickFormat;
-                this.chart.axis.labels({
-                    x: funcMeta.label
-                });
+                this.chart.axis.labels({x: funcMeta.label});
                 this.options.absX = this.model.getAttributeRange(funcMeta)[1];
                 //console.log ("ABSX", this.options.absX);
             }
@@ -461,12 +459,15 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
             // Add sub-series data
             // split TT list into sublists for length
-            var splitSeries = colModel.get("labels").range().concat([colModel.get("undefinedLabel")]).map(function(name) {
-                return {
-                    name: name,
-                    linkValues: []
-                };
-            });
+            var splitSeries = colModel.get("labels").range()    // get colour scale category names  
+                .concat([colModel.get("undefinedLabel")])       // add an 'undefined' label (returning as new array)
+                .map(function(name) {                           // make into object with name and linkValues properties
+                    return {
+                        name: name,
+                        linkValues: []
+                    };
+                })
+            ;
 
             //console.log ("measurements", measurements);
             seriesData[TT].linkValues.forEach(function(linkDatum) {
@@ -532,8 +533,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             }
 
             var redoChart = function() {
-
-
                 var currentlyLoaded = _.pluck(this.chart.data(), "id");
                 var toBeLoaded = countArrays.map(function(arr) {
                     return arr[0];
@@ -541,21 +540,18 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 var unload = _.difference(currentlyLoaded, toBeLoaded);
                 var newloads = _.difference(toBeLoaded, currentlyLoaded);
 
-                this.options.subSeriesNames = seriesData
-                    .filter(function(d) {
+                var subSeries = seriesData
+                    .filter (function(d) {
                         return d.isSubSeries;
                     })
-                    .map(function(d) {
-                        return d.name;
-                    });
+                ;
+                this.options.subSeriesNames = _.pluck (subSeries, "name");
 
-                var subSeriesLengths = seriesData
-                    .filter(function(d) {
-                        return d.isSubSeries;
-                    })
+                var subSeriesLengths = subSeries
                     .map(function(d) {
                         return d.linkValues.length;
-                    });
+                    })
+                ;
 
                 var chartOptions = {
                     columns: countArrays,
@@ -595,7 +591,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             //console.log ("SHORTCUT", shortcut, this.chart);
 
             console.log ("REDRAW TYPE", "noaxesrescale", options.noAxesRescale, "shortcut", shortcut);
-            if (options.noAxesRescale) { // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
+            if (options.noAxesRescale) { // doing something where we don't need to rescale x/y axes or relabel (change of colour in scheme or selection)
                 var seriesChanges = redoChart.call(this);
                 c3.chart.internal.fn.redraw = tempHandle;
                 tempHandle.call(chartInternal, {

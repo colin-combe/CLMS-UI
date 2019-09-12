@@ -417,10 +417,11 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var bMid = (b.start + b.end + (b.end < b.start ? 360 : 0)) % 720;
                 return aMid - bMid;
             });
-            var bespokeOrder = _.object(nodeData.map(function(d) {
-                return d.id;
-            }), _.range(0, nodeData.length)); // generate {7890: 0, 1234: 1, 2345: 2} etc
-
+            var bespokeOrder = _.object(
+                _.pluck (nodeData, "id"), 
+                _.range(0, nodeData.length)
+            ); // generate {7890: 0, 1234: 1, 2345: 2} etc
+            
             if (!_.isEqual(bespokeOrder, this.bespokeOrder)) {
                 self.bespokeOrder = bespokeOrder;
                 self.options.sort = "bespoke";
@@ -868,9 +869,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             var filteredInteractors = this.filterInteractors(interactors);
             var filteredCrossLinks = this.model.getFilteredCrossLinks(); //CLMSUI.modelUtils.getFilteredNonDecoyCrossLinks (crossLinks);
             if (this.options.showSelectedOnly) {
-                var selectedIDs = d3.set(this.model.getMarkedCrossLinks("selection").map(function(xlink) {
-                    return xlink.id;
-                }));
+                var selectedIDs = d3.set (_.pluck (this.model.getMarkedCrossLinks("selection"), "id"));
                 filteredCrossLinks = filteredCrossLinks.filter(function(xlink) {
                     return selectedIDs.has(xlink.id);
                 });
