@@ -314,7 +314,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     }
                 }
                 self.makeBarsSitBetweenTicks(this);
-                self.tidyXAxis.call(self);  // CAN WE SHORTCUT THIS IF NO XAXIS CHANGE?
+                if (!self.options.dodgeTidyXAxis) {
+                    self.tidyXAxis.call(self);
+                    self.options.dodgeTidyXXAxis = true;
+                }
             },
             onmouseout: function() {
                 self.model.setMarkedCrossLinks("highlights", [], false, false);
@@ -534,9 +537,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
             var redoChart = function() {
                 var currentlyLoaded = _.pluck(this.chart.data(), "id");
-                var toBeLoaded = countArrays.map(function(arr) {
-                    return arr[0];
-                });
+                var toBeLoaded = _.pluck (countArrays, 0);  // number is index in subarray to be plucked
                 var unload = _.difference(currentlyLoaded, toBeLoaded);
                 var newloads = _.difference(toBeLoaded, currentlyLoaded);
 
@@ -588,9 +589,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             removeSeries (colModel.get("undefinedLabel"), true);
             removeSeries ("Selected", true);
             var shortcut = this.compareNewOldData(countArrays) && !newX;
-            //console.log ("SHORTCUT", shortcut, this.chart);
-
             console.log ("REDRAW TYPE", "noaxesrescale", options.noAxesRescale, "shortcut", shortcut);
+            this.options.dodgeTidyXAxis &= (shortcut || options.noAxesRescale);
+            
             if (options.noAxesRescale) { // doing something where we don't need to rescale x/y axes or relabel (change of colour in scheme or selection)
                 var seriesChanges = redoChart.call(this);
                 c3.chart.internal.fn.redraw = tempHandle;
@@ -928,15 +929,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
     relayout: function() {
         // fix c3 setting max-height to current height so it never gets bigger y-wise
         // See https://github.com/masayuki0812/c3/issues/1450
-        var d3el = d3.select(this.el);
-        d3el.select(".c3")
+        d3.select(this.el).select(".c3")
             .style("max-height", "none")
             .style("position", null)
         ;
-        //this.redrawColourRanges();
+        //console.log ("RESiZING DISTOGRAM");
+        this.options.dodgeTidyXAxis = false;  // retidy x axis on resize
         this.chart.resize();
-        //this.tidyXAxis();
-        //this.makeBarsSitBetweenTicks (this.chart.internal);
         return this;
     },
 
@@ -982,14 +981,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
             var ev = d3.event || {};
             if (matchBasedSelection) {
-                var matches = bin.map(function(linkData) {
-                    return linkData[2];
-                }); // get the link data from that bin
+                var matches = _.pluck (bin, 2); // get the link data from every bin
                 this.model.setMarkedMatches(type, matches, false, ev.ctrlKey || ev.shiftKey); // set marked cross links according to type and modal keys
             } else {
-                var crossLinks = bin.map(function(linkData) {
-                    return linkData[0];
-                }); // get the link data from that bin
+                var crossLinks = _.pluck (bin, 0); // get the link data from every bin
                 this.model.setMarkedCrossLinks(type, crossLinks, false, ev.ctrlKey || ev.shiftKey); // set marked cross links according to type and modal keys
             }
         }

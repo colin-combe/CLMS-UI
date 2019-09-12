@@ -647,9 +647,7 @@ CLMSUI.utils = {
 
     searchesToString: function() {
         var searches = Array.from(CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
-        var searchKeys = searches.map(function(search) {
-            return search[0];
-        }); // just the keys
+        var searchKeys = _.pluck (searches, 0); // just the keys
         var searchStr = ("SRCH=" + searchKeys.join("-")).substring(0, 40);
         return searchStr;
     },
