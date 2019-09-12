@@ -263,7 +263,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     title: function(x) {
                         var tickFunc = self.chart.internal.config.axis_x_tick_format;
                         var realX = tickFunc(x, true);
-                        var nextX = tickFunc(x + 1, true);
+                        var clSeries = self.chart.x()["Cross-Links"];
+                        var gap = clSeries.length > 1 ? clSeries[1] - clSeries[0] : 1;
+                        var nextX = tickFunc(x + gap, true);
                         var realXVal = realX.val;
                         var nextXVal = nextX.val;
                         var funcMeta = self.getSelectedOption("X");
