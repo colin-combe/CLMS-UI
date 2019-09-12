@@ -25,7 +25,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.listenTo(this.get("filterModel"), "change:fdrMode", function(filterModel) {
             if (!filterModel.get("fdrMode")) {
                 // Need to clear all crosslinks as they all get valued
-                CLMSUI.clearFdr(CLMS.arrayFromMapValues(this.get("clmsModel").get("crossLinks")));
+                CLMSUI.clearFdr(this.getAllCrossLinks());
             }
         });
 
@@ -36,12 +36,12 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     // This means when we grab distances we get the worst-case distance (useful for setting ranges)
     // Another call to applyFilter will set them back to normal
     calcWorstCaseHomomultimerStates: function () {
-        var crossLinksArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("crossLinks"));
+        var crossLinksArr = this.getAllCrossLinks();
         crossLinksArr.forEach (function (clink) {
             clink.confirmedHomomultimer = false;
             if (clink.isSelfLink()) {
                 clink.confirmedHomomultimer = _.any (clink.matches_pp, function (m) { return m.match.confirmedHomomultimer;});
-            };
+            }
         });
         return this;
     },
@@ -67,7 +67,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     applyFilter: function() {
         var filterModel = this.get("filterModel");
         var clmsModel = this.get("clmsModel");
-        var crossLinksArr = CLMS.arrayFromMapValues(clmsModel.get("crossLinks"));
+        var crossLinksArr = this.getAllCrossLinks();
         var clCount = crossLinksArr.length;
         var searches = CLMS.arrayFromMapValues(clmsModel.get("searches"));
         var result;
@@ -229,8 +229,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             if (uniqueResiduePairsPerPPI > 1) {
                 var value, key, crossLink;
                 var ppiMap = new Map();
-                var clmsModel = this.get("clmsModel");
-                var crossLinksArr = CLMS.arrayFromMapValues(clmsModel.get("crossLinks"));
+                var crossLinksArr = this.getAllCrossLinks();
                 var clCount = crossLinksArr.length;
                 for (var c = 0; c < clCount; c++) {
                     crossLink = crossLinksArr[c];
@@ -328,12 +327,15 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     getFilteredDatum: function (key) {
         return this.filteredStats[key];
     },
+    
+    getAllCrossLinks: function () {
+        return CLMS.arrayFromMapValues (this.get("clmsModel").get("crossLinks"));
+    },
 
     getAllTTCrossLinks: function () {
         var clmsModel = this.get("clmsModel");
         if (clmsModel) {
-            var crossLinks = clmsModel.get("crossLinks");
-            var ttCrossLinks = CLMS.arrayFromMapValues(crossLinks).filter(function(link) {
+            var ttCrossLinks = this.getAllCrossLinks().filter(function(link) {
                 return !link.isDecoyLink() && !link.isLinearLink();
             });
             return ttCrossLinks;
@@ -716,6 +718,21 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         return features ? features.filter(function(f) {
             return featureFilterSet.has(f.type);
         }, this) : [];
+    },
+    
+    getAttributeRange: function (attrMetaData) {
+        var allCrossLinks = this.getAllCrossLinks();
+        var func = attrMetaData.unfilteredLinkFunc;
+        var vals = allCrossLinks.map (function (link) {
+            var attrVals = func(link);
+            if (attrVals.length > 1) {
+                attrVals = d3.extent(attrVals);
+            }
+            return attrVals;
+        });
+        var extent = d3.extent (d3.merge (vals));
+        //console.log (vals, extent);
+        return extent;
     },
     
     generateUrlString: function() {

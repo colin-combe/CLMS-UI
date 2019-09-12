@@ -105,9 +105,7 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend({
                 ms1Units: search.mstoleranceunits,
                 ms2Value: search.ms2tolerance,
                 ms2Units: search.ms2toleranceunits,
-                enzymeNames: search.enzymes ? search.enzymes.map(function(enz) {
-                    return enz.name;
-                }).join(", ") : "",
+                enzymeNames: search.enzymes ? _.pluck(search.enzymes, "name").join(", ") : "",
                 missedCleavages: search.missedcleavages,
                 maxModifications: search.modifications ? search.modifications.length : 0,
                 fixedModList: search.modifications ? search.modifications

@@ -166,12 +166,13 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
 
                     self.toggleLegend.call(self); // initially hide legend
                 }
+                //self.tidyXAxis.call(self);
             }
         });
 
         this.runOnce = true;
 
-        this.chart.internal.main.style("display", "none");
+        this.chart.internal.main.style("display", "none");  // hide main chart (the one that normally gets zoomed in and out of)
 
         var brush = d3.select(this.el).selectAll("svg .c3-brush");
         var flip = {e: 1, w: -1};
@@ -236,21 +237,24 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
 
         d3.select(this.el).select(".c3-brush").attr("clip-path", "");
         
-        this.tidyXAxis();
+        window.setTimeout (function () { 
+            self.tidyXAxis();   // i think I'm having to wait for c3 to finish setting up before the size calculates properly
+        }, 500);
+        //this.tidyXAxis();
 
         //CLMSUI.utils.xilog ("data", distArr, binnedData);
         return this;
     },
     
     getAxisRange: function () {
-        return this.options.gapX * this.chart.internal.orgXDomain[1];
+        return this.chart.internal.orgXDomain[1] - this.chart.internal.orgXDomain[0];
     },
     
     // make x tick text values the rounder numbers, and remove any that overlap afterwards
     tidyXAxis: function () {
-        var xaxis = d3.select(this.el).selectAll(".c3-axis-x");
+        var xaxis = d3.select (d3.select(this.el).selectAll(".c3-axis-x").filter(function(d,i) { return i === 1; }).node());
         CLMSUI.utils.niceValueAxis (xaxis, this.getAxisRange());
-        CLMSUI.utils.declutterAxis (xaxis);
+        CLMSUI.utils.declutterAxis (xaxis, true);
         return this;
     },
 
@@ -299,9 +303,6 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         }, this);
 
         CLMSUI.utils.xilog("ca", countArrays);
-        
-        this.options.minX = thresholds[0];
-        this.options.gapX = thresholds[1] - thresholds[0];
 
         return {
             counts: countArrays,

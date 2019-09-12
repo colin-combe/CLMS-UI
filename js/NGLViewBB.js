@@ -484,7 +484,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
         this.listenToOnce (CLMSUI.vent, "recalcLinkDistances", function () {
             console.log ("RECALCING LINK DISTANCES");
-            self.model.getCrossLinkDistances (CLMS.arrayFromMapValues (self.model.get("clmsModel").get("crossLinks")));
+            self.model.getCrossLinkDistances (self.model.getAllCrossLinks());
         });
         this.model.get("clmsModel").get("distancesObj").setAssemblyChains(this.model.get("stageModel").get("structureComp").structure, this.options.defaultAssembly);
         return this;

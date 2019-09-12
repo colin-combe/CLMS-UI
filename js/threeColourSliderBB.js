@@ -14,9 +14,9 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.ThreeColourSliderBB = Backbone.View.extend({
     events: {
-        "change input.subsetNumberFilter": "directInput",
-        "keyup input.subsetNumberFilter": "directInputIfReturn",
-        //"mouseup input.subsetNumberFilter": "directInput",
+        "change input.filterTypeNumber": "directInput",
+        "keyup input.filterTypeNumber": "directInputIfReturn",
+        //"mouseup input.filterTypeNumber": "directInput",
     },
 
     initialize: function(viewOptions) {
@@ -93,7 +93,7 @@ CLMSUI.ThreeColourSliderBB = Backbone.View.extend({
         numberInputs.append("input")
             .attr({
                 class: function(d) {
-                    return "subsetNumberFilter " + d.class;
+                    return "filterTypeNumber " + d.class;
                 },
                 type: "number",
                 min: self.options.domain[0],

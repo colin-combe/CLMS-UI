@@ -463,7 +463,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
     getData: function(funcMeta, filteredFlag, optionalLinks) {
         var linkFunc = funcMeta ? (filteredFlag ? funcMeta.linkFunc : funcMeta.unfilteredLinkFunc) : undefined;
         var crossLinks = optionalLinks ||
-            (filteredFlag ? this.getFilteredCrossLinks() : CLMS.arrayFromMapValues(this.model.get("clmsModel").get("crossLinks")));
+            (filteredFlag ? this.getFilteredCrossLinks() : this.model.getAllCrossLinks());
         var data = crossLinks.map(function(c) {
             return linkFunc ? linkFunc.call(this, c) : [undefined];
         }, this);
@@ -1033,11 +1033,13 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
     redrawAxes: function(sizeData) {
         this.vis.select(".x")
             .attr("transform", "translate(0," + (sizeData.height) + ")")
-            .call(this.xAxis);
+            .call(this.xAxis)
+        ;
 
         this.vis.select(".y")
             .attr("transform", "translate(-1,0)")
-            .call(this.yAxis);
+            .call(this.yAxis)
+        ;
 
         CLMSUI.utils.declutterAxis(this.vis.select(".x"));
         CLMSUI.utils.declutterAxis(this.vis.select(".y"));

@@ -476,9 +476,7 @@ CLMSUI.DistancesObj.prototype = {
 
     setAssemblyChains: function(nglPdbStructure, assemblyKey) {
         var dictEntry = nglPdbStructure.biomolDict[assemblyKey];
-        var chainNames = dictEntry ? d3.merge(dictEntry.partList.map(function(part) {
-            return part.chainList;
-        })) : [];
+        var chainNames = dictEntry ? d3.merge(_.pluck (dictEntry.partList, "chainList")) : [];
         if (!chainNames.length) {   // default - if chainNames empty, make chainNames all chains
             nglPdbStructure.eachChain(function(cp) {
                 chainNames.push(cp.chainname);
