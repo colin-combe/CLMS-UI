@@ -190,7 +190,7 @@ function getMatchesCSV() {
     crossLinks.forEach(function(crossLink) {
         crossLink.filteredMatches_pp.forEach(function(match) {
             matchMap.set(match.match.id, match.match);
-    });
+        });
     });
     console.log ("finish map", performance.now() - zz, "ms.");
     zz = performance.now();
@@ -301,7 +301,7 @@ function getSSL() {
     crossLinks.forEach(function(crossLink) {
         crossLink.filteredMatches_pp.forEach(function(match) {
             matchMap.set(match.match.id, match.match);
-        })
+        });
     });
 
     var notUpperCase = /[^A-Z]/g;

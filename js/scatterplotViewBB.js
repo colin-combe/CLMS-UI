@@ -509,9 +509,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     getBothAxesMetaData: function() {
-        return ["X", "Y"].map(function(axisLetter) {
-            return this.getSelectedOption(axisLetter);
-        }, this);
+        return ["X", "Y"].map(this.getSelectedOption, this);
     },
 
     isLinearScale: function(scale) {
@@ -660,9 +658,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                 } // gets rid of negative zero
                 return v;
             });
-            var fvals = rvals.map(function(v) {
-                return commaFormat(v);
-            });
+            var fvals = rvals.map (commaFormat);
             inBetweenValidValues |= (rvals[0] > rvals[1]);
             return [axisMetaData.label, rvals[0] > rvals[1] ? "---" : fvals[0] + (fvals[0] === fvals[1] ? "" : " to " + fvals[1])];
         });

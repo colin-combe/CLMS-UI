@@ -75,7 +75,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                             seqCounts[i]++;
                         }
                     });
-                };
+                }
 
                 var approxCounts = seqCounts.map(function(seqCount) {
                     return (1 / Math.log(2)) * ((categoryCount - 1) / (2 * seqCount));

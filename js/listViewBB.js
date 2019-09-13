@@ -939,9 +939,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             var self = this;
             var normScores = CLMSUI.modelUtils.normalize2DArrayToColumn(this.stats.zscores, columnIndexMap[this.viewStateModel.get("normalColumn")]);
-            var zrange = d3.extent(d3.merge(normScores.map(function(zs) {
-                return d3.extent(zs);
-            })));
+            var zrange = d3.extent (d3.merge (normScores.map (d3.extent))); // extent of values in 2D array
 
             var zmap = {};
             normScores.forEach(function(row, i) {

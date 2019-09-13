@@ -86,14 +86,13 @@ CLMSUI.circleLayout = function(nodeArr, linkArr, featureArrs, range, options) {
     });
     //CLMSUI.utils.xilog ("CONV FEATURES", featureCoords);
 
-    var linkCoords = [];
-    linkArr.forEach(function(link) {
+    var linkCoords = linkArr.map (function(link) {
         var tofrom = _options.linkParse(link);
-        linkCoords.push({
+        return {
             id: link.id,
             start: scale(0.5 + tofrom.fromPos + nodeCoordMap.get(tofrom.fromNodeID).rawStart),
             end: scale(0.5 + tofrom.toPos + nodeCoordMap.get(tofrom.toNodeID).rawStart),
-        });
+        };
     });
 
     // End result
@@ -833,7 +832,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         return Math.min(zelem.width(), zelem.height()) / 2;
     },
 
-    filterInteractors: function(interactors) {
+    filterInteractors: function(interactors) {  // interactors is a native map
         var filteredInteractors = [];
         var showLinkless = this.options.showLinkless;
         interactors.forEach(function(value) {
