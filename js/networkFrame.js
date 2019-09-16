@@ -652,6 +652,7 @@ CLMSUI.init.viewsEssential = function(options) {
     ;
     });
     
+    // redraw brush when distancesObj is changed, extent is likely to be different
     minigramViews[1]
         .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) { 
             this.render().redrawBrush();

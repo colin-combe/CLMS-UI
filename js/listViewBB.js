@@ -932,10 +932,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
     normalise: function() {
 
         if (this.stats.zColumnNames) {
-            var columnIndexMap = {};
-            this.stats.zColumnNames.forEach(function(columnKey, i) {
-                columnIndexMap[columnKey] = i;
-            });
+            var columnIndexMap = _.object (_.zip (this.stats.zColumnNames, _.range (0, this.stats.zColumnNames.length)));
 
             var self = this;
             var normScores = CLMSUI.modelUtils.normalize2DArrayToColumn(this.stats.zscores, columnIndexMap[this.viewStateModel.get("normalColumn")]);
