@@ -133,16 +133,6 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
                 size: {
                     height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars
                 },
-                    /*
-                    axis: {
-                        x: {
-                            show: true,
-                            tick: {
-                                fit: true
-                            }
-                        }
-                    }
-					*/
             },
             onrendered: function() {
                 // for some reason setting extent in the x axis configuration isn't working, so get it to run once and once only when the chart is rendered
@@ -216,7 +206,7 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         //CLMSUI.utils.xilog ("thresholds", thresholds);
 
         var curMaxY = this.chart.axis.max().y;
-        if (curMaxY === undefined || curMaxY < maxY) { // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
+        if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) { // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
             this.chart.axis.max({
                 y: maxY
             });
