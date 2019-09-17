@@ -1011,7 +1011,6 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 chainIndexToProteinMap.set(chainData.index, cmapEntry.key);
             });
         });
-        //CLMSUI.utils.xilog ("Chain Index to Protein Map", chainIndexToProteinMap);
         //console.log ("PIM", chainIndexToProteinMap);
         comp.structure.eachChain(function(chainProxy) {
             var description = chainProxy.entity ? chainProxy.entity.description : "";

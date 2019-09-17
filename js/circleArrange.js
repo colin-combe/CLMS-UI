@@ -44,10 +44,7 @@ CLMSUI.utils.circleArrange = function(proteins, options) {
 
 
     function makeNodeEdgeLists(proteins) {
-        var map = CLMS.arrayFromMapValues(proteins).map(function(protein) {
-            return makeNodeEdgeList(protein);
-        });
-        return map;
+        return CLMS.arrayFromMapValues(proteins).map(makeNodeEdgeList);
     }
 
 

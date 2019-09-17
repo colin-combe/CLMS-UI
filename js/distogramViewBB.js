@@ -943,19 +943,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
     getSeriesColours: function(seriesNames) {
         var colModel = this.colourScaleModel;
-        var colScale = colModel.get("colScale");
-
-        /*
-        var colLabels = colModel.get("labels");
-        var colDomain = colScale.domain();
-        this.chart.xgrids([{value: colDomain[0], text: colLabels.range()[0]+' ↑'}, {value: colDomain[1], text: colLabels.range()[2]+' ↓', class:"overLengthGridRule"}]);
-        */
-
-        var colRange = colScale.range();
-        var colMap = {};
-        seriesNames.forEach(function(seriesName, i) {
-            colMap[seriesName] = colRange[i];
-        });
+        var colRange = colModel.get("colScale").range();
+        var colMap = _.object (_.zip (seriesNames, colRange));
         colMap[colModel.get("undefinedLabel")] = colModel.get("undefinedColour");
         return colMap;
     },

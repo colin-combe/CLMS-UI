@@ -430,9 +430,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
     makeNewChainShowSets: function() {
         var distanceObj = this.model.get("clmsModel").get("distancesObj");
         if (distanceObj) {
-            var chainVals = d3.merge(d3.values(distanceObj.chainMap)).map(function(cd) {
-                return cd.index;
-            });
+            var chainVals = _.pluck (d3.merge(d3.values(distanceObj.chainMap)), "index");
             this.showChains = [
                 d3.set(chainVals),
                 d3.set(chainVals)

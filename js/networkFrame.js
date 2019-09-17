@@ -257,6 +257,60 @@ CLMSUI.init.modelsEssential = function(options) {
     });
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel();
+    
+    
+    // Make score and distance minigram models, and add listeners to make sure they synchronise to attributes in filter model
+    var minigramModels = ["matchScoreCutoff", "distanceCutoff"].map (function (filterAttrName) {
+        var filterAttr = filterModelInst.get (filterAttrName);
+        var miniModel = new CLMSUI.BackboneModelTypes.MinigramModel({
+            domainStart: filterAttr[0],// || 0,
+            domainEnd: filterAttr[1],// || 1,
+        });
+        miniModel
+            .listenTo (filterModelInst, "change:"+filterAttrName, function(filterModel, newCutoff) {
+                this.set({
+                    domainStart: newCutoff[0],
+                    domainEnd: newCutoff[1]
+                });
+            })
+        ;
+        
+        // When the range changes on these models pass the values onto the appropriate value in the filter model
+        filterModelInst.listenTo (miniModel, "change", function(model) {
+            this.set (filterAttrName, [model.get("domainStart"), model.get("domainEnd")]);
+        }, this);
+        
+        return miniModel;
+    });
+
+    // Data generation routines for minigram models
+    minigramModels[0].data = function() {
+        return CLMSUI.modelUtils.flattenMatches(clmsModelInst.get("matches")); // matches is now an array of arrays - [matches, []];
+    };
+    minigramModels[1].data = function() {
+        var crossLinks = CLMSUI.compositeModelInst.getAllCrossLinks();
+        var distances = crossLinks
+            .map (function (clink) { return clink.getMeta("distance"); })
+            .filter (function (dist) { return dist !== undefined; })
+        ;
+        return [distances];
+    };
+    
+    // change in distanceObj changes the distanceExtent in filter model and should trigger a re-filter for distance minigram model as dists may have changed
+    minigramModels[1]
+        .listenTo (clmsModelInst, "change:distancesObj", function (clmsModel, distObj) { 
+            //console.log ("minigram arguments", arguments, this);
+            var max = Math.ceil(distObj.maxDistance);
+            this.set ("extent", [0, max + 1]);
+            //console.log ("MM", this);
+            filterModelInst.distanceExtent = [0, max];
+            filterModelInst
+                .trigger ("change:distanceCutoff", filterModelInst, [this.get("domainStart"), this.get("domainEnd")])
+                .trigger ("change", filterModelInst, {showHide: true})
+            ;
+        })
+    ;
+
 
     // overarching model
     CLMSUI.compositeModelInst = new CLMSUI.BackboneModelTypes.CompositeModelType({
@@ -265,13 +319,14 @@ CLMSUI.init.modelsEssential = function(options) {
         tooltipModel: tooltipModelInst,
         alignColl: options.alignmentCollectionInst,
         linkColourAssignment: CLMSUI.linkColour.defaultColoursBB,
+        minigramModels: {distance: minigramModels[1], score: minigramModels[0]},
     });
 
     //moving this to end of allDataLoaded - think validation page needs this, TODO, check
     CLMSUI.compositeModelInst.applyFilter(); // do it first time so filtered sets aren't empty
 
     // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
-    // and then tell the views that filtering has occurred via a custom event ("filtering Done") in applyFilter().
+    // and then tell the views that filtering has occurred via a custom event ("filteringDone") in applyFilter().
     // This ordering means the views are only notified once the changed data is ready.
     CLMSUI.compositeModelInst.listenTo(filterModelInst, "change", function() {
         console.log("filterChange");
@@ -572,105 +627,34 @@ CLMSUI.init.viewsEssential = function(options) {
         d3.select("#filterModeDiv").style("display", "none");
     }
 
-    // Score minigram set-up
-    var miniMod = filterModel.get("matchScoreCutoff");
-    var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel({
-        domainStart: miniMod[0] || 0,
-        domainEnd: miniMod[1] || 1,
-    });
-    miniDistModelInst
-        .listenTo(filterModel, "change:matchScoreCutoff", function(filterModel, newCutoff) {
-            this.set({
-                domainStart: newCutoff[0],
-                domainEnd: newCutoff[1]
-            });
-        })
-        .data = function() {
-            return CLMSUI.modelUtils.flattenMatches(compModel.get("clmsModel").get("matches")); // matches is now an array of arrays - [matches, []];
-        }
-    ;
-
-    // When the range changes on the mini histogram model pass the values onto the filter model
-    filterModel.listenTo(miniDistModelInst, "change", function(model) {
-        this.set("matchScoreCutoff", [model.get("domainStart"), model.get("domainEnd")]);
-    }, this);
-
-    new CLMSUI.MinigramViewBB({
-            el: "#filterPlaceholdermatchScoreSliderHolder",
-            model: miniDistModelInst,
-            myOptions: {
-                maxX: 0, // let data decide
-                seriesNames: ["Targets", "Decoys"],
-                //scaleOthersTo: "Matches",
-                xlabel: "Score",
-                ylabel: "Count",
-                height: 65,
-                colours: {
-                    "Targets": "blue",
-                    "Decoys": "red"
-                }
-            }
-        })
-        // If the ClmsModel matches attribute changes then tell the mini histogram view
-        .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
-    ;
     
-      
-    // Distance minigram set-up
-    miniMod = filterModel.get("distanceCutoff");
-    miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel({
-        domainStart: miniMod[0],// || 0,
-        domainEnd: miniMod[1],// || 1,
-    });
-    miniDistModelInst
-        .listenTo(filterModel, "change:distanceCutoff", function(filterModel, newCutoff) {
-            this.set({
-                domainStart: newCutoff[0],
-                domainEnd: newCutoff[1]
-            });
-        })
-        .data = function() {
-            console.log ("MINI DATA ASKED FOR"); 
-            var crossLinks = compModel.getAllCrossLinks();
-            var distances = crossLinks
-                .map (function (clink) { return clink.getMeta("distance"); })
-                .filter (function (dist) { return dist !== undefined; })
-            ;
-            return [distances];
-        }
-    ;
-
-    // When the range changes on the mini histogram model pass the values onto the filter model
-    filterModel.listenTo(miniDistModelInst, "change", function(model) {
-        this.set("distanceCutoff", [model.get("domainStart"), model.get("domainEnd")]);
-    }, this);
-
-    new CLMSUI.MinigramViewBB({
-            el: "#filterPlaceholderdistanceFilterSliderHolder",
-            model: miniDistModelInst,
+    // Generate minigram views
+    var minigramViewConfig = [
+        {id: "score", el: "#filterPlaceholdermatchScoreSliderHolder", seriesNames: ["Targets", "Decoys"], colours: ["blue", "red"], label: "Score"},
+        {id: "distance", el: "#filterPlaceholderdistanceFilterSliderHolder", seriesNames: ["Distances"], colours: ["blue"], label: "Distance"},
+    ];
+    var minigramViews = minigramViewConfig.map (function (config) {
+        return new CLMSUI.MinigramViewBB({
+            el: config.el,
+            model: compModel.get("minigramModels")[config.id],
             myOptions: {
                 maxX: 0, // let data decide
-                seriesNames: ["Distances"],
+                seriesNames: config.seriesNames,
                 //scaleOthersTo: "Matches",
-                xlabel: "Score",
+                xlabel: config.label,
                 ylabel: "Count",
                 height: 65,
-                colours: {
-                    Distances: "blue",
-                }
+                colours: _.object (_.zip (config.seriesNames, config.colours)), // [a,b],[c,d] -> [a,c],[b,d] -> {a:c, b:d}
             }
         })
+        // If the clmsModel matches attribute changes then tell the mini histogram view
         .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
+    ;
+    });
+    
+    // redraw brush when distancesObj is changed, extent is likely to be different
+    minigramViews[1]
         .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) { 
-            //console.log ("minigram arguments", arguments, this);
-            var max = Math.ceil(distObj.maxDistance);
-            filterModel.distanceExtent = [0, max];
-            this.model.set("extent", [0, max + 1]);
-            //console.log ("MM", this.model);
-            filterModel
-                .trigger ("change:distanceCutoff", filterModel, [this.model.get("domainStart"), this.model.get("domainEnd")])
-                .trigger ("change", filterModel, {showHide: true})
-            ;
             this.render().redrawBrush();
         }) // if the distances change (likely?) need to re-render the view too
     ;

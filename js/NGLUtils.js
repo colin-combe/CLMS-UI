@@ -48,7 +48,7 @@ CLMSUI.NGLUtils = {
                 var structureComp;
                 if (structureCompArray.length > 1) {
                     //structureCompArray 
-                    var oldStructures = structureCompArray.map (function (sc) { return sc.structure; });
+                    var oldStructures = _.pluck (structureCompArray, "structure");
                     var combinedStructure = NGL.concatStructures.apply (NGL, ["concat"].concat(oldStructures));
                     CLMSUI.NGLUtils.copyEntities (combinedStructure, oldStructures);
                     CLMSUI.NGLUtils.makeChainToOriginalStructureIDMap (combinedStructure, oldStructures);

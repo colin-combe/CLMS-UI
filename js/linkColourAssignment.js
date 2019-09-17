@@ -457,8 +457,7 @@ CLMSUI.linkColour.makeMapBasedLinkColourModel = function(columnIndex, label, lin
     entries.forEach(function(entry, i) {
         fieldValueMap[entry.key] = domain[i];
     });
-
-    console.log("dfv", domain, fieldValueMap);
+    //console.log("dfv", domain, fieldValueMap);
 
     var extents = d3.extent(domain);
     var range = CLMSUI.linkColour.colourRangeMaker (extents);

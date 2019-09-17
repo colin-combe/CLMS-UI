@@ -554,9 +554,7 @@ CLMSUI.modelUtils = {
             crossSpec = {
                 "default": {
                     name: "all",
-                    searches: new Set(searchArray.map(function(s) {
-                        return s.id;
-                    })),
+                    searches: new Set(_.pluck (searchArray, "id")),
                     linkables: [new Set(["*"])]
                 }
             };
