@@ -100,6 +100,10 @@ div.filterItem, div.scoreSlider > div {
     color: black;
 }
 
+.scoreSlider .undef {
+    margin-left: 0.25em;
+}
+
 #fdrSummaryPlaceholder {
     display: inline-block;
 }
