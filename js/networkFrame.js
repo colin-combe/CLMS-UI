@@ -27,7 +27,7 @@ CLMSUI.init = CLMSUI.init || {};
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
 CLMSUI.init.postDataLoaded = function() {
     console.log("DATA LOADED AND WINDOW LOADED");
-    
+
     CLMSUI.compositeModelInst.set("go", CLMSUI.go); // add pre-parsed go terms to compositeModel from placeholder
     CLMSUI.go = null;
 
@@ -87,7 +87,7 @@ CLMSUI.init.postDataLoaded = function() {
             });
         }
     });
-    
+
     // add uniprot feature types
     annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
@@ -113,7 +113,7 @@ CLMSUI.init.pretendLoad = function() {
 
 CLMSUI.init.blosumLoading = function (options) {
     options = options || {};
-    
+
     // Collection of blosum matrices that will be fetched from a json file
     CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection (options); // options if we want to override defaults
 
@@ -122,7 +122,7 @@ CLMSUI.init.blosumLoading = function (options) {
         console.log("ASYNC. blosum models loaded");
         allDataLoaded();
     });
-    
+
     // Start the asynchronous blosum fetching after the above events have been set up
     CLMSUI.blosumCollInst.fetch (options);
 };
@@ -138,7 +138,7 @@ CLMSUI.init.models = function(options) {
         console.log("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
     });
-    
+
     CLMSUI.init.modelsEssential(options);
 
     // following listeners require compositeModelInst etc to be set up in modelsEssential() so placed afterwards
@@ -372,7 +372,7 @@ CLMSUI.init.views = function() {
             label: "Legend & Colours",
             eventName: "keyShow",
             tooltip: "Explains and allows changing of current colour scheme",
-            sectionEnd: false
+            sectionEnd: true
         },
         {
             id: "goTermsChkBxPlaceholder",
@@ -614,8 +614,8 @@ CLMSUI.init.viewsEssential = function(options) {
         // If the ClmsModel matches attribute changes then tell the mini histogram view
         .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
     ;
-    
-      
+
+
     // Distance minigram set-up
     miniMod = filterModel.get("distanceCutoff");
     miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel({
@@ -630,7 +630,7 @@ CLMSUI.init.viewsEssential = function(options) {
             });
         })
         .data = function() {
-            console.log ("MINI DATA ASKED FOR"); 
+            console.log ("MINI DATA ASKED FOR");
             var crossLinks = compModel.getAllCrossLinks();
             var distances = crossLinks
                 .map (function (clink) { return clink.getMeta("distance"); })
@@ -661,7 +661,7 @@ CLMSUI.init.viewsEssential = function(options) {
             }
         })
         .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
-        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) { 
+        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) {
             //console.log ("minigram arguments", arguments, this);
             var max = Math.ceil(distObj.maxDistance);
             filterModel.distanceExtent = [0, max];
