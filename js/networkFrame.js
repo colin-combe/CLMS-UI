@@ -375,12 +375,12 @@ CLMSUI.init.views = function() {
             tooltip: "Explains and allows changing of current colour scheme",
             sectionEnd: true
         },
-        //{
-        //    id: "goTermsChkBxPlaceholder",
-        //    label: "GO Terms",
-        //    eventName: "goTermsShow",
-        //    tooltip: "Browse Gene Ontology terms"
-        //},
+        {
+           id: "goTermsChkBxPlaceholder",
+           label: "GO Terms",
+           eventName: "goTermsShow",
+           tooltip: "Browse Gene Ontology terms"
+        },
     ];
     checkBoxData.forEach(function(cbdata) {
         var options = $.extend({
