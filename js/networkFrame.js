@@ -87,8 +87,8 @@ CLMSUI.init.postDataLoaded = function() {
             });
             }
     });
-    
-    //add uniprot feature types
+
+    // add uniprot feature types
     annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
     CLMSUI.compositeModelInst.set("annotationTypes", annotationTypeCollection);
@@ -373,7 +373,7 @@ CLMSUI.init.views = function() {
             label: "Legend & Colours",
             eventName: "keyShow",
             tooltip: "Explains and allows changing of current colour scheme",
-            sectionEnd: false
+            sectionEnd: true
         },
         //{
         //    id: "goTermsChkBxPlaceholder",
@@ -615,8 +615,8 @@ CLMSUI.init.viewsEssential = function(options) {
         // If the ClmsModel matches attribute changes then tell the mini histogram view
         .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
     ;
-    
-      
+
+
     // Distance minigram set-up
     miniMod = filterModel.get("distanceCutoff");
     miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel({
@@ -631,7 +631,7 @@ CLMSUI.init.viewsEssential = function(options) {
             });
         })
         .data = function() {
-            console.log ("MINI DATA ASKED FOR"); 
+            console.log ("MINI DATA ASKED FOR");
             var crossLinks = compModel.getAllCrossLinks();
             var distances = crossLinks
                 .map (function (clink) { return clink.getMeta("distance"); })
@@ -662,7 +662,7 @@ CLMSUI.init.viewsEssential = function(options) {
             }
         })
         .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
-        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) { 
+        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) {
             //console.log ("minigram arguments", arguments, this);
             var max = Math.ceil(distObj.maxDistance);
             filterModel.distanceExtent = [0, max];
