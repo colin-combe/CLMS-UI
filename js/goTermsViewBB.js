@@ -108,15 +108,16 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
         //four  layers
-        // this.backgroundGroup = vis.append("g");
-        // this.linksGroup = vis.append("g");
+        this.backgroundGroup = vis.append("g");
+        this.linkGroup = vis.append("g");
         this.foregroundGroup = vis.append("g");
 
         //this.listenTo(CLMSUI.vent, "goAnnotationsUpdated", this.update);
         this.listenTo(this.model, "change:highlightedProteins", this.highlightedProteinsChanged);
         // this.listenTo(this.model, "change:selectedProteins", this.selectedProteinsChanged);
-        this.tree = d3.layout.tree().size(500, 500);//width, height);
+        this.tree = d3.layout.tree().size(500, 500); //width, height);
 
+        this.update();  // can do this here as go terms are available on the view's initialisation
     },
 
     render: function() {
@@ -128,31 +129,6 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         var dag = CLMSUI.compositeModelInst.get("goDags")[termType];
 
-        this.treeData = [{
-            "name": "Top Level",
-            "parent": "null",
-            "children": [{
-                    "name": "Level 2: A",
-                    "parent": "Top Level",
-                    "children": [{
-                            "name": "Son of A",
-                            "parent": "Level 2: A"
-                        },
-                        {
-                            "name": "Daughter of A",
-                            "parent": "Level 2: A"
-                        }
-                    ]
-                },
-                {
-                    "name": "Level 2: B",
-                    "parent": "Top Level"
-                }
-            ]
-        }];
-
-        //this.root = this.treeData[0];
-
         function treeNode(dagNode, treeParent) {
             var node = {
                 name: dagNode.name,
@@ -161,7 +137,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 term: dagNode
             };
             for (var c of dagNode.is_aChildren) {
-                node._children.push(treeNode(c, node));
+                if (c.getInteractors().size > 0) {
+                    node._children.push(treeNode(c, node));
+                }
             }
             return node;
         }
@@ -276,8 +254,96 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         nodeExit.select("text")
             .style("fill-opacity", 1e-6);
 
+        // Update the nodes…
+        var nodeBackground = this.backgroundGroup.selectAll("circle.nodeBackground")
+            .data(nodes, function(d) {
+                return d.id || (d.id = ++self.i)
+            });
+
+        // Enter any new nodes at the parent's previous position.
+        var nodeBackgroundEnter = nodeBackground.enter().append("circle")
+            .attr("class", "nodeBackground")
+            .attr("transform", function(d) {
+                return "translate(" + source.y0 + "," + source.x0 + ")";
+            })
+            .on("contextmenu", function(d, i) {
+                d3.event.preventDefault();
+                // react on right-clicking
+                self.click(d);
+            })
+            .on("click", function(d) {
+                self.model.setSelectedProteins([], false);
+                self.model.setSelectedProteins(Array.from(d.term.getInteractors().values()), true);
+            })
+            .on("mouseover", function(d) {
+                var term = d.term;
+                d3.select(this).select("circle").classed("highlightedProtein", true);
+                self.model.get("tooltipModel")
+                    .set("header", "GO Term")
+                    .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(term))
+                    .set("location", {
+                        pageX: d3.event.pageX,
+                        pageY: d3.event.pageY
+                    });
+                self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
+            })
+            .on("mouseout", function(d) {
+                d3.select(this).select("circle").classed("highlightedProtein", false);
+                self.model.get("tooltipModel").set("contents", null);
+                self.model.setHighlightedProteins([]);
+            })
+            .attr("r", function(d) {
+                return Math.sqrt(d.term.getInteractors().size / Math.PI) * 20;
+            })
+            .style("fill", function(d) {
+                return "white";
+            });
+
+
+        // Transition nodes to their new position.
+        var nodeBackgroundUpdate = nodeBackground.transition()
+            .duration(duration)
+            .attr("transform", function(d) {
+                return "translate(" + d.y + "," + d.x + ")";
+            });
+        //
+        // nodeUpdate.select("circle")
+        //     .attr("r", 10)
+        //     .style("fill", function(d) {
+        //         return d._children ? "lightsteelblue" : "#fff";
+        //     });
+        //
+        // nodeUpdate.select("text")
+        //     .style("fill-opacity", 1);
+
+        // Transition exiting nodes to the parent's new position.
+        var nodeBackgroundExit = nodeBackground.exit().transition()
+            .duration(duration)
+            .attr("transform", function(d) {
+                return "translate(" + source.y + "," + source.x + ")";
+            })
+            .remove();
+
+        nodeBackgroundExit.select("circle")
+            .attr("r", 1e-6);
+
+        /*
+
+                var backgroundCircleSel = this.backgroundGroup.selectAll(".bcNode")
+                    .data(nodes, function(d) {
+                        return d.id;
+                    });
+
+                var bcEnter = backgroundCircleSel.enter().append("circle")
+                    .classed("bcNode", true)
+                    .attr("r", function(d) {
+                      // console.log("I", d.getInteractors().size)
+                        return Math.sqrt(d.getInteractors().size / Math.PI) * 10;
+                    })
+                backgroundCircleSel.exit().remove();*/
+
         // Update the links…
-        var link = this.foregroundGroup.selectAll("path.goLink")
+        var link = this.linkGroup.selectAll("path.goLink")
             .data(links, function(d) {
                 return d.target.id;
             });
@@ -349,8 +415,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var cx = jqElem.width(); //this.svg.node().clientWidth;
         var cy = jqElem.height(); //this.svg.node().clientHeight;
         var margin = this.options.margin;
-        var width = Math.max(0, cx);// - margin.left - margin.right);
-        var height = Math.max(0, cy);// - margin.top - margin.bottom);
+        var width = Math.max(0, cx); // - margin.left - margin.right);
+        var height = Math.max(0, cy); // - margin.top - margin.bottom);
         this.svg.style("width", width).style("height", height);
         this.tree = d3.layout.tree().size([width, height]);
         if (this.root) {

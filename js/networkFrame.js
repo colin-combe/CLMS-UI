@@ -22,11 +22,19 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.vent = {};
 _.extend(CLMSUI.vent, Backbone.Events);
 
+CLMSUI.init = CLMSUI.init || {};
+
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
-var allDataLoaded = _.after(3, function() {
+CLMSUI.init.postDataLoaded = function() {
     console.log("DATA LOADED AND WINDOW LOADED");
 
-    CLMSUI.blosumCollInst.trigger("blosumModelGlobalSet", CLMSUI.blosumCollInst.get("Blosum100"));
+    CLMSUI.compositeModelInst.set("go", CLMSUI.go); // add pre-parsed go terms to compositeModel from placeholder
+    CLMSUI.go = null;
+
+    // Now we have blosum models and sequences, we can set blosum defaults for alignment models
+    CLMSUI.compositeModelInst.get("alignColl").models.forEach (function (protAlignModel) {
+        protAlignModel.set("scoreMatrix", CLMSUI.blosumCollInst.get("Blosum100"));
+    });
 
     //init annotation types
     var annotationTypes = [
@@ -60,28 +68,26 @@ var allDataLoaded = _.after(3, function() {
         })
     ];
 
-    //get uniprot feature types
+    //  make uniprot feature types - done here as need proteins parsed and ready from xi
     var uniprotFeatureTypes = new Map();
     var participantArray = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
-    var participantCount = participantArray.length;
-    for (var p = 0; p < participantCount; p++) {
-        var participant = participantArray[p];
+    participantArray.forEach (function (participant) {
         if (participant.uniprot) {
             var featureArray = Array.from(participant.uniprot.features);
-            var featureCount = featureArray.length;
-            for (var f = 0; f < featureCount; f++) {
-                var feature = featureArray[f];
+            featureArray.forEach (function (feature) {
                 var key = feature.category + "-" + feature.type;
-                if (uniprotFeatureTypes.has(key) === false) {
+                if (!uniprotFeatureTypes.has(key)) {
                     var annotationType = new CLMSUI.BackboneModelTypes.AnnotationType(feature);
                     annotationType
                         .set("source", "Uniprot")
-                        .set("typeAlignmentID", "Canonical");
+                        .set("typeAlignmentID", "Canonical")
+                    ;
                     uniprotFeatureTypes.set(key, annotationType);
                 }
+            });
             }
-        }
-    }
+    });
+    
     //add uniprot feature types
     annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
@@ -93,13 +99,32 @@ var allDataLoaded = _.after(3, function() {
     CLMSUI.compositeModelInst.applyFilter(); // do it first time so filtered sets aren't empty
 
     CLMSUI.vent.trigger("initialSetupDone"); //	Message that models and views are ready for action, with filter set initially
-});
+};
 
-CLMSUI.init = CLMSUI.init || {};
+// This bar function calls postDataLoaded on the 4th go, ensuring all data is in place from various data loading ops
+var allDataLoaded = _.after(4, CLMSUI.init.postDataLoaded);
 
 // for qunit testing
 CLMSUI.init.pretendLoad = function() {
     allDataLoaded();
+    allDataLoaded();
+};
+
+
+CLMSUI.init.blosumLoading = function (options) {
+    options = options || {};
+
+    // Collection of blosum matrices that will be fetched from a json file
+    CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection (options); // options if we want to override defaults
+
+    // when the blosum Collection is fetched (an async process), we select one of its models as being selected
+    CLMSUI.blosumCollInst.listenToOnce(CLMSUI.blosumCollInst, "sync", function() {
+        console.log("ASYNC. blosum models loaded");
+        allDataLoaded();
+    });
+
+    // Start the asynchronous blosum fetching after the above events have been set up
+    CLMSUI.blosumCollInst.fetch (options);
 };
 
 CLMSUI.init.models = function(options) {
@@ -108,32 +133,11 @@ CLMSUI.init.models = function(options) {
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.ProtAlignCollection();
     options.alignmentCollectionInst = alignmentCollectionInst;
 
-    alignmentCollectionInst.listenToOnce(CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
-        this.addNewProteins(CLMS.arrayFromMapValues(clmsModel.get("participants")));
+    alignmentCollectionInst.listenToOnce (CLMSUI.vent, "uniprotDataParsed", function(clmsModel) {
+        this.addNewProteins (CLMS.arrayFromMapValues(clmsModel.get("participants")));
         console.log("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
     });
-
-
-    // Collection of blosum matrices that will be fetched from a json file
-    CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection(); // options if we want to override defaults
-
-    // when the blosum Collection is fetched (an async process), we select one of its models as being selected
-    CLMSUI.blosumCollInst.listenToOnce(CLMSUI.blosumCollInst, "sync", function() {
-        console.log("ASYNC. blosum models loaded");
-        allDataLoaded();
-    });
-
-    // and when the blosum Collection fires a blosumModelGlobalSetevent (via bothSyncsDone) it is accompanied by the chosen blosum Model
-    // and we set the alignmentCollection to listen for this and set all its Models to use that blosum Model as the initial value
-    alignmentCollectionInst.listenToOnce(CLMSUI.blosumCollInst, "blosumModelGlobalSet", function(blosumModel) {
-        // sets alignmentModel's scoreMatrix, the change of which then triggers an alignment
-        // (done internally within alignmentModelInst)
-        this.models.forEach(function(protAlignModel) {
-            protAlignModel.set("scoreMatrix", blosumModel);
-        });
-    });
-
 
     CLMSUI.init.modelsEssential(options);
 
@@ -179,8 +183,8 @@ CLMSUI.init.models = function(options) {
     // Set up colour models, some (most) of which depend on data properties
     CLMSUI.linkColour.setupColourModels();
 
-    // Start the asynchronous blosum fetching after the above events have been set up
-    CLMSUI.blosumCollInst.fetch(options.blosumOptions || {});
+    // Start asynchronous GO term fetching
+    //CLMSUI.modelUtils.loadGOAnnotations(); // it will call allDataLoaded when done
 };
 
 
@@ -215,18 +219,12 @@ CLMSUI.init.modelsEssential = function(options) {
     var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString(window.location.search.slice(1));
 
     // Anonymiser for screen shots / videos. MJG 17/05/17, add &anon to url for this
-    if (urlChunkMap["anon"]) {
+    if (urlChunkMap.anon) {
         clmsModelInst.get("participants").forEach(function(prot, i) {
             prot.name = "Protein " + (i + 1);
             prot.description = "Protein " + (i + 1) + " Description";
         });
     }
-
-    // Connect searches to proteins, and add the protein set as a property of a search in the clmsModel, MJG 17/05/17
-    var searchMap = CLMSUI.modelUtils.getProteinSearchMap(options.peptides, options.rawMatches);
-    clmsModelInst.get("searches").forEach(function(value, key) {
-        value.participantIDSet = searchMap[key];
-    });
 
     // Add c- and n-term positions to searchresultsmodel on a per protein basis // MJG 29/05/17
     //~ clmsModelInst.set("terminiPositions", CLMSUI.modelUtils.getTerminiPositions (options.peptides));
@@ -246,8 +244,8 @@ CLMSUI.init.modelsEssential = function(options) {
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
         //matchScoreCutoff: [undefined, undefined],
-        //matchScoreCutoff: [Math.floor(clmsModelInst.get("minScore")) || undefined, Math.ceil(clmsModelInst.get("maxScore")) || undefined],
         matchScoreCutoff: scoreExtentInstance.slice(),
+        //distanceCutoff: [0, 250],
         searchGroups: CLMSUI.modelUtils.getSearchGroups(clmsModelInst),
     };
     var urlFilterSettings = CLMSUI.BackboneModelTypes.FilterModel.prototype.getFilterUrlSettings(urlChunkMap);
@@ -255,6 +253,7 @@ CLMSUI.init.modelsEssential = function(options) {
     console.log("urlFilterSettings", urlFilterSettings, "progFilterSettings", filterSettings);
     var filterModelInst = new CLMSUI.BackboneModelTypes.FilterModel(filterSettings, {
         scoreExtent: scoreExtentInstance,
+        //distanceExtent: [0, 250],
         possibleSearchGroups: CLMSUI.modelUtils.getSearchGroups(clmsModelInst),
     });
 
@@ -276,7 +275,7 @@ CLMSUI.init.modelsEssential = function(options) {
     // and then tell the views that filtering has occurred via a custom event ("filtering Done") in applyFilter().
     // This ordering means the views are only notified once the changed data is ready.
     CLMSUI.compositeModelInst.listenTo(filterModelInst, "change", function() {
-        //console.log("filterChange");
+        console.log("filterChange");
         this.applyFilter();
     });
 
@@ -430,16 +429,16 @@ CLMSUI.init.views = function() {
             myOptions: {
                 title: "Protein-Selection",
                 menu: [{
-                        name: "Invert",
-                        func: compModel.invertSelectedProteins,
-                        context: compModel,
-                        tooltip: "Switch selected and unselected proteins"
-                    },
-                    {
-                        name: "Hide",
+                        name: "Hide Selected",
                         func: compModel.hideSelectedProteins,
                         context: compModel,
                         tooltip: "Hide selected proteins"
+                    },
+                    {
+                            name: "Hide Unselected",
+                            func: compModel.hideUnselectedProteins,
+                        context: compModel,
+                            tooltip: "Hide unselected proteins"
                     },
                     {
                         name: "+Neighbours",
@@ -520,7 +519,7 @@ CLMSUI.init.views = function() {
 
     new CLMSUI.URLSearchBoxViewBB({
         el: "#urlSearchBox",
-        model: compModel.get("filterModel"),
+        model: compModel,
         displayEventName: "shareURL",
         myOptions: {}
     });
@@ -574,23 +573,31 @@ CLMSUI.init.viewsEssential = function(options) {
         d3.select("#filterModeDiv").style("display", "none");
     }
 
+    // Score minigram set-up
     var miniMod = filterModel.get("matchScoreCutoff");
     var miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel({
         domainStart: miniMod[0] || 0,
         domainEnd: miniMod[1] || 1,
     });
-    miniDistModelInst.data = function() {
+    miniDistModelInst
+        .listenTo(filterModel, "change:matchScoreCutoff", function(filterModel, newCutoff) {
+            this.set({
+                domainStart: newCutoff[0],
+                domainEnd: newCutoff[1]
+            });
+        })
+        .data = function() {
         return CLMSUI.modelUtils.flattenMatches(compModel.get("clmsModel").get("matches")); // matches is now an array of arrays - [matches, []];
-    };
+        }
+    ;
 
     // When the range changes on the mini histogram model pass the values onto the filter model
     filterModel.listenTo(miniDistModelInst, "change", function(model) {
-        console.log("MSC change", [model.get("domainStart"), model.get("domainEnd")]);
         this.set("matchScoreCutoff", [model.get("domainStart"), model.get("domainEnd")]);
     }, this);
 
     new CLMSUI.MinigramViewBB({
-            el: "#filterPlaceholderSliderHolder",
+            el: "#filterPlaceholdermatchScoreSliderHolder",
             model: miniDistModelInst,
             myOptions: {
                 maxX: 0, // let data decide
@@ -606,14 +613,68 @@ CLMSUI.init.viewsEssential = function(options) {
             }
         })
         // If the ClmsModel matches attribute changes then tell the mini histogram view
-        .listenTo(compModel.get("clmsModel"), "change:matches", this.render) // if the matches change (likely?) need to re-render the view too
-        .listenTo(filterModel, "change:matchScoreCutoff", function(filterModel, newCutoff) {
-            this.model.set({
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
+    ;
+    
+      
+    // Distance minigram set-up
+    miniMod = filterModel.get("distanceCutoff");
+    miniDistModelInst = new CLMSUI.BackboneModelTypes.MinigramModel({
+        domainStart: miniMod[0],// || 0,
+        domainEnd: miniMod[1],// || 1,
+    });
+    miniDistModelInst
+        .listenTo(filterModel, "change:distanceCutoff", function(filterModel, newCutoff) {
+            this.set({
                 domainStart: newCutoff[0],
                 domainEnd: newCutoff[1]
             });
-            //console.log ("cutoff changed");
-        });
+        })
+        .data = function() {
+            console.log ("MINI DATA ASKED FOR"); 
+            var crossLinks = compModel.getAllCrossLinks();
+            var distances = crossLinks
+                .map (function (clink) { return clink.getMeta("distance"); })
+                .filter (function (dist) { return dist !== undefined; })
+            ;
+            return [distances];
+        }
+    ;
+
+    // When the range changes on the mini histogram model pass the values onto the filter model
+    filterModel.listenTo(miniDistModelInst, "change", function(model) {
+        this.set("distanceCutoff", [model.get("domainStart"), model.get("domainEnd")]);
+    }, this);
+
+    new CLMSUI.MinigramViewBB({
+            el: "#filterPlaceholderdistanceFilterSliderHolder",
+            model: miniDistModelInst,
+            myOptions: {
+                maxX: 0, // let data decide
+                seriesNames: ["Distances"],
+                //scaleOthersTo: "Matches",
+                xlabel: "Score",
+                ylabel: "Count",
+                height: 65,
+                colours: {
+                    Distances: "blue",
+                }
+            }
+        })
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
+        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) { 
+            //console.log ("minigram arguments", arguments, this);
+            var max = Math.ceil(distObj.maxDistance);
+            filterModel.distanceExtent = [0, max];
+            this.model.set("extent", [0, max + 1]);
+            //console.log ("MM", this.model);
+            filterModel
+                .trigger ("change:distanceCutoff", filterModel, [this.model.get("domainStart"), this.model.get("domainEnd")])
+                .trigger ("change", filterModel, {showHide: true})
+            ;
+            this.render().redrawBrush();
+        }) // if the distances change (likely?) need to re-render the view too
+    ;
 
 
     // World of code smells vol.1
@@ -808,7 +869,7 @@ CLMSUI.init.viewsEssential = function(options) {
             }, {
                 name: "Online Videos",
                 func: function() {
-                    window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/xiview-videos", "_blank");
+                    window.open("https://vimeo.com/user64900020", "_blank");
                 },
                 tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"
             }, {
@@ -820,7 +881,7 @@ CLMSUI.init.viewsEssential = function(options) {
             }, {
                 name: "About Xi View",
                 func: function() {
-                    window.open("http://rappsilberlab.org/rappsilber-laboratory-home-page/tools/xiview/", "_blank");
+                    window.open("https://rappsilberlab.org/software/xiview/", "_blank");
                 },
                 tooltip: "About Xi View (opens external web page)"
             }, ],
@@ -968,10 +1029,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         displayEventName: "nglShow",
     });
 
+    var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString(window.location.search.slice(1));
     new CLMSUI.PDBFileChooserBB({
         el: "#pdbPanel",
         model: compModel,
         displayEventName: "pdbShow",
+        initPDBs: urlChunkMap.pdb,
     });
 
     new CLMSUI.ScatterplotViewBB({
@@ -996,12 +1059,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#userAnnotationsMetaLoadPanel",
         model: compModel,
         displayEventName: "userAnnotationsMetaShow",
-    });
-
-    new CLMSUI.GafMetaDataFileChooserBB({
-        el: "#gafAnnotationsMetaLoadPanel",
-        model: compModel,
-        displayEventName: "gafMetaShow",
     });
 
     new CLMSUI.GoTermsViewBB({

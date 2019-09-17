@@ -42,8 +42,8 @@
 }
 
 .selectView THEAD TR {
-    line-height: 1.5em;
-    height: 1.5em;
+    line-height: 1.3em;
+    /*height: 1.5em;*/
 }
 
 .selectView TBODY TR {
@@ -59,6 +59,10 @@
 
 .selectView TBODY TR.matchRow td.colSectionStart:not(:first-child), .selectView THEAD TR th.colSectionStart:not(:first-child) {
     border-left: 3px solid #bbb;
+}
+
+.selectView TD {
+    text-transform: capitalize;
 }
 
 .selectView TD.number {
@@ -81,8 +85,8 @@
     text-overflow: ellipsis;
 }
 
-.selectView TD.minWidth {
-    min-width: 6em;
+.selectView TD.minWidth, .selectView TH.minWidth {
+    min-width: 7em;
 }
 
 .selectView TD.emphasise {
@@ -108,6 +112,7 @@
 
 .pager input {
     margin-left: 0.5em;
+    margin-right: 0.4em;
 }
 
 .buttonPressed {
@@ -118,6 +123,10 @@
 /* stop firefox making massive number box */
 .selectView input[type='number'] {
     max-width: 3.5em;
+}
+
+.selectView .pager:before {
+    content: "Page";
 }
 
 .selectView TR.matchRow.highlighted {
@@ -161,3 +170,23 @@
     color: inherit;
 }
 
+.selectView input[type="number"] {
+  -webkit-appearance: textfield;
+     -moz-appearance: textfield;
+          appearance: textfield;
+}
+.selectView input[type=number]::-webkit-inner-spin-button, 
+.selectView input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none;
+}
+
+.btnIncr {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+.selectView .colourSwatchSquare {
+    margin-left: 0;
+    margin-right: 0.3em;
+    border: none;
+}

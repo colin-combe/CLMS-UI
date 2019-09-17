@@ -45,7 +45,8 @@ CLMSUI.URLSearchBoxViewBB = CLMSUI.utils.BaseFrameView.extend({
             .attr("readonly", "true")
             .attr("length", "500");
 
-        this.listenTo(this.model, "change", this.render);
+        this.listenTo (this.model.get("filterModel"), "change", this.render);
+        this.listenTo (this.model, "change:pdbCode", this.render);
 
         return this;
     },

@@ -55,10 +55,11 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 }], // TT, TD then DD
                 showRandoms: true,
                 showY2Axis: true,
+                showDistMaxInput: true,
             }
         };
 
-        this.options.attributeOptions = CLMSUI.compositeModelInst.get("clmsModel").attributeOptions;
+        this.options.attributeOptions = this.model.get("clmsModel").attributeOptions;
 
         this.precalcedDistributions = {
             Random: {
@@ -123,7 +124,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         toolbar.append("p").attr("id", optid);
         new CLMSUI.DropDownMenuViewBB({
             el: "#" + optid,
-            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            model: self.model.get("clmsModel"),
             myOptions: {
                 title: "Random Scope ▼",
                 menu: toggleButtonData.map(function(d) {
@@ -136,9 +137,21 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     header: "Random Scope",
                     contents: "Decide scope of random distances."
                 },
-                tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+                tooltipModel: self.model.get("tooltipModel"),
             }
         });
+        
+        var maxid = this.el.id + "MaxXValue";
+        var maxElem = toolbar.append("p").attr("id", maxid);
+        maxElem.append("span").text("Axis Extent (X)");
+        maxElem.append("input").attr("type", "number").attr("class", "xAxisMax").attr("min", 40).attr("max", 500)
+            .on ("change", function () {
+                self.getSelectedOption("X").maxVal = +d3.event.target.value;
+                self.options.reRandom = true;
+                self.render();
+            })
+        ;
+        
 
         // Add a select widget for picking axis data type
         this.setMultipleSelectControls(toolbar, this.options.attributeOptions, false);
@@ -157,9 +170,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         this.chart = c3.generate({
             bindto: chartID,
             transition: {
-                duration: 0, // no animations, causes bugs in c3 when actions performed rapidly
+                duration: null, // no animations, causes bugs in c3 when actions performed rapidly
             },
             data: {
+                x: 'x',
                 columns: columnsAsNamesOnly,
                 type: 'bar',
                 colors: {
@@ -206,8 +220,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                         right: 1,
                     },
                     tick: {
-                        format: function(v, returnUnformattedToo) {
-                            var val = (v + (self.options.minX || 0)) * (self.options.gapX || 1);
+                        format: function(val, returnUnformattedToo) {
                             var formattedVal = self.options.xCurrentTickFormat(val);
                             return returnUnformattedToo ? {
                                 val: val,
@@ -250,7 +263,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     title: function(x) {
                         var tickFunc = self.chart.internal.config.axis_x_tick_format;
                         var realX = tickFunc(x, true);
-                        var nextX = tickFunc(x + 1, true);
+                        var clSeries = self.chart.x()["Cross-Links"];
+                        var gap = clSeries.length > 1 ? clSeries[1] - clSeries[0] : 1;
+                        var nextX = tickFunc(x + gap, true);
                         var realXVal = realX.val;
                         var nextXVal = nextX.val;
                         var funcMeta = self.getSelectedOption("X");
@@ -301,6 +316,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     }
                 }
                 self.makeBarsSitBetweenTicks(this);
+                if (!self.options.dodgeTidyXAxis) {
+                    self.tidyXAxis.call(self);
+                    self.options.dodgeTidyXXAxis = true;
+                }
             },
             onmouseout: function() {
                 self.model.setMarkedCrossLinks("highlights", [], false, false);
@@ -321,12 +340,24 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         pattern.append("line").attr("x1", "5").attr("y1", "0").attr("x2", "5").attr("y2", "10");
 
         function distancesAvailable() {
-            console.log("DISTOGRAM RAND DISTANCES CALCULATED");
+            //console.log("DISTOGRAM RAND DISTANCES MARKED FOR RECALCULATION");
             this.options.reRandom = true;
-            this
-                .render()
-                .handleExtraOptions()   // hide random choice button if only 1 protein
-            ;
+            
+            // Reset distance attribute max value according to max cross-link distance
+            var distAttr = this.options.attributeOptions.filter (function (attr) { return attr.id === "Distance"; });
+            if (distAttr.length === 1) {
+                var userMax = +mainDivSel.select(".xAxisMax").property("value");
+                var distObj = this.model.get("clmsModel").get("distancesObj");
+                if (!userMax) {
+                    distAttr[0].maxVal = CLMSUI.utils.niceRound (distObj.maxDistance * 1.3) + 1;
+                }
+                //console.log ("MAX VAL", distObj.maxDistance, distAttr[0].maxVal);
+            }
+            
+            if (this.getSelectedOption("X").id === "Distance") {
+                //console.log ("DISTOGRAM RERENDERED DUE TO DISTANCE CHANGES");
+                this.render();
+            }
         }
 
         this.listenTo(this.model, "filteringDone", this.render); // listen for custom filteringDone event from model
@@ -409,13 +440,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         if (this.isVisible()) {
             // Update X Label if necessary
             var funcMeta = this.getSelectedOption("X");
-            var curXLabel = this.chart.internal.config.axis_x_label;
+            var curXLabel = this.chart.internal.config.axis_x_label.text;
             var newX = (curXLabel !== funcMeta.label);
             if (newX) { // if a new attribute set on the x axis, change the x axis label and tick format if necessary
                 this.options.xCurrentTickFormat = funcMeta.valueFormat || this.options.xStandardTickFormat;
-                this.chart.axis.labels({
-                    x: funcMeta.label
-                });
+                this.chart.axis.labels({x: funcMeta.label});
+                this.options.absX = this.model.getAttributeRange(funcMeta)[1];
+                //console.log ("ABSX", this.options.absX);
             }
             this.handleExtraOptions();
 
@@ -433,12 +464,15 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
             // Add sub-series data
             // split TT list into sublists for length
-            var splitSeries = colModel.get("labels").range().concat([colModel.get("undefinedLabel")]).map(function(name) {
-                return {
-                    name: name,
-                    linkValues: []
-                };
-            });
+            var splitSeries = colModel.get("labels").range()    // get colour scale category names  
+                .concat([colModel.get("undefinedLabel")])       // add an 'undefined' label (returning as new array)
+                .map(function(name) {                           // make into object with name and linkValues properties
+                    return {
+                        name: name,
+                        linkValues: []
+                    };
+                })
+            ;
 
             //console.log ("measurements", measurements);
             seriesData[TT].linkValues.forEach(function(linkDatum) {
@@ -457,11 +491,12 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             
 
             //console.log ("seriesLengths", seriesLengths);
-            var removeCatchAllCategory = (this.options.maxX !== undefined);
-            var countArrays = this.aggregate(seriesData, this.precalcedDistributions, removeCatchAllCategory);
+            var removeCatchAllCategory = (funcMeta.maxVal !== undefined);
+            var aggregates = this.aggregate(seriesData, this.precalcedDistributions, removeCatchAllCategory);
+            var countArrays = aggregates.countArrays;
 
 
-            function removeSeries(seriesID, onlyIfEmpty) {
+            function removeSeries (seriesID, onlyIfEmpty) {
                 var seriesIndex = _.findIndex(seriesData, function(series) {
                     return series.name === seriesID;
                 });
@@ -492,41 +527,34 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             countArrays.forEach(function(countArray, i) {
                 countArray.unshift(seriesData[i].name);
             }, this);
+            var thresholds = aggregates.thresholds;
+            thresholds.unshift("x");
+            countArrays.push(thresholds);
             //console.log ("thresholds", thresholds);
-            //console.log ("countArrays", countArrays);
+            console.log ("countArrays", countArrays.slice(), seriesData.slice());
 
             if (this.isEmpty(seriesData)) {
                 countArrays = [[]];
             }
 
             var redoChart = function() {
-                // Remove 'Undefined' category if empty
-                removeSeries.call(this, colModel.get("undefinedLabel"), true);
-                removeSeries.call(this, "Selected", true);
-
                 var currentlyLoaded = _.pluck(this.chart.data(), "id");
-                var toBeLoaded = countArrays.map(function(arr) {
-                    return arr[0];
-                });
+                var toBeLoaded = _.pluck (countArrays, 0);  // number is index in subarray to be plucked
                 var unload = _.difference(currentlyLoaded, toBeLoaded);
                 var newloads = _.difference(toBeLoaded, currentlyLoaded);
-                console.log("series", currentlyLoaded, toBeLoaded, unload, newloads);
 
-                this.options.subSeriesNames = seriesData
-                    .filter(function(d) {
+                var subSeries = seriesData
+                    .filter (function(d) {
                         return d.isSubSeries;
                     })
-                    .map(function(d) {
-                        return d.name;
-                    });
+                ;
+                this.options.subSeriesNames = _.pluck (subSeries, "name");
 
-                var subSeriesLengths = seriesData
-                    .filter(function(d) {
-                        return d.isSubSeries;
-                    })
+                var subSeriesLengths = subSeries
                     .map(function(d) {
                         return d.linkValues.length;
-                    });
+                    })
+                ;
 
                 var chartOptions = {
                     columns: countArrays,
@@ -557,10 +585,16 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             var tempTitleHandle = c3.chart.internal.fn.redrawTitle;
             c3.chart.internal.fn.redrawTitle = function() {};
             var chartInternal = this.chart.internal;
+            
+            // Remove 'Undefined' category if empty
+            // need to detect if these two get removed to do compareNewOldData
+            removeSeries (colModel.get("undefinedLabel"), true);
+            removeSeries ("Selected", true);
             var shortcut = this.compareNewOldData(countArrays) && !newX;
-            //console.log ("SHORTCUT", shortcut, this.chart);
-
-            if (options.noAxesRescale) { // doing something where we don't need to rescale x/y axes or relabel (resplitting existing data usually)
+            console.log ("REDRAW TYPE", "noaxesrescale", options.noAxesRescale, "shortcut", shortcut);
+            this.options.dodgeTidyXAxis &= (shortcut || options.noAxesRescale);
+            
+            if (options.noAxesRescale) { // doing something where we don't need to rescale x/y axes or relabel (change of colour in scheme or selection)
                 var seriesChanges = redoChart.call(this);
                 c3.chart.internal.fn.redraw = tempHandle;
                 tempHandle.call(chartInternal, {
@@ -594,7 +628,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     withUpdateOrgXDomain: true,
                     withUpdateXDomain: true
                 });
-                CLMSUI.utils.declutterAxis(d3.select(this.el).select(".c3-axis-x"));
             }
 
             //console.log ("data", distArr, binnedData);
@@ -619,6 +652,21 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         }
         return this;
     },
+    
+    getAxisRange: function () {
+        return this.chart.internal.orgXDomain[1] - this.chart.internal.orgXDomain[0];
+    },
+    
+    // make x tick text values the rounder numbers, and remove any that overlap afterwards
+    tidyXAxis: function () {
+        console.log ("TAXIS");
+        var xaxis = d3.select(this.el).select(".c3-axis-x");
+        if (this.chart) {
+            CLMSUI.utils.niceValueAxis (xaxis, this.getAxisRange());
+            CLMSUI.utils.declutterAxis (xaxis, true);
+        }
+        return this;
+    },
 
     // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
     makeBarsSitBetweenTicks: function(chartObj) {
@@ -634,12 +682,12 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
     compareNewOldData: function(newData) {
         var oldData = this.chart.data();
         //console.log ("oldData", this.chart, oldData, newData);
-        if (oldData.length !== newData.length) {
+        if (oldData.length !== newData.length - 1) {    // 'x' isn't in old data
             return false;
         }
         var oldNewMatch = newData.every(function(newSeries) {
             var oldSeries = this.chart.data.values(newSeries[0]);
-            return oldSeries && oldSeries.length === newSeries.length - 1;
+            return newSeries[0] === 'x' || (oldSeries && oldSeries.length === newSeries.length - 1);
         }, this);
 
         //console.log ("match", oldNewMatch);
@@ -765,7 +813,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
     getDataCount: function() {
         var funcMeta = this.getSelectedOption("X");
-        this.options.maxX = funcMeta.maxVal;
+        this.options.maxX = funcMeta.maxVal || this.options.absX;
         return this.getRelevantAttributeData.call(this, funcMeta);
     },
 
@@ -849,11 +897,12 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 array.pop();
             });
         }
-
-        this.options.minX = thresholds[0];
-        this.options.gapX = thresholds[1] - thresholds[0];
-
-        return countArrays;
+        
+        //console.log ("CA", countArrays, this.chart.internal);
+        return {
+            countArrays: countArrays,
+            thresholds: thresholds
+        };
     },
 
     reRandom: function(evt) {
@@ -872,6 +921,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         d3el.select("#distoPanelRandomOptions")
             .style("display", /*self.model.get("clmsModel").targetProteinCount > 1 && */ extras.showRandoms ? null : "none")
         ;
+        d3el.select("#distoPanelMaxXValue")
+            .style("display", extras.showDistMaxInput ? null : "none")
+        ;
         d3el.selectAll(".c3-axis-y2,c3-axis-y2-label").style("display", extras.showY2Axis ? null : "none");
         return this;
     },
@@ -879,14 +931,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
     relayout: function() {
         // fix c3 setting max-height to current height so it never gets bigger y-wise
         // See https://github.com/masayuki0812/c3/issues/1450
-        var d3el = d3.select(this.el);
-        d3el.select(".c3")
+        d3.select(this.el).select(".c3")
             .style("max-height", "none")
-            .style("position", null);
-        //this.redrawColourRanges();
+            .style("position", null)
+        ;
+        //console.log ("RESiZING DISTOGRAM");
+        this.options.dodgeTidyXAxis = false;  // retidy x axis on resize
         this.chart.resize();
-        CLMSUI.utils.declutterAxis(d3el.select(".c3-axis-x"));
-        //this.makeBarsSitBetweenTicks (this.chart.internal);
         return this;
     },
 
@@ -924,20 +975,18 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 }, this)
                 .map(function(seriesBin) {
                     return seriesBin.bin[c3MouseData.index];
-                });
+                })
+                .filter(function(bin) { return bin !== undefined; })
+            ;
             var bin = d3.merge(bins);
-            //console.log ("bins", bins, bin);
+            
 
             var ev = d3.event || {};
             if (matchBasedSelection) {
-                var matches = bin.map(function(linkData) {
-                    return linkData[2];
-                }); // get the link data from that bin
+                var matches = _.pluck (bin, 2); // get the link data from every bin
                 this.model.setMarkedMatches(type, matches, false, ev.ctrlKey || ev.shiftKey); // set marked cross links according to type and modal keys
             } else {
-                var crossLinks = bin.map(function(linkData) {
-                    return linkData[0];
-                }); // get the link data from that bin
+                var crossLinks = _.pluck (bin, 0); // get the link data from every bin
                 this.model.setMarkedCrossLinks(type, crossLinks, false, ev.ctrlKey || ev.shiftKey); // set marked cross links according to type and modal keys
             }
         }

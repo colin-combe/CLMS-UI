@@ -178,17 +178,22 @@ function mostReadableId(protein) {
 function getMatchesCSV() {
     var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","PeakListFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","Decoy1","Decoy2","3D Distance","From Chain","To Chain","PDB SeqPos 1","PDB SeqPos 2","LinkType","DecoyType"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+    var participants = clmsModel.get("participants");
     var distance2dp = d3.format(".2f");
 
     var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks("all");
     var matchMap = d3.map();
 
     // do it like this so ambiguous matches (belonging to >1 crosslink) aren't repeated
+    console.log ("start map");
+    var zz = performance.now();
     crossLinks.forEach(function(crossLink) {
         crossLink.filteredMatches_pp.forEach(function(match) {
             matchMap.set(match.match.id, match.match);
-        })
     });
+    });
+    console.log ("finish map", performance.now() - zz, "ms.");
+    zz = performance.now();
 
     matchMap.values().forEach(function(match) {
         var peptides1 = match.matchedPeptides[0];
@@ -198,8 +203,8 @@ function getMatchesCSV() {
         var lp1 = CLMSUI.utils.fullPosConcat(match, 0);
         var lp2 = CLMSUI.utils.fullPosConcat(match, 1);
 
-        var decoy1 = clmsModel.get("participants").get(peptides1.prt[0]).is_decoy;
-        var decoy2 = peptides2 ? clmsModel.get("participants").get(peptides2.prt[0]).is_decoy : "";
+        var decoy1 = participants.get(peptides1.prt[0]).is_decoy;
+        var decoy2 = peptides2 ? participants.get(peptides2.prt[0]).is_decoy : "";
 
         // Work out distances for this match - ambiguous matches will have >1 crosslink
         var crossLinks = match.crossLinks;
@@ -219,18 +224,13 @@ function getMatchesCSV() {
         var linkType;
         if (match.isAmbig()) {
             linkType = "Ambig.";
-        } else if (clmsModel.get("participants").get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || (match.matchedPeptides[1] && clmsModel.get("participants").get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___")) {
+        } else if (participants.get(match.matchedPeptides[0].prt[0]).accession == "___AMBIGUOUS___" || (match.matchedPeptides[1] && participants.get(match.matchedPeptides[1].prt[0]).accession == "___AMBIGUOUS___")) {
             linkType = "__AMBIG__";
         } else if (match.crossLinks[0].isSelfLink()) {
             linkType = "Self";
         } else {
             linkType = "Between";
         }
-
-        // if (match.matchedPeptides[0].sequence.indexOf(match.matchedPeptides[1].sequence)  > -1
-        //     || match.matchedPeptides[1].sequence.indexOf(match.matchedPeptides[0].sequence) > -1) {
-        //     linkType = "Substring";
-        // }
 
         var decoyType;
         if (decoy1 && decoy2) {
@@ -250,6 +250,8 @@ function getMatchesCSV() {
     }
 	*/
     });
+
+    console.log ("build string", performance.now() - zz, "ms.");
 
     //console.log ("MCSV", count, matchMap.values().length);
     return csv;

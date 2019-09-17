@@ -163,7 +163,8 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
         ;
     },
     getValue: function(crossLink) {
-        return CLMSUI.compositeModelInst.getSingleCrosslinkDistance(crossLink);
+        return crossLink.getMeta("distance");
+        //return CLMSUI.compositeModelInst.getSingleCrosslinkDistance(crossLink);
     },
 });
 
@@ -171,13 +172,8 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
     initialize: function(properties, options) {
         var colScale;
         var labels = ["Same Protein"];
-        var proteinIDs = CLMSUI.modelUtils.filterOutDecoyInteractors (CLMS.arrayFromMapValues(options.proteins))
-            .map(function(p) {
-                return p.id;
-            })
-        ;
+        var proteinIDs = _.pluck (CLMSUI.modelUtils.filterOutDecoyInteractors (CLMS.arrayFromMapValues(options.proteins)), "id");
 
-        
         if (proteinIDs && proteinIDs.length > 2 && proteinIDs.length < 6) {
             var groupDomain = ["same"];
             for (var n = 0; n < proteinIDs.length; n++) {

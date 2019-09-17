@@ -20,7 +20,7 @@
 }
 
 .CLMStooltip p {
-    padding: 6px 4px 4px 4px;
+    padding: 0.3em;
     margin: 0px;
     font-size: 10pt;
     color: #222;
@@ -41,6 +41,8 @@
     border-collapse: collapse;
     background: none;
     word-wrap: break-word;
+    margin: 0;
+    padding: 0;
 }
 
 .CLMStooltip table tr:nth-child(2n) {
@@ -50,6 +52,16 @@
 .CLMStooltip table tr td {
     font-weight: bold;
     max-width: 200px;  /* stop one column stealing all the space */
+    vertical-align: top;
+    padding-left: 0.1em;
+}
+
+.CLMStooltip table tr:not(:first-child) td {
+    padding-top: 0.2em;
+}
+
+.CLMStooltip table tr td:last-child {
+    padding-right: 0.1em;
 }
 
 .CLMStooltip table tr td:first-child, .CLMStooltip table tr th:first-child {
@@ -58,6 +70,7 @@
 
 .CLMStooltip table tr th {
     height: 1em;
+    padding-left: 0.1em;
 }
 
 .c3-tooltip-container {

@@ -51,6 +51,23 @@ CLMSUI.modelUtils = {
         residueString: function(singleLetterCode) {
             return singleLetterCode + " (" + CLMSUI.modelUtils.amino1to3Map[singleLetterCode] + ")";
         },
+        
+        formatDictionary: {
+            formats: {distance: d3.format(".2f")},
+            units: {distance: " Å"},
+            unknownText: {distance : "Unknown"}
+        },
+        
+        niceFormat: function (key, value) {
+            var fd = CLMSUI.modelUtils.makeTooltipContents.formatDictionary;
+            var noFormat = function (v) { return v; };
+            
+            var format = fd.formats[key] || noFormat;
+            var unit = fd.units[key] || "";
+            var unknown = fd.unknownText[key] || "";
+            
+            return value !== undefined ? (format (value) + (unit || "")) : unknown;
+        },
 
         link: function(xlink, extras) {
             var linear = xlink.isLinearLink();
@@ -67,15 +84,17 @@ CLMSUI.modelUtils = {
             });
 
             d3.entries(xlink.getMeta()).forEach(function(entry) {
-                if (entry.value !== undefined && !_.isObject(entry.value)) {
-                    info.push([entry.key, entry.value]);
+                var val = entry.value;
+                var key = entry.key.toLocaleLowerCase();
+                if (val !== undefined && !_.isObject(val)) {
+                    info.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
                 }
             });
             return info;
         },
 
         interactor: function(interactor) {
-            contents = [
+            var contents = [
                 ["ID", interactor.id],
                 ["Accession", interactor.accession],
                 ["Size", interactor.size],
@@ -104,11 +123,13 @@ CLMSUI.modelUtils = {
                     return [linear ? "Linear" : xlink.toProtein.name, linear ? "---" : xlink.toResidue, residueCode, xlink.filteredMatches_pp.length];
                 }
             });
-
+            
             var extraEntries = d3.entries(extras);
             extraEntries.forEach(function(extraEntry) {
+                var key = extraEntry.key.toLocaleLowerCase();
+
                 extraEntry.value.forEach(function(val, i) {
-                    ttinfo[i].push(val);
+                    ttinfo[i].push (CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val));
                 });
             });
 
@@ -164,6 +185,7 @@ CLMSUI.modelUtils = {
         linkList: function(linkList, extras) {
             var extraEntries = d3.entries(extras);
             var fromProtein, toProtein;
+            
             var details = linkList.map(function(crossLink, i) {
                 var from3LetterCode = CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(crossLink, false));
                 var to3LetterCode = CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(crossLink, true));
@@ -171,7 +193,9 @@ CLMSUI.modelUtils = {
                 toProtein = crossLink.toProtein.name;
                 var row = [crossLink.fromResidue + " " + from3LetterCode, crossLink.toResidue + " " + to3LetterCode];
                 extraEntries.forEach(function(entry) {
-                    row.push(entry.value[i]);
+                    var key = entry.key.toLocaleLowerCase();
+                    var val = entry.value[i];
+                    row.push (CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val));
                 });
                 return row;
             });
@@ -196,14 +220,15 @@ CLMSUI.modelUtils = {
 
         goTerm: function(goTerm) {
             return [
-                ["ID", goTerm.id],
+                //["ID", goTerm.id],
                 ["Name", goTerm.name],
-                ["Namespace", goTerm.namespace],
+                //["Namespace", goTerm.namespace],
                 ["Definition", goTerm.def],
-                ["Synonym", goTerm.synomym],
-                ["is_a", Array.from(goTerm.is_a.values()).join(", ")],
-                ["intersection_of", Array.from(goTerm.intersection_of.values()).join(", ")],
-                ["relationship", Array.from(goTerm.relationship.values()).join(", ")]
+                // ["Synonym", goTerm.synomym],
+                // ["is_a", Array.from(goTerm.is_a.values()).join(", ")],
+                // ["intersection_of", Array.from(goTerm.intersection_of.values()).join(", ")],
+                // ["relationship", Array.from(goTerm.relationship.values()).join(", ")],
+                // ["interactors", goTerm.getInteractors(false).size]
             ];
         },
     },
@@ -552,39 +577,17 @@ CLMSUI.modelUtils = {
         return rmap;
     },
 
-    // Connect searches to proteins
-    getProteinSearchMap: function(peptideArray, rawMatchArray) {
-        var pepMap = d3.map(peptideArray, function(peptide) {
-            return peptide.id;
-        });
-        var searchMap = {};
-        rawMatchArray = rawMatchArray || [];
-        rawMatchArray.forEach(function(rawMatch) {
-            var prots = pepMap.get(rawMatch.pi/*[0]*/).prt; // pi now restored to single value, not array
-            var searchToProts = searchMap[rawMatch.si];
-            if (!searchToProts) {
-                var newSet = d3.set();
-                searchMap[rawMatch.si] = newSet;
-                searchToProts = newSet;
-            }
-            prots.forEach(function(prot) {
-                searchToProts.add(prot);
-            });
-        });
-        return searchMap;
-    },
-
-    makeMultiKeyProteinMap: function (clmsModel) {
+    makeMultiKeyProteinMap: function(clmsModel) {
         var protMap = d3.map();
         clmsModel.get("participants").forEach(function(value, key) {
             protMap.set(value.accession, key);
             protMap.set(value.name, key);
             protMap.set(value.id, key);
-        }); 
+        });
         return protMap;
     },
-    
-    parseProteinID: function (protMap, pid) {
+
+    parseProteinID: function(protMap, pid) {
         var parts = pid.split("|");
         var pkey;
         parts.forEach(function(part) {
@@ -595,7 +598,7 @@ CLMSUI.modelUtils = {
 
     updateLinkMetadata: function(metaDataFileContents, clmsModel) {
         var crossLinks = clmsModel.get("crossLinks");
-        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
         var first = true;
         var columns = [];
         var columnTypes = {};
@@ -606,9 +609,9 @@ CLMSUI.modelUtils = {
             return d[ref + " " + n] || d[ref + n];
         }
 
-        function parseProteinID2 (i, d) {
+        function parseProteinID2(i, d) {
             var p = getValueN("Protein", i, d) || "";
-            return CLMSUI.modelUtils.parseProteinID (protMap, p);
+            return CLMSUI.modelUtils.parseProteinID(protMap, p);
         }
 
         var matchedCrossLinks = [];
@@ -618,8 +621,8 @@ CLMSUI.modelUtils = {
 
             // Maybe need to generate key from several columns
             if (!crossLink) {
-                var pkey1 = parseProteinID2 (1, d);
-                var pkey2 = parseProteinID2 (2, d);
+                var pkey1 = parseProteinID2(1, d);
+                var pkey2 = parseProteinID2(2, d);
                 linkID = pkey1 + "_" + getValueN("SeqPos", 1, d) + "-" + pkey2 + "_" + getValueN("SeqPos", 2, d);
                 crossLink = crossLinks.get(linkID);
             }
@@ -665,8 +668,7 @@ CLMSUI.modelUtils = {
                         matchedCrossLink.setMeta(entry.key, val.toString());
                     }
                 });
-            })
-        ;
+            });
 
         var registry = clmsModel.get("crossLinkMetaRegistry") || d3.set();
         columns.forEach(function(column) {
@@ -709,7 +711,7 @@ CLMSUI.modelUtils = {
         var dontStoreSet = d3.set(dontStoreArray);
         var matchedProteinCount = 0;
 
-        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
 
         d3.csv.parse(metaDataFileContents, function(d) {
             if (first) {
@@ -721,7 +723,7 @@ CLMSUI.modelUtils = {
             }
 
             var proteinIDValue = d.proteinID || d.ProteinID || d.Accession || d.accession;
-            var proteinID = protMap.get (CLMSUI.modelUtils.parseProteinID (protMap, proteinIDValue));
+            var proteinID = protMap.get(CLMSUI.modelUtils.parseProteinID(protMap, proteinIDValue));
             if (proteinID !== undefined) {
                 var protein = proteins.get(proteinID);
 
@@ -775,7 +777,7 @@ CLMSUI.modelUtils = {
         var first = true;
         var columns = [];
 
-        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap (clmsModel);
+        var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
         var newAnnotations = [];
         var annotationMap = d3.map();
         var proteinSet = d3.set();
@@ -794,7 +796,7 @@ CLMSUI.modelUtils = {
                 dl[key.toLocaleLowerCase()] = d[key];
             });
 
-            var proteinID = protMap.get (CLMSUI.modelUtils.parseProteinID (protMap, dl.proteinid));
+            var proteinID = protMap.get(CLMSUI.modelUtils.parseProteinID(protMap, dl.proteinid));
             if (proteinID !== undefined) {
                 var protein = proteins.get(proteinID);
 
@@ -832,141 +834,112 @@ CLMSUI.modelUtils = {
             source: "file"
         });
     },
-
-
-    updateGafAnnotationsMetadata: function(gafFileContents, clmsModel) {
-
-        var url = "./go.obo";
-
-        d3.text(url, function(error, txt) {
+    
+    
+    convertGO_OBOtoJson: function (url) {
+        d3.text (url, function(error, txt) {
             if (error) {
                 console.log("error", error, "for", url, arguments);
             } else {
-                var go = new Map();
-                var lines = txt.split('\n');
-                var term;
-
-                for (var l = 0; l < lines.length; l++) {
-                    var line = lines[l];
-                    if (line.trim() != "") {
-                        if (line.trim() == "[Term]" || line.trim() == "[Typedef]") {
-                            if (term) { //} && term.namespace == termType) {
-                                go.set(term.id, term);
-                            }
-                            term = new CLMSUI.GoTerm();
-                        } else if (term) {
-                            var parts = line.split(":");
-                            if (parts[0] == "is_a" || parts[0] == "part_of" || parts[0] == "intersection_of" || parts[0] == "relationship") {
-                                term[parts[0]].add(parts.slice(1, parts.length).join("").trim());
-                            } else {
-                                term[parts[0]] = parts.slice(1, parts.length).join("").trim();
-                            }
-                        }
-                    }
-                }
-                go.set(term.id, term);
-                console.log("go size:" + go.size)
-                CLMSUI.compositeModelInst.set("go", go);
-
-                var tempMap = new Map();
-                var goDags = {};
-
-                function checkTerm(goTerm) {
-                    if (!tempMap.has(goTerm.id)) {
-                        if (goTerm.is_a.size > 0) {
-                            var is_aValues = goTerm.is_a.values();
-                            for (var parent of is_aValues) {
-                                var parentId = parent.split(" ")[0];
-                                var parentTerm = go.get(parentId);
-                                if (goTerm.namespace = parentTerm.namespace) {
-                                    // goTerm.is_aParents.push(parentTerm);
-                                    checkTerm(parentTerm);
-                                    parentTerm.is_aChildren.push(goTerm);
-                                }
-                            }
-                        }
-                        if (goTerm.part_of.size > 0) {
-                            var part_ofValues = goTerm.part_of.values();
-                            for (var parent of is_aValues) {
-                                var parentId = potentialParent.split(" ")[0];
-                                var parentTerm = go.get(parentId);
-                                if (goTerm.namespace = parentTerm.namespace) {
-                                    // goTerm.part_ofParents.push(parentTerm);
-                                    checkTerm(parentTerm);
-                                    parentTerm.part_ofChildren.push(goTerm);
-                                }
-                            }
-                        } else if (goTerm.id == "GO0008150") {
-                            goDags.biological_process = goTerm;
-                        } else if (goTerm.id == "GO0003674") {
-                            goDags.molecular_function = goTerm;
-                        } else if (goTerm.id == "GO0005575") {
-                            goDags.cellular_component = goTerm;
-                        }
-                        tempMap.set(goTerm.id, goTerm);
-                        return goTerm;
-                    } else {
-                        return tempMap.get(goTerm.id);
-                    }
-                    return null;
-                };
-
-                for (var t of go.values()) {
-                    checkTerm(t);
-                }
-
-                // function setNodeDepth(node, depth) {
-                //     if (depth > node.depth) {
-                //         node.depth = depth;
-                //     }
-                //     for (var c of node.children) {
-                //         setNodeDepth(c, depth + 1);
-                //     }
-                // }
-                //
-                // setNodeDepth(goTrees.biological_process, 0);
-                // setNodeDepth(goTrees.molecular_function, 0);
-                // setNodeDepth(goTrees.cellular_component, 0);
-
-                CLMSUI.compositeModelInst.set("goDags", goDags);
-
-                var proteins = clmsModel.get("participants");
-                var protMap = d3.map();
-                proteins.forEach(function(value, key) {
-                    protMap.set(value.accession, key);
-                });
-
-                var gafLines = gafFileContents.split('\n');
-                for (var g = 0; g < gafLines.length; g++) {
-                    line = gafLines[g];
-                    if (line.startsWith("!") == false) {
-                        var fields = line.split("\t");
-                        var goId = fields[4].replace(":", "");
-                        var goTerm = go.get(goId);
-                        if (goTerm) {
-                            var acc = fields[1];
-                            var proteinId = protMap.get(acc);
-                            if (proteinId) {
-                                var protein = proteins.get(proteinId);
-                                goTerm.interactors.add(protein);
-                                // if (!protein.go) {
-                                //     protein.go = new Set();
-                                // }
-                                // //console.log(">>"+goId);
-                                // protein.go.add(goId);
-                            }
-                        }
-                    }
-                }
-
-                CLMSUI.vent.trigger("goAnnotationsUpdated", {
-                    // groups: groups
-                }, {
-                    source: "file"
-                });
-
+                CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+                CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
             }
         });
+    },
+
+
+    loadGOAnnotations: function (txt) {
+        console.log ("parsing go obo");
+        var z = performance.now();
+        var go = new Map();
+        //var lines = txt.split('\n');
+        var term;
+        var i = 0, l = 0;
+        var first = true;
+        
+        //for (var l = 0; l < lines.length; l++) {
+        while (i !== 0 || first) {
+            first = false;
+            var endi = txt.indexOf("\n", i);
+            var line = txt.slice(i, endi !== -1 ? endi : undefined);
+            //not having ':' in go ids, so valid html id later, maybe a mistake, (do trim here to get rid of '/r's too - mjg)
+            line = line.trim().replace (/:/g, '');
+            //var line = lines[l].trim().replace (/:/g, '');
+
+            if (line) {
+                if (line === "[Term]" || line === "[Typedef]") {
+                    if (term) {
+                        go.set(term.id, term);
+                    }
+                    term = new CLMSUI.GoTerm();
+                } else if (term) {
+                    //var parts = line.split(" ");  // speed up by avoiding split if humanly possible as free text lines are space heavy
+                    var tag = line.slice (0, line.indexOf(" "));
+                    var value = line.slice (tag.length + 1);
+                    if (tag === "is_a") {
+                        var vi = value.indexOf(" ");
+                        var valuewc = vi >= 0 ? value.slice(0, vi) : value; // remove comment portion
+                        term.is_a = term.is_a || new Set();
+                        term.is_a.add (valuewc);
+                    } else if (tag === "intersection_of" || tag === "relationship") {
+                        var parts = value.split(" ", 2);    // split to first 2 only, avoid parsing comments
+                        if (parts[0] === "part_of") {
+                            // console.log(term.namespace, line);
+                            term.part_of = term.part_of || new Set();
+                            term.part_of.add (parts[1]);
+                        }
+                    } else {
+                        term[tag] = value;   // quicker in chrome at least
+                    }
+                }
+            }
+            i = endi + 1;
+            l++;
+        } 
+        go.set(term.id, term); // last one left over
+
+        var zz = performance.now();
+        //populate subclasses and parts
+        for (term of go.values()) {
+            if (term.is_a) {
+                for (let superclassId of term.is_a){
+                    //console.log ("go", go, superclassId, go.get(superclassId));
+                    var other = go.get(superclassId);
+                    other.subclasses = other.subclasses || new Set();
+                    other.subclasses.add(term.id);
+                }
+            }
+            if (term.part_of) {
+                for (let partOfId of term.part_of){
+                    var other = go.get(partOfId);
+                    other.parts = other.parts || new Set();
+                    other.parts.add(term.id);
+                }
+            }
+        }
+        console.log (zz-z, "ms. first pass (is_a, part_of)", performance.now() - zz, "ms. second pass (subclasses, parts)");
+        console.log ("for obo parsing", l, "lines into map size", go.size);
+        
+        return go;
+    },
+    
+    jsonifyGoMap (goMap) {
+        var json = {};
+        goMap.forEach (function (v, k) {
+            var newv = $.extend({}, v);
+            Object.keys(newv).forEach (function (key) {
+                if (newv[key] instanceof Set) {
+                    if (newv[key].size === 0) {
+                        delete newv[key];
+                    } else {
+                        newv[key] = [...newv[key]];
+                    }
+                }
+            });
+            json[k] = JSON.parse(JSON.stringify(newv));
+        });
+        
+        return json;
     },
 
 
@@ -1006,9 +979,7 @@ CLMSUI.modelUtils = {
             value: d3.mean
         };
 
-        var groupIndices = valuesByColumn.map(function(zscore) {
-            return zscore.groupIndex;
-        });
+        var groupIndices = _.pluck (valuesByColumn, "groupIndex");
         var colRange = _.range(d3.max(groupIndices) + 1);
         var avgColumns = colRange.map(function() {
             return [];
@@ -1049,9 +1020,7 @@ CLMSUI.modelUtils = {
     // e.g. options.groups = d3.map({a: "cat", b: "cat", c: "dog"});
     // then a.groupIndex = 0, b.groupIndex = 0, c.groupIndex = 1, colNameGroups = [0: [a,b], 1: [c]]
     makeColumnGroupIndices: function(valuesByColumn, options) {
-        var columnNamesSet = d3.set(valuesByColumn.map(function(columnValues) {
-            return columnValues.colName;
-        }));
+        var columnNamesSet = d3.set(_.pluck (valuesByColumn, "colName"));
         var columnNameGroups = {};
         options.groups.forEach(function(k, v) {
             if (columnNamesSet.has(k)) {
@@ -1145,9 +1114,7 @@ CLMSUI.modelUtils = {
         var zGroupAvgScores = CLMSUI.modelUtils.averageGroups(zScoresByColumn, colNameGroups, options.averageFuncEntry);
         var allZScores = zScoresByColumn.concat(zGroupAvgScores);
         var allZScoresByLink = CLMSUI.modelUtils.reduceLinks(d3.transpose(allZScores), crossLinks);
-        var colNames = allZScores.map(function(col) {
-            return col.colName;
-        });
+        var colNames = _.pluck (allZScores, "colName");
         var groupColumns = zGroupAvgScores.map(function(avgColumn) {
             return {
                 name: avgColumn.colName,
@@ -1160,10 +1127,7 @@ CLMSUI.modelUtils = {
         CLMSUI.modelUtils.updateMetaDataWithTheseColumns(allZScoresByLink, groupColumns);
 
         // Then tell the world these meta attributes have changed
-        var newAndUpdatedColumns = groupColumns
-            .map(function(groupCol) {
-                return groupCol.name;
-            });
+        var newAndUpdatedColumns = _.pluck (groupColumns, "name");
         CLMSUI.vent.trigger("linkMetadataUpdated", {
             columns: newAndUpdatedColumns,
             columnTypes: _.object(newAndUpdatedColumns, _.range(newAndUpdatedColumns.length).map(function() {
@@ -1355,7 +1319,7 @@ CLMSUI.modelUtils = {
         return vals;
     },
 
-    getDistanceSquared: function(coords1, coords2) {
+    getDistanceSquared: function (coords1, coords2) {
         var d2 = 0;
         for (var n = 0; n < coords1.length; n++) {
             var diff = coords1[n] - coords2[n];
@@ -1434,7 +1398,7 @@ CLMSUI.modelUtils = {
         return urlChunkMap;
     },
 
-    makeURLQueryString: function(obj, commonKeyPrefix) {
+    makeURLQueryPairs: function (obj, commonKeyPrefix) {
         var attrEntries = d3.entries(obj);
         var parts = attrEntries.map(function(attrEntry) {
             var val = attrEntry.value;
@@ -1447,7 +1411,7 @@ CLMSUI.modelUtils = {
             } else {
                 val = encodeURI(JSON.stringify(val));
             }
-            return commonKeyPrefix + attrEntry.key + "=" + val;
+            return (commonKeyPrefix || "") + attrEntry.key + "=" + val;
         });
         return parts;
     },

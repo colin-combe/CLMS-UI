@@ -244,7 +244,7 @@ CLMSUI.utils = {
     niceRoundMap: {
         1: 1,
         2: 2,
-        3: 3,
+        3: 5,
         4: 5,
         5: 5,
         6: 10,
@@ -387,23 +387,51 @@ CLMSUI.utils = {
         ;
     },
 
-    declutterAxis: function(d3AxisElem) {
+    // Hide overlapping d3 axis labels
+    declutterAxis: function(d3AxisElem, keepHidden) {
         var lastBounds = {
             left: -100,
             right: -100,
             top: -100,
             bottom: -100
         };
+        d3AxisElem.selectAll(".tick text").style("visibility", "visible");
+        
         d3AxisElem.selectAll(".tick text")
-            .each(function() {
+            .each(function(d) {
                 var text = d3.select(this);
-                var bounds = this.getBoundingClientRect();
-                var overlap = !(bounds.right <= lastBounds.left || bounds.left >= lastBounds.right || bounds.bottom <= lastBounds.top || bounds.top >= lastBounds.bottom);
-                text.style("visibility", overlap ? "hidden" : null);
-                if (!overlap) {
-                    lastBounds = bounds;
+                var elemVis = text.style("visibility") !== "hidden";
+                if (elemVis) {
+                    var bounds = this.getBoundingClientRect();
+                    if (bounds.width * bounds.height !== 0) {
+                        var overlap = !(bounds.right <= lastBounds.left + 1 || bounds.left >= lastBounds.right - 1 || bounds.bottom <= lastBounds.top + 1 || bounds.top >= lastBounds.bottom - 1);
+                        text.style("visibility", overlap ? "hidden" : "visible");
+                        if (!overlap) {
+                            lastBounds = bounds;
+                        }
+                    }
                 }
             });
+    },
+    
+    // Remove non-round d3 axis labels and associated ticks
+    niceValueAxis: function(d3AxisElem, maxVal) {
+        var u = Math.round (Math.log10 (maxVal + 3)) - 1;
+        var m = Math.pow (10, u);
+        
+        d3AxisElem.selectAll(".tick")
+            .each (function (d) {
+                var nice = d % m === 0;
+                var tick = d3.select(this);
+                tick.style("stroke-width", nice ? 2 : 1);
+                var text = tick.select("text");
+                if (!nice) {
+                    text.text("");
+                } else {
+                    text.style("display", "block");
+                }
+            })
+        ;
     },
 
     RadioButtonFilterViewBB: Backbone.View.extend({
@@ -619,9 +647,7 @@ CLMSUI.utils = {
 
     searchesToString: function() {
         var searches = Array.from(CLMSUI.compositeModelInst.get("clmsModel").get("searches"));
-        var searchKeys = searches.map(function(search) {
-            return search[0];
-        }); // just the keys
+        var searchKeys = _.pluck (searches, 0); // just the keys
         var searchStr = ("SRCH=" + searchKeys.join("-")).substring(0, 40);
         return searchStr;
     },
@@ -1071,6 +1097,11 @@ CLMSUI.utils = {
             return this;
         },
         
+        // called when reshown (visible set to true) - use for updating calcs before rendering
+        reshow: function () {
+            return this;
+        },
+        
         _makeDetachedSVG : function (thisSVG) {
             var keyHeight = 0;
             if (this.options.exportKey) {
@@ -1170,7 +1201,7 @@ CLMSUI.utils = {
                 var link = this.model.get("filterModel") ? 
                     tempSVG.append("a")
                         .attr ("class", "imageOrigin")
-                        .attr ("xlink:href", this.model.get("filterModel").generateUrlString())
+                        .attr ("xlink:href", this.model.generateUrlString())
                         .attr ("target", "_blank")
                     : tempSVG
                 ;
@@ -1345,6 +1376,7 @@ CLMSUI.utils = {
 
             if (show) {
                 this
+                    .reshow()
                     .relayout() // need to resize first sometimes so render gets correct width/height coords
                     .render();
                 this.bringToTop();

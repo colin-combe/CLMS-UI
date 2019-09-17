@@ -8,9 +8,9 @@
 	vertical-align: top;
     /*display: inline-block;*/
 	display: inline-flex;
-    padding: 0 0.35em 0 0;
+    padding: 0 0.2em 0 0;
 	border-right: 1px solid #bbb;
-	margin: auto 0.35em auto 0;
+	margin: auto 0.1em auto 0;
     height: 65px;
 }
 
@@ -55,19 +55,19 @@ div.filterControlGroup label:hover {
 }
 
 
-div.textFilters, div.toggles, div.scoreSlider > div, div.navNumberFilterDiv {
+div.filterItem, div.scoreSlider > div {
     display: inline-block;
     vertical-align: top;
 }
 
 
-.textFilters span:after, .toggles span:after, .scoreSlider span:after, .navNumberFilterDiv span:after {
+.filterItem span:after, .scoreSlider span:after {
     content: ' ';
     display: block;
 }
 
 
-.subsetNumberFilter {
+.filterTypeNumber {
     width: 4em;
 }
 
@@ -154,6 +154,7 @@ div.filterControlGroup label.noBreak2 {
     background: #cce;
     font-size: 0.85em;
     line-height: 1em;
+    margin-right:0.2em;
 }
 
 .verticalText {

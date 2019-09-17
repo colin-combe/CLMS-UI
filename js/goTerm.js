@@ -1,45 +1,71 @@
 CLMSUI = CLMSUI || {};
 
 CLMSUI.GoTerm = function() {
-  this.is_a = new Set();
-  this.part_of = new Set();
-  this.intersection_of = new Set();
-    this.relationship = new Set();
-    this.interactors = new Set();
+    // lazy instantiation instead
+    //this.is_a = new Set(); // i.e. superclasses
+    //this.subclasses = new Set();
+    //this.part_of = new Set();
+    //this.parts = new Set();
+    //this.interactors = new Set();
+    this.filtInteractorCount = 0;
+};
 
-    this.is_aChildren = [];
-    this.part_ofChildren = [];
-    this.height = 25;
-    this.width = 50;
-    this.expanded = false;
-    this.depth = 0;
+CLMSUI.GoTerm.prototype.getInteractors = function (storeCount) {
+    var go = CLMSUI.compositeModelInst.get("go");
+    CLMSUI.GoTerm.prototype.getCount++;
+    
+    var subTreeSet; // = new Set();
+    
+    if (this.parts || this.subclasses || this.interactors) {
+        subTreeSet = new Set();
+        
+        if (this.parts) {
+            for (let partId of this.parts) {
+                var sub = go.get(partId).getInteractors(storeCount);
+                if (sub) {
+                    sub.forEach (subTreeSet.add, subTreeSet);
+                }
+            }
+        }
+        if (this.subclasses) {
+            for (let subclassId of this.subclasses) {
+                var sub = go.get(subclassId).getInteractors(storeCount);
+                if (sub) {
+                    sub.forEach (subTreeSet.add, subTreeSet);
+                }
+            }
+        }
 
-    //TODO - this wastes a bit memory coz the property is not on the prototype, fix
-    // Object.defineProperty(this, "width", {
-    //     get: function width() {
-    //         return this.upperGroup.getBBox().width;
-    //     }
-    // });
-    // var self = this;
-    // Object.defineProperty(this, "height", {
-    //     get: function height() {
-    //         return Math.sqrt(self.getInteractors().size / Math.PI) * 10;;//this.upperGroup.getBBox().height;
-    //     }
-    // });
+        if (this.interactors) {
+            for (let i of this.interactors) {
+                if (i.hidden == false) {
+                    subTreeSet.add(i);
+                }
+            }
+        }
+        
+        if (subTreeSet.size === 0) { subTreeSet = null; }
+    }
+    if (storeCount) {
+        this.filtInteractorCount = subTreeSet ? subTreeSet.size : 0;
+        //if (subTreeSet.size) { console.log ("sub", subTreeSet, this.id); }
+    }
+    
+    return subTreeSet;
+};
+
+
+CLMSUI.GoTerm.prototype.isDirectRelation = function(anotherGoTerm) {
+    var agoid = anotherGoTerm.id;
+    return ( 
+        (this == anotherGoTerm) ||
+        (this.is_a && this.is_a.has (agoid)) ||
+        (this.subclasses && this.subclasses.has (agoid)) ||
+        (this.part_of && this.part_of.has (agoid)) ||
+        (this.parts && this.parts.has (agoid)) 
+    );
 }
 
-CLMSUI.GoTerm.prototype.getInteractors = function(interactorSet) {
-    if (!interactorSet) {
-        interactorSet = new Set();
-    }
-    for (var c of this.is_aChildren) {
-        c.getInteractors(interactorSet);
-    }
-    for (var i of this.interactors.values()) {
-        interactorSet.add(i);
-    }
-    return interactorSet;
-}
 
 /*
 CLMSUI.GoTerm.prototype.getClosestVisibleParents = function(visibleParents) {

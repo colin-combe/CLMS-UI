@@ -491,10 +491,18 @@ A.btn {
 /* For use with Split.js */
 
 .gutter {
-  background-color: #eee;
+    border-top: 1px solid white;
+    border-bottom: 1px solid #aaa;
+    background-color: #091d42;
   background-repeat: no-repeat;
   background-position: 50%;
   position: relative; /* will overlay previous absolute divs i.e. distance slider */
+    margin: 0 10px;
+}
+
+.gutter:hover {
+    background-color: white;
+    border-color: #091d42;
 }
 
 .gutter.gutter-horizontal {
@@ -506,6 +514,8 @@ A.btn {
   background-image: url('../images/grips/horizontal.png');
   cursor: ns-resize;
 }
+
+
 
 .fdrCalculation {
     display: inline-block;
@@ -842,12 +852,6 @@ image.sharpImage {
     -ms-interpolation-mode: nearest-neighbor;
     image-rendering: pixelated;
 }
-
-.textFilters.chargeFilterControl {
-    /* hide charge control here */
-    display: none;
-}
-
 
 div#gafAnnotationsMetaLoadPanel > div > div.expectedFormatPanel {
   display:none;

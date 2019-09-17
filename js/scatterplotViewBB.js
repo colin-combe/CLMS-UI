@@ -278,7 +278,8 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo(this.model, "selectionMatchesLinksChanged change:linkColourAssignment currentColourModelChanged", this.recolourCrossLinks);
         this.listenTo(this.model, "highlightsMatchesLinksChanged", this.rehighlightCrossLinks);
         this.listenTo(this.model, "filteringDone", function() { this.renderCrossLinks({isFiltering: true}); });
-        this.listenTo(this.model.get("clmsModel"), "change:distancesObj", function() { this.axisChosen().render(); });
+        this.listenTo(this.model.get("clmsModel"), "change:distancesObj", this.ifADistanceAxisRerender);
+        this.listenTo(CLMSUI.vent, "distancesAdjusted PDBPermittedChainSetsUpdated changeAllowInterModelDistances", this.ifADistanceAxisRerender);
         this.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaMetaData) {
             //console.log ("HELLO", arguments);
             var columns = metaMetaData.columns;
@@ -307,6 +308,16 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
     
     takeImage: function(event, thisSVG) {
         return this.downloadSVGWithCanvas ();
+    },
+    
+    ifADistanceAxisRerender: function () {
+        var distanceAxes = this.getBothAxesMetaData().filter(function (axis) {
+            return axis.id === "Distance";
+        });
+        if (distanceAxes.length) {
+            console.log ("RERENDER SCATTERPLOT ON DISTANCE CHANGE");
+            this.axisChosen().render();
+        }
     },
 
     setMultipleSelectControls: function(elem, options, keepOld) {
@@ -420,8 +431,10 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.nearest = nearest;
     },
 
-    relayout: function() {
-        this.render();
+    relayout: function(descriptor) {
+        if (descriptor && descriptor.dragEnd) { // avoids doing two renders when view is being made visible
+            this.render();
+        }
         return this;
     },
 
@@ -450,7 +463,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
     getData: function(funcMeta, filteredFlag, optionalLinks) {
         var linkFunc = funcMeta ? (filteredFlag ? funcMeta.linkFunc : funcMeta.unfilteredLinkFunc) : undefined;
         var crossLinks = optionalLinks ||
-            (filteredFlag ? this.getFilteredCrossLinks() : CLMS.arrayFromMapValues(this.model.get("clmsModel").get("crossLinks")));
+            (filteredFlag ? this.getFilteredCrossLinks() : this.model.getAllCrossLinks());
         var data = crossLinks.map(function(c) {
             return linkFunc ? linkFunc.call(this, c) : [undefined];
         }, this);
@@ -471,7 +484,8 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
             })
             .each(function(d) {
                 funcMeta = d;
-            });
+            })
+        ;
 
         return funcMeta;
     },
@@ -1019,11 +1033,13 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
     redrawAxes: function(sizeData) {
         this.vis.select(".x")
             .attr("transform", "translate(0," + (sizeData.height) + ")")
-            .call(this.xAxis);
+            .call(this.xAxis)
+        ;
 
         this.vis.select(".y")
             .attr("transform", "translate(-1,0)")
-            .call(this.yAxis);
+            .call(this.yAxis)
+        ;
 
         CLMSUI.utils.declutterAxis(this.vis.select(".x"));
         CLMSUI.utils.declutterAxis(this.vis.select(".y"));

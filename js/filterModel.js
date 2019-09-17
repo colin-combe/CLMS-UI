@@ -17,9 +17,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 aaApart: 0,
                 pepLength: 1,
                 //validation status
-                thresholdAll: false,
-                thresholdPass: true,
-                thresholdFail: false,
+                pass: true,
+                fail: false,
 
                 decoys: true,
                 //fdr
@@ -29,26 +28,82 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 //navigation
                 pepSeq: "",
                 protNames: "",
-                charge: "",
                 runName: "",
                 scanNumber: "",
                 urpPpi: 1,
             },
 
+            extents: {
+                aaApart: {
+                    min: 0,
+                    max: 999
+                },
+                pepLength: {
+                    min: 1,
+                    max: 99
+                },
+                urpPpi: {
+                    min: 1,
+                    max: 99
+                },
+                fdrThreshold: {
+                    min: 0,
+                    max: 100
+                }
+            },
+
+            patterns: {
+                pepSeq: "[A-Za-z]+-?[A-Za-z]*",
+            },
+
+            types: {
+                manualMode: "boolean",
+                fdrMode: "boolean",
+                //subset
+                linears: "boolean",
+                crosslinks: "boolean",
+                betweenLinks: "boolean",
+                selfLinks: "boolean",
+                homomultimericLinks: "boolean",
+                ambig: "boolean",
+                aaApart: "number",
+                pepLength: "number",
+                //validation status
+                pass: "boolean",
+                fail: "boolean",
+                decoys: "boolean",
+                //fdr
+                fdrThreshold: "number",
+                interFdrCut: "number",
+                intraFdrCut: "number",
+                //navigation
+                pepSeq: "text",
+                protNames: "text",
+                runName: "text",
+                scanNumber: "number",
+                urpPpi: "number",
+            },
+
             initialize: function(options, secondarySettings) {
                 if (!this.get("matchScoreCutoff")) {
-                    this.set("matchScoreCutoff", [0, 100]);
+                    this.set("matchScoreCutoff", [undefined, undefined]);
                     // ^^^setting an array in defaults passes that same array reference to every instantiated model, so do it in initialize
                 }
-                
                 // scoreExtent used to restrain text input values
                 this.scoreExtent = (secondarySettings ? secondarySettings.scoreExtent : undefined) || this.get("matchScoreCutoff").slice(0);
+
+
+                if (!this.get("distanceCutoff")) {
+                    this.set("distanceCutoff", [undefined, undefined]);
+                }
+                this.distanceExtent = (secondarySettings ? secondarySettings.distanceExtent : undefined) || this.get("distanceCutoff").slice(0);
+
                 // possibleSearchGroups used to restrain searchGroup options
                 this.possibleSearchGroups = (secondarySettings ? secondarySettings.possibleSearchGroups : undefined) || this.get("searchGroups").slice(0);
                 //this.scoreExtent = this.matches.extent (fu)
                 this.valMap = d3.map();
                 this.valMap.set("?", "Q");
-                this.preprocessedInputText = d3.map(); // preprocessed user input values so they're not constantly reparsed for every match
+                this.preprocessedInputValues = d3.map(); // preprocessed user input values so they're not constantly reparsed for every match
 
                 this.resetValues = this.toJSON(); // Store copy of original values if needed to restore later
             },
@@ -59,21 +114,26 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                         silent: true
                     })
                     .set(this.resetValues);
-                
+
                 return this;
             },
 
-            processTextFilters: function (searchArray) {
+            getMinExtent: function (attrID) {
+                var extents = this.extents[attrID];
+                return extents ? extents.min : null;
+            },
+
+            getMaxExtent: function (attrID) {
+                var extents = this.extents[attrID];
+                return extents ? extents.max : null;
+            },
+
+            preprocessFilterInputValues: function (searchArray) {
                 var protSplit1 = this.get("protNames").toLowerCase().split(","); // split by commas
-                this.preprocessedInputText.set("protNames", protSplit1.map(function(prot) {
+                this.preprocessedInputValues.set("protNames", protSplit1.map(function(prot) {
                     return prot.split("-");
                 })); // split these in turn by hyphens
-                //console.log ("preprocessedInputText", this.preprocessedInputText.get("protNames"));
-
-                var chargeRange = this.get("charge").split("-").map(function(val, i) {
-                    return +val || [0, Infinity][i];
-                });
-                this.preprocessedInputText.set("chargeRange", chargeRange);
+                //console.log ("preprocessedValues", this.preprocessedValues.get("protNames"));
 
                 var pepSeq = this.get("pepSeq");
                 var splitPepSeq = pepSeq.split("-").map(function(part) {
@@ -82,24 +142,19 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                         lower: part.toLowerCase()
                     };
                 });
-                this.preprocessedInputText.set("pepSeq", splitPepSeq);
-                
+                this.preprocessedInputValues.set("pepSeq", splitPepSeq);
+
                 // Search group pre calculations
                 this.precalcedSearchGroupsSet = d3.set(this.get("searchGroups"));
-                
+
                 var searchGroupMap = d3.map ();
                 searchArray.forEach (function (search) {
-                    searchGroupMap.set (search.id, search.group);    
+                    searchGroupMap.set (search.id, search.group);
                 });
                 this.precalcedSearchToGroupMap = searchGroupMap;
             },
 
-            naiveProteinMatch: function(p1, p2) {
-                return p1 === p2;
-            },
-
-            subsetFilter: function(match, matchingProteinPairFunc) {
-                matchingProteinPairFunc = matchingProteinPairFunc || this.naiveProteinMatch; // naive default match
+            subsetFilter: function(match) {
                 var linear = match.isLinear();
                 var ambig = match.isAmbig();
 
@@ -116,18 +171,12 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
                 //self-links? - if self links's not selected and match is self link return false
                 // possible an ambiguous self link will still get displayed
-                var showSelfLinks = this.get("selfLinks");
-                var showBetweenLinks = this.get("betweenLinks");
-                var showHomomultimericLinks = this.get("homomultimericLinks");
-                // if ((showSelfLinks || showBetweenLinks) && !linear) { // we don't test linears here
 
-                if (!((match.couldBelongToSelfLink == true && showSelfLinks && !match.confirmedHomomultimer) ||
-                        (match.couldBelongToBetweenLink == true && showBetweenLinks) ||
-                        (match.confirmedHomomultimer == true && showHomomultimericLinks))) {
+                if (!((match.couldBelongToSelfLink && !match.confirmedHomomultimer && this.get("selfLinks")) ||
+                        (match.couldBelongToBetweenLink && this.get("betweenLinks")) ||
+                        (match.confirmedHomomultimer && this.get("homomultimericLinks")))) {
                     return false;
                 }
-
-                // }
 
                 //temp
                 var aaApart = +this.get("aaApart");
@@ -136,8 +185,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     if ( /*!match.confirmedHomomultimer &&*/ !ambig && match.crossLinks[0].isSelfLink()) {
                         // linears report false for isSelfLink so they never get to this bit (where toResidue would be null)
                         var unambigCrossLink = match.crossLinks[0];
-                        var calc = Math.abs(unambigCrossLink.toResidue - unambigCrossLink.fromResidue);
-                        if (calc < aaApart) {
+                        if (Math.abs(unambigCrossLink.toResidue - unambigCrossLink.fromResidue) < aaApart) {
                             return false;
                         }
                     }
@@ -156,26 +204,33 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             },
 
             scoreFilter: function(match) {
-                var msc = this.get("matchScoreCutoff");
+                var score = match.score();
                 //defend against not having a score (from a CSV file without such a column)
-                if (match.score() === undefined) {
+                if (score === undefined) {
                     return true;
                 }
-                return (msc[0] == undefined || match.score() >= msc[0]) && (msc[1] == undefined || match.score() <= msc[1]); // == undefined cos shared links get undefined json'ified to null
+                var msc = this.get("matchScoreCutoff");
+                return (msc[0] == undefined || score >= msc[0]) && (msc[1] == undefined || score <= msc[1]); // == undefined cos shared links get undefined json'ified to null
             },
 
             decoyFilter: function(match) {
                 return !match.isDecoy() || this.get("decoys");
             },
 
+            distanceFilter: function (crossLink) {
+                var dsc = this.get("distanceCutoff");
+                var dist = crossLink.getMeta("distance");
+                if (dist === undefined) {
+                    return true;
+                }
+                return (dsc[0] == undefined || dist >= dsc[0]) && (dsc[1] == undefined || dist <= dsc[1]); // == undefined cos shared links get undefined json'ified to null
+            },
+
             validationStatusFilter: function(match) {
-                if (this.get("thresholdAll")) {
+                if (this.get("pass") && match.passThreshold == true) {
                     return true;
                 }
-                if (this.get("thresholdPass") && match.passThreshold == true) {
-                    return true;
-                }
-                if (this.get("thresholdFail") && match.passThreshold == false) {
+                if (this.get("fail") && match.passThreshold == false) {
                     return true;
                 }
                 return false;
@@ -184,7 +239,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             proteinNameCheck: function(match, searchString) {
                 if (searchString) {
                     //protein name check
-                    var stringPartArrays = this.preprocessedInputText.get("protNames");
+                    var stringPartArrays = this.preprocessedInputValues.get("protNames");
                     var participants = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
                     var matchedPeptides = match.matchedPeptides;
                     var matchedPepCount = matchedPeptides.length;
@@ -235,16 +290,6 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             navigationFilter: function(match) {
                 // Arranged so cheaper checks are done first
 
-                //charge check - charge now not filtered
-                /*
-                var chargeFilter = this.get("charge");
-                var chargeRange = this.preprocessedInputText.get("chargeRange");
-                var mpCharge = match.precursorCharge;
-                if (chargeFilter && (chargeRange.length === 1 ? mpCharge !== chargeRange[0] : (mpCharge < chargeRange[0] || mpCharge > chargeRange[1]))) {
-                    return false;
-                }
-                */
-
                 //run name check
                 var runNameFilter = this.get("runName");
                 if (runNameFilter &&
@@ -268,7 +313,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
 
                 //peptide seq check
-                if (seqCheck(this.get("pepSeq"), this.preprocessedInputText.get("pepSeq")) === false) {
+                if (seqCheck(this.get("pepSeq"), this.preprocessedInputValues.get("pepSeq")) === false) {
                     return false;
                 }
 
@@ -317,7 +362,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                             aggMatchedCount |= matchCount; // logically aggregate to aggMatchedCount
                         }
                         // If 1, both pepstrings matched first peptide. If 2, both pepstrings matched second peptide.
-                        // Can't be one pepstring matching both peptides and the other neither, as an individual zero matchcount would return false in the loop 
+                        // Can't be one pepstring matching both peptides and the other neither, as an individual zero matchcount would return false in the loop
                         // (so can't be 0 in total either)
                         // So 3 must be the case where both peptides contain the pepstrings, such that one or both pepstrings are present at alternate ends
                         return aggMatchedCount === 3;
@@ -325,8 +370,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     return true;
                 }
             },
-            
-            
+
+
             groupFilter: function (match) {
                 if (this.possibleSearchGroups.length > 1) {
                     var matchGroup = this.precalcedSearchToGroupMap.get (match.searchId);
@@ -353,6 +398,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     pepLength: "PEPLEN",
                     fdrThreshold: "THR",
                     matchScoreCutoff: "MATCHSCORES",
+                    distanceCutoff: "DIST",
                     aaApart: "APART",
                     crosslinks: "XLINKS",
                     homomultimericLinks: "HOMOM",
@@ -373,6 +419,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     if (this.get("matchScoreCutoff")[1] == undefined) { // ignore matchscorecutoff if everything allowed
                         antiFields.push("matchScoreCutoff");
                     }
+                    if (this.get("distanceCutoff")[1] == undefined) { // ignore distancecutoff if everything allowed
+                        antiFields.push("distanceCutoff");
+                    }
                     fields = d3.keys(_.omit(this.attributes, antiFields));
                     //console.log ("filter fieldset", this.attributes, fields);
                 }
@@ -381,20 +430,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return str;
             },
 
-            generateUrlString: function() {
+            getURLQueryPairs: function() {
                 // make url parts from current filter attributes
-                var parts = CLMSUI.modelUtils.makeURLQueryString (this.attributes, "F");
-
-                // return parts of current url query string that aren't filter flags or values
-                var search = window.location.search.slice(1);
-                var nonFilterKeys = d3.set(["upload", "decoys", "unval", "lowestScore", "anon"]);
-                var nonFilterParts = search.split("&").filter(function(nfpart) {
-                    return nonFilterKeys.has(nfpart.split("=")[0]);
-                });
-                // and queue them to be at the start of new url query string (before filter attributes)
-                parts = nonFilterParts.concat(parts);
-
-                return window.location.origin + window.location.pathname + "?" + parts.join("&");
+                return CLMSUI.modelUtils.makeURLQueryPairs (this.attributes, "F");
             },
 
             getFilterUrlSettings: function(urlChunkMap) {
@@ -406,7 +444,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     filterUrlSettingsMap[key.slice(1)] = urlChunkMap[key];
                 });
                 var allowableFilterKeys = d3.keys(this.defaults);
-                allowableFilterKeys.push("matchScoreCutoff", "searchGroups");
+                allowableFilterKeys.push("matchScoreCutoff", "searchGroups", "distanceCutoff", "pdb");
                 var intersectingKeys = _.intersection(d3.keys(filterUrlSettingsMap), allowableFilterKeys);
                 var filterChunkMap = _.pick(filterUrlSettingsMap, intersectingKeys);
                 console.log("FCM", filterChunkMap);

@@ -320,9 +320,7 @@ CLMSUI.NGLUtils = {
         }
 
         function updateMatchMatrix(protID, alignResults) {
-            var uniqScores = alignResults.map(function(indRes) {
-                return indRes.avgBitScore;  //indRes.eScore;
-            });
+            var uniqScores = _.pluck (alignResults, "avgBitScore");  //eScore;
             matchMatrix[protID] = uniqScores;
         }
 
@@ -416,6 +414,18 @@ CLMSUI.NGLUtils = {
         // The New Way - 0.5s vs 21.88s OLD (individual resno's rather than min-max)
         var sel = ":" + chainProxy.chainname + "/" + chainProxy.modelIndex + " AND " + min + "-" + max + ".CA";
         return sel;
+    },
+    
+    getReasonableDistanceLimit: function (nglStageModel) {
+        //var showableChains = nglStageModel.getShowableChains (false);
+        var chainSele;  // = nglStageModel.getChainSelection(showableChains);
+        var boundingBox = nglStageModel.get("structureComp").getBoxUntransformed(chainSele);
+        function xyzToArray (xyz) {
+            return [xyz.x, xyz.y, xyz.z];
+        }
+        var dist = CLMSUI.modelUtils.getDistanceSquared (xyzToArray (boundingBox.min), xyzToArray (boundingBox.max));
+        
+        return Math.sqrt (dist);
     },
     
     // test to ignore short chains and those that aren't polymer chains (such as water molecules)

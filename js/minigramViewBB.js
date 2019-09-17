@@ -14,7 +14,8 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
             maxX: 80,
             height: 60,
             width: 180,
-            xAxisHeight: 20
+            xAxisHeight: 20,
+            maxBars: 50,
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
@@ -124,18 +125,21 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
                     // a variation on http://stackoverflow.com/questions/23965326/backbone-js-prevent-listener-event-from-firing-when-model-changes
                     self.stopRebounds = true;
                     self.model.set({
-                        "domainStart": roundDomain[0],
-                        "domainEnd": roundDomain[1]
+                        domainStart: roundDomain[0],
+                        domainEnd: roundDomain[1]
                     });
                     self.stopRebounds = false;
                 },
                 size: {
                     height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars
                 },
-                /*
+                    /*
                     axis: {
                         x: {
                             show: true,
+                            tick: {
+                                fit: true
+                            }
                         }
                     }
 					*/
@@ -162,18 +166,16 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
 
                     self.toggleLegend.call(self); // initially hide legend
                 }
+                //self.tidyXAxis.call(self);
             }
         });
 
         this.runOnce = true;
 
-        this.chart.internal.main.style("display", "none");
+        this.chart.internal.main.style("display", "none");  // hide main chart (the one that normally gets zoomed in and out of)
 
         var brush = d3.select(this.el).selectAll("svg .c3-brush");
-        var flip = {
-            "e": 1,
-            "w": -1
-        };
+        var flip = {e: 1, w: -1};
         brush.selectAll(".resize").append("path")
             .attr("transform", function(d) {
                 return "translate(0,0) scale(" + (flip[d]) + ",1)";
@@ -181,7 +183,6 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
             .attr("d", "M 1 0 V 20 L 10 10 Z");
 
         this.listenTo(this.model, "change", this.redrawBrush);
-        this.listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", this.render);
 
         this.render();
 
@@ -235,8 +236,25 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate(" + halfBarW + ",0)");
 
         d3.select(this.el).select(".c3-brush").attr("clip-path", "");
+        
+        window.setTimeout (function () { 
+            self.tidyXAxis();   // i think I'm having to wait for c3 to finish setting up before the size calculates properly
+        }, 500);
+        //this.tidyXAxis();
 
         //CLMSUI.utils.xilog ("data", distArr, binnedData);
+        return this;
+    },
+    
+    getAxisRange: function () {
+        return this.chart.internal.orgXDomain[1] - this.chart.internal.orgXDomain[0];
+    },
+    
+    // make x tick text values the rounder numbers, and remove any that overlap afterwards
+    tidyXAxis: function () {
+        var xaxis = d3.select (d3.select(this.el).selectAll(".c3-axis-x").filter(function(d,i) { return i === 1; }).node());
+        CLMSUI.utils.niceValueAxis (xaxis, this.getAxisRange());
+        CLMSUI.utils.declutterAxis (xaxis, true);
         return this;
     },
 
@@ -244,13 +262,18 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         accessor = accessor || function(d) {
             return d;
         }; // return object/variable/number as is as standard accessor
+        
+        var seriesCopy = series.slice();
+        if (this.model.get("extent")) {
+            seriesCopy.push (this.model.get("extent"));
+        }
         // get extents of all arrays, concatenate them, then get extent of that array
-        var extent = d3.extent([].concat.apply([], series.map(function(singleSeries) {
+        var extent = d3.extent([].concat.apply([], seriesCopy.map(function(singleSeries) {
             return singleSeries ? d3.extent(singleSeries, accessor) : [0, 1];
         })));
         var min = d3.min([0, Math.floor(extent[0])]);
         var max = d3.max([1, this.options.maxX || Math.ceil(extent[1])]);
-        var step = Math.max(1, CLMSUI.utils.niceRound((max - min) / 100));
+        var step = Math.max(1, CLMSUI.utils.niceRound((max - min) / this.options.maxBars));
         var thresholds = d3.range(min, max + (step * 2), step);
         //CLMSUI.utils.xilog ("thresholds", thresholds, extent, min, max, step, this.options.maxX, series);
 
@@ -291,17 +314,22 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         //CLMSUI.utils.xilog ("changed brushExtent", this.model.get("domainStart"), this.model.get("domainEnd"));
         // Have to go via c3 chart internal properties as it isn't exposed via API
 
-        this.chart.internal.brush
-            .clamp(true)
-            .extent([this.model.get("domainStart"), this.model.get("domainEnd")])
-            .update();
+        if (this.model.get("domainStart") !== undefined) {
+            this.chart.internal.brush
+                .clamp(true)
+                .extent([this.model.get("domainStart"), this.model.get("domainEnd")])
+                .update()
+            ;
+        }
         //CLMSUI.utils.xilog ("extent", this.chart.internal.brush.extent());
+        return this;
     },
 
     redrawBrush: function() {
         if (!this.stopRebounds) {
             this.brushRecalc();
         }
+        return this;
     },
 
     relayout: function() {
@@ -311,6 +339,7 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         // kill brush clip so we can see brush arrows at chart extremeties
         d3.select(this.el).select(".c3-brush").attr("clip-path", "");
         this.chart.resize();
+        this.tidyXAxis();
         return this;
     },
 
@@ -325,6 +354,7 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
                 this.chart.legend.hide(); // hides labels, but not legend background
                 this.chart.legend.hide([]); // hides legend background, not labels
             }
+            this.tidyXAxis();
         }
         return this;
     },

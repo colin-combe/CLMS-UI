@@ -31,33 +31,33 @@ CLMSUI.DistancesObj.prototype = {
         return d;
     },
 
-    getShortestLinks: function (linkWrappers, angstromAccuracy) {
+    getShortestLinkAlternatives: function (nglLinkWrappers, angstromAccuracy) {
         angstromAccuracy = angstromAccuracy || 1;
         var self = this;
 
-        linkWrappers.forEach (function (link) {
+        nglLinkWrappers.forEach (function (linkWrapper) {
             var distance = this.getXLinkDistanceFromChainCoords (
-                this.matrices, link.residueA.seqIndex, link.residueB.seqIndex, link.residueA.chainIndex, link.residueB.chainIndex
+                this.matrices, linkWrapper.residueA.seqIndex, linkWrapper.residueB.seqIndex, linkWrapper.residueA.chainIndex, linkWrapper.residueB.chainIndex
             );
-            link.distance = CLMSUI.utils.toNearest (distance, angstromAccuracy);
+            linkWrapper.distance = CLMSUI.utils.toNearest (distance, angstromAccuracy);
         }, this);
 
         var nestedLinks = d3.nest()
-            .key(function(d) {
-                return d.origId;
+            .key (function (linkWrapper) {
+                return linkWrapper.origId;
             })
-            .sortValues(function(link1, link2) {
-                var d = link1.distance - link2.distance;
-                return (d < 0 ? -1 : (d > 0 ? 1 : self.tieBreaker (link1.residueA, link1.residueB, link2.residueA, link2.residueB)));
+            .sortValues (function (linkWrapper1, linkWrapper2) {
+                var d = linkWrapper1.distance - linkWrapper2.distance;
+                return (d < 0 ? -1 : (d > 0 ? 1 : self.tieBreaker (linkWrapper1.residueA, linkWrapper1.residueB, linkWrapper2.residueA, linkWrapper2.residueB)));
             })
-            .entries(linkWrappers)
+            .entries(nglLinkWrappers)
         ;
 
         var shortestLinks = nestedLinks.map(function(group) {
             return group.values[0];
         });
 
-        CLMSUI.utils.xilog("nestedLinks", linkWrappers, nestedLinks, shortestLinks);
+        CLMSUI.utils.xilog("nestedLinks", nglLinkWrappers, nestedLinks, shortestLinks);
 
         return shortestLinks;
     },
@@ -145,6 +145,7 @@ CLMSUI.DistancesObj.prototype = {
 
         // allocate distance variable to average or smallest distance depending on 'average' flag
         var distance = average ? (distCount ? totalDist / distCount : undefined) : minDist;
+        
         // if chaininfo asked for then return an object else just return the distance
         return returnChainInfo ? {
             distance: distance,
@@ -166,7 +167,7 @@ CLMSUI.DistancesObj.prototype = {
                 dist = sm ? sm.getSingleDistanceBetween2Residues(seqIndex1, seqIndex2, chainIndex1, chainIndex2) : 0;
             }
         } else {
-            dist = Number.POSITIVE_INFINITY;
+            dist = undefined;//Number.POSITIVE_INFINITY;
         }
 
         //CLMSUI.utils.xilog ("dist", dist);
@@ -474,12 +475,9 @@ CLMSUI.DistancesObj.prototype = {
     },
 
     setAssemblyChains: function(nglPdbStructure, assemblyKey) {
-        var biomolDict = nglPdbStructure.biomolDict;
-        var dictEntry = biomolDict[assemblyKey];
-        var chainNames = dictEntry ? d3.merge(dictEntry.partList.map(function(part) {
-            return part.chainList;
-        })) : [];
-        if (!chainNames.length) {
+        var dictEntry = nglPdbStructure.biomolDict[assemblyKey];
+        var chainNames = dictEntry ? d3.merge(_.pluck (dictEntry.partList, "chainList")) : [];
+        if (!chainNames.length) {   // default - if chainNames empty, make chainNames all chains
             nglPdbStructure.eachChain(function(cp) {
                 chainNames.push(cp.chainname);
             });
@@ -506,6 +504,7 @@ CLMSUI.DistancesObj.prototype = {
         console.log("PCIS", this.permittedChainIndicesSet);
         if (!isNewObj) {
             // if changing existing object fire an event, otherwise hold off. Fire an event once whole new distancesObj object is installed.
+            CLMSUI.vent.trigger("recalcLinkDistances"); // this needs listened to and link distances updated before views listen to next trigger
             CLMSUI.vent.trigger("PDBPermittedChainSetsUpdated", this.permittedChainIndicesSet);
         }
 
