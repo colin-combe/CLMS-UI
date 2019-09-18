@@ -78,10 +78,8 @@ CLMSUI.modelUtils = {
                 ["Highest Score", CLMSUI.modelUtils.highestScore(xlink)]
             ];
 
-            var extraEntries = d3.entries(extras);
-            extraEntries.forEach(function(entry) {
-                info.push([entry.key, entry.value]);
-            });
+            var extraEntries = _.pairs (extras);    // turn {a:1, b:2} into [["a",1],["b",2]]
+            info.push.apply (info, extraEntries);
 
             d3.entries(xlink.getMeta()).forEach(function(entry) {
                 var val = entry.value;
@@ -669,9 +667,7 @@ CLMSUI.modelUtils = {
             });
 
         var registry = clmsModel.get("crossLinkMetaRegistry") || d3.set();
-        columns.forEach(function(column) {
-            registry.add(column);
-        });
+        columns.forEach (registry.add, registry);
         clmsModel.set("crossLinkMetaRegistry", registry);
 
         if (columns) {

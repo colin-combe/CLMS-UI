@@ -350,7 +350,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             .selectAll("option")
             .data(nonEmptyEntries, function(d) {
                 return d.key;
-            });
+            })
+        ;
         matrixOptions.exit().remove();
         matrixOptions
             .enter()
