@@ -266,8 +266,8 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return dist != undefined ? distance2dp(dist) : "";
                 },
             };
-            d3.entries(dataToHTMLModifiers).forEach(function(entry) {
-                columnSettings[entry.key].dataToHTMLModifier = dataToHTMLModifiers[entry.key];
+            d3.keys(dataToHTMLModifiers).forEach (function(key) {
+                columnSettings[key].dataToHTMLModifier = dataToHTMLModifiers[key];
             });
 
             var d3tableElem = flexWrapperPanel.append("div").attr("class", "d3tableContainer verticalFlexContainer")
@@ -574,7 +574,8 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.d3table
             .columnSettings(columnSettings)
-            .columnOrder(d3.keys(columnSettings));
+            .columnOrder(d3.keys(columnSettings))
+        ;
 
         this.d3table(this.d3table.getSelection());
 
