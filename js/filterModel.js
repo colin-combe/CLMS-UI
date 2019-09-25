@@ -30,6 +30,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 fdrThreshold: 0.05,
                 interFdrCut: undefined,
                 intraFdrCut: undefined,
+                // groups
+                multipleGroup: true,
                 //navigation
                 pepSeq: "",
                 protNames: "",
@@ -87,6 +89,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 fdrThreshold: "number",
                 interFdrCut: "number",
                 intraFdrCut: "number",
+                //groups,
+                multipleGroup: "boolean",
                 //navigation
                 pepSeq: "text",
                 protNames: "text",
@@ -385,6 +389,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             },
             
             
+            // If activated, this only passes matches whose search ids belong to particular groups
             groupFilter: function (match) {
                 if (this.possibleSearchGroups.length > 1) {
                     var matchGroup = this.precalcedSearchToGroupMap.get (match.searchId);
@@ -392,8 +397,17 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 }
                 return true;
             },
-
-
+            
+            // If activated, this only passes a whole match set if they are of the same group
+            groupFilter2: function (matchArr) {
+                if (this.possibleSearchGroups.length > 1 && matchArr.length > 1 && !this.get("multipleGroup")) {
+                    var firstMatchGroup = this.precalcedSearchToGroupMap.get (matchArr[0].searchId);
+                    return matchArr.every (function (match) {
+                        return this.precalcedSearchToGroupMap.get(match.searchId) === firstMatchGroup;
+                    }, this);
+                }
+                return true;
+            },
 
             stateString: function() {
                 // https://library.stanford.edu/research/data-management-services/case-studies/case-study-file-naming-done-well
