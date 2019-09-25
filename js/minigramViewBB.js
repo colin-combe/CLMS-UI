@@ -19,8 +19,6 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         };
         this.options = _.extend(defaultOptions, viewOptions.myOptions);
 
-        this.precalcedDistributions = {};
-
         var self = this;
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
@@ -33,15 +31,10 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         // Generate the C3 Chart
         var bid = "#" + chartDiv.attr("id");
 
-        //if (!c3.chart.fn.enableRedraw) {    // try to reduce intermediate redraws
-        //    CLMSUI.utils.c3mods();
-        //}
-        //c3.chart.fn.enableRedraw(false);
-
         this.chart = c3.generate({
             bindto: bid,
             data: {
-                x: 'x', // x is now declared as a column to account for possible negative values in x
+                x: 'x', // x is now declared as a column to account for possible negative values
                 columns: [
                     [this.options.seriesName],
                 ],
@@ -50,14 +43,6 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
                     actual: "#555",
                     random: "#aaa"
                 },
-                /*
-                selection: {
-                    enabled: true,
-                    grouped: true,
-                    multiple: true,
-                    draggable: true
-                },
-                */
             },
             size: {
                 width: this.options.width,
@@ -133,16 +118,6 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
                 size: {
                     height: this.options.height - this.options.xAxisHeight // subchart doesnt seem to account for x axis height and sometimes we lose tops of bars
                 },
-                    /*
-                    axis: {
-                        x: {
-                            show: true,
-                            tick: {
-                                fit: true
-                            }
-                        }
-                    }
-					*/
             },
             onrendered: function() {
                 // for some reason setting extent in the x axis configuration isn't working, so get it to run once and once only when the chart is rendered
@@ -191,11 +166,10 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
 
     render: function() {
         var self = this;
-        var dataSeries = this.model.data();
+        var seriesData = this.model.data();
 
         // aggregate data into bar chart friendly form
-        var seriesLengths = _.pluck(dataSeries, "length");
-        var aggregates = this.aggregate(dataSeries, seriesLengths, this.precalcedDistributions);
+        var aggregates = this.aggregate (seriesData);
         var countArrays = aggregates.counts;
         var thresholds = aggregates.thresholds;
 
@@ -216,7 +190,7 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         //CLMSUI.utils.xilog ("thresholds", thresholds);
 
         var curMaxY = this.chart.axis.max().y;
-        if (curMaxY === undefined || curMaxY < maxY) { // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
+        if (curMaxY === undefined || curMaxY < maxY || curMaxY / maxY >= 2) { // only reset maxY if necessary as it causes redundant repaint (given we load and repaint straight after)
             this.chart.axis.max({
                 y: maxY
             });
@@ -226,28 +200,20 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
             columns: countArrays
         });
 
-        //c3.chart.fn.enableRedraw(true, true);
-        //CLMSUI.utils.xilog (this.chart);
-        //this.chart.internal.redraw ();
-
-        // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
-        var internal = this.chart.internal;
-        var halfBarW = internal.getBarW(internal.subXAxis, 1) / 2;
-        d3.select(this.el).selectAll(".c3-chart-bars").attr("transform", "translate(" + halfBarW + ",0)");
-
+        this.makeBarsSitBetweenTicks (this.chart.internal, "subXAxis");
         d3.select(this.el).select(".c3-brush").attr("clip-path", "");
         
         window.setTimeout (function () { 
             self.tidyXAxis();   // i think I'm having to wait for c3 to finish setting up before the size calculates properly
         }, 500);
-        //this.tidyXAxis();
 
         //CLMSUI.utils.xilog ("data", distArr, binnedData);
         return this;
     },
     
     getAxisRange: function () {
-        return this.chart.internal.orgXDomain[1] - this.chart.internal.orgXDomain[0];
+        var extent = d3.extent (this.chart.internal.orgXDomain);
+        return Math.abs (extent[1] - extent[0]);
     },
     
     // make x tick text values the rounder numbers, and remove any that overlap afterwards
@@ -257,8 +223,16 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         CLMSUI.utils.declutterAxis (xaxis, true);
         return this;
     },
+    
+    // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
+    makeBarsSitBetweenTicks: function (chartObj, whichXAxis) {  // can be xAxis or subXAxis
+        var internal = chartObj || this.chart.internal;
+        var halfBarW = internal.getBarW (internal[whichXAxis], 1) / 2 || 0;
+        d3.select(this.el).selectAll(".c3-event-rects,.c3-chart-bars").attr("transform", "translate(" + halfBarW + ",0)");
+        return this;
+    },
 
-    getBinThresholds: function(series, accessor) {
+    getBinThresholds: function (series, accessor) {
         accessor = accessor || function(d) {
             return d;
         }; // return object/variable/number as is as standard accessor
@@ -284,18 +258,15 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
         return thresholds;
     },
 
-    aggregate: function(series, seriesLengths, precalcedDistributions) {
-        var thresholds = this.getBinThresholds(series);
+    aggregate: function (seriesData) {
+        var seriesLengths = _.pluck (seriesData, "length");
+        var thresholds = this.getBinThresholds (seriesData);
 
         var sIndex = this.options.seriesNames.indexOf(this.options.scaleOthersTo);
         var targetLength = sIndex >= 0 ? seriesLengths[sIndex] : 1;
 
-        var countArrays = series.map(function(aseries, i) {
-            var aseriesName = this.options.seriesNames[i];
-            var binnedData = precalcedDistributions[aseriesName] ?
-                precalcedDistributions[aseriesName] :
-                d3.layout.histogram().bins(thresholds)(aseries);
-
+        var countArrays = seriesData.map(function(aseries, i) {
+            var binnedData = d3.layout.histogram().bins(thresholds)(aseries);
             var scale = sIndex >= 0 ? targetLength / (seriesLengths[i] || targetLength) : 1;
             return binnedData.map(function(nestedArr) {
                 return nestedArr.y * scale;
@@ -321,7 +292,6 @@ CLMSUI.MinigramViewBB = Backbone.View.extend({
                 .update()
             ;
         }
-        //CLMSUI.utils.xilog ("extent", this.chart.internal.brush.extent());
         return this;
     },
 

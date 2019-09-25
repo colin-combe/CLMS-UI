@@ -266,8 +266,8 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return dist != undefined ? distance2dp(dist) : "";
                 },
             };
-            d3.entries(dataToHTMLModifiers).forEach(function(entry) {
-                columnSettings[entry.key].dataToHTMLModifier = dataToHTMLModifiers[entry.key];
+            d3.keys(dataToHTMLModifiers).forEach (function(key) {
+                columnSettings[key].dataToHTMLModifier = dataToHTMLModifiers[key];
             });
 
             var d3tableElem = flexWrapperPanel.append("div").attr("class", "d3tableContainer verticalFlexContainer")
@@ -574,7 +574,8 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.d3table
             .columnSettings(columnSettings)
-            .columnOrder(d3.keys(columnSettings));
+            .columnOrder(d3.keys(columnSettings))
+        ;
 
         this.d3table(this.d3table.getSelection());
 
@@ -932,16 +933,11 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
     normalise: function() {
 
         if (this.stats.zColumnNames) {
-            var columnIndexMap = {};
-            this.stats.zColumnNames.forEach(function(columnKey, i) {
-                columnIndexMap[columnKey] = i;
-            });
+            var columnIndexMap = _.object (_.zip (this.stats.zColumnNames, _.range (0, this.stats.zColumnNames.length)));
 
             var self = this;
             var normScores = CLMSUI.modelUtils.normalize2DArrayToColumn(this.stats.zscores, columnIndexMap[this.viewStateModel.get("normalColumn")]);
-            var zrange = d3.extent(d3.merge(normScores.map(function(zs) {
-                return d3.extent(zs);
-            })));
+            var zrange = d3.extent (d3.merge (normScores.map (d3.extent))); // extent of values in 2D array
 
             var zmap = {};
             normScores.forEach(function(row, i) {

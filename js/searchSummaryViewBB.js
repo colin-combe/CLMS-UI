@@ -143,7 +143,7 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend({
                 arr = [];
                 dmap.set(desc, arr);
             }
-            arr.push(searches[i].id)
+            arr.push(searches[i].id);
         });
 
         var fullDesc = dmap.entries()

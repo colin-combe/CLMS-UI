@@ -250,7 +250,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
 
                 var sliderSection = cutoffDivSel.append("div").attr("class", "scoreSlider");
                 // Can validate template output at http://validator.w3.org/#validate_by_input+with_options
-                var tpl = _.template("<div><p>"+config.label+"</p><P class='vmin cutoffLabel'><span>&gt;</span></P><P>Min</P></div><div id='<%= eid %>'></div><div><p>"+config.label+"</p><P class='cutoffLabel vmax'><span>&lt;</span></P><P>Max</P></div>");
+                var tpl = _.template("<div><p>"+config.label+"</p><P class='vmin cutoffLabel'><span>&gt;</span></P><P>Min</P></div><div id='<%= eid %>'></div><div><p>"+config.label+"</p><P class='cutoffLabel vmax'><span>&lt;</span></P><P>Max</P></div><div class='undef'></div>");
                 sliderSection.html(tpl({
                     eid: self.el.id + config.id + "SliderHolder"
                 }));
@@ -296,6 +296,22 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     })
                 ;
                 
+                if (config.undefAttr) {
+                    var cbox = new CLMSUI.utils.checkBoxView({
+                        el: sliderSection.select("div.undef").node(),
+                        model: self.model,
+                        myOptions: {
+                            toggleAttribute: config.undefAttr,
+                            id: self.el.id + config.undefAttr,
+                            label: "Ø"
+                        },
+                    });
+                    d3.select(cbox.$el[0])
+                        .attr("title", "Show Cross-Links of Unknown "+config.label)
+                        .select("label").classed("btn", false)
+                    ;
+                }
+                
                 this.listenTo (this.model, "change:"+config.attr, function (model, val) {
                     sliderSection.select(".vmin input").property("value", val[0]); // min label
                     sliderSection.select(".vmax input").property("value", val[1]); // max label
@@ -336,7 +352,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         initResetGroup.call(this);
         addFilterGroup.call (this, {id: "filterModeDiv", groupName: "Mode"}, ["manualMode", "fdrMode"]);
         addFilterGroup.call (this, {groupName: "Crosslinks"}, ["linears", "crosslinks", "ambig", "betweenLinks", "selfLinks", "homomultimericLinks", "aaApart", "pepLength"]);
-        initMinigramFilterGroup.call(this, {attr: "distanceCutoff", extentProperty: "distanceExtent", label: "Distance", id: "distanceFilter", groupName: "Distances", tooltipIntro: "Filter out crosslinks with distance"});
+        initMinigramFilterGroup.call(this, {attr: "distanceCutoff", extentProperty: "distanceExtent", undefAttr: "distanceUndef", label: "Distance", id: "distanceFilter", groupName: "Distances", tooltipIntro: "Filter out crosslinks with distance"});
         addFilterGroup.call (this, {id: "validationStatus", groupName: "Auto Val"}, ["A", "B", "C", "Q", "AUTO", "unval", "decoys"]);
         initMinigramFilterGroup.call(this, {attr: "matchScoreCutoff", extentProperty: "scoreExtent", label: "Match Score", id: "matchScore", groupName: "Scores", tooltipIntro: "Filter out matches with scores"});
         initFDRPlaceholder.call(this);

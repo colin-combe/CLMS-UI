@@ -880,8 +880,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 return _.pluck(protChains, "index");
             }, this);
         } else {
-            chainIndices = d3.entries(this.get("chainMap")).map(function(chainEntry) {
-                return _.pluck(chainEntry.value, "index");
+            chainIndices = d3.values(this.get("chainMap")).map(function(chainValue) {
+                return _.pluck(chainValue, "index");
             });
         }
         chainIndices = d3.merge(chainIndices);
