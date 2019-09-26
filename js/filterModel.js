@@ -398,12 +398,13 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return true;
             },
             
-            // If activated, this only passes a whole match set if they are of the same group
+            // If activated, this only passes an array of matches if they are of the same group
             groupFilter2: function (matchArr) {
-                if (this.possibleSearchGroups.length > 1 && matchArr.length > 1 && !this.get("multipleGroup")) {
-                    var firstMatchGroup = this.precalcedSearchToGroupMap.get (matchArr[0].searchId);
+                if (matchArr.length > 1 && this.possibleSearchGroups.length > 1 && !this.get("multipleGroup")) {
+                    var smap = this.precalcedSearchToGroupMap;
+                    var firstMatchGroup = smap.get (matchArr[0].match.searchId);
                     return matchArr.every (function (match) {
-                        return this.precalcedSearchToGroupMap.get(match.searchId) === firstMatchGroup;
+                        return smap.get(match.match.searchId) === firstMatchGroup;
                     }, this);
                 }
                 return true;
@@ -431,6 +432,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     crosslinks: "XLINKS",
                     homomultimericLinks: "HOMOM",
                     searchGroups: "GROUPS",
+                    multipleGroup: "MGRP",
                 };
                 var zeroFormatFields = d3.set(["intraFdrCut", "interFdrCut", "scores"]);
                 if (this.get("fdrMode")) {

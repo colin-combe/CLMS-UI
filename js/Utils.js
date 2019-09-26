@@ -1339,7 +1339,7 @@ CLMSUI.utils = {
                 var activeDivs = d3.selectAll(".dynDiv").filter(function() {
                     return CLMSUI.utils.isZeptoDOMElemVisible($(this));
                 });
-                console.log("this view", this);
+                //console.log("this view", this);
 
                 // Push objects containing the individual divs as selections along with their z-indexes to an array
                 activeDivs.each(function() {

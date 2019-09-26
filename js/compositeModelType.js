@@ -217,7 +217,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 homomultiSwitchers.push (crossLink);
             }
         }
-        this.getCrossLinkDistances (homomultiSwitchers);
+        this.getCrossLinkDistances (homomultiSwitchers);    // recalculate distances for crosslinks whose homomultimer status has changed
 
         // Filters after this point are those that depend on results of previous filtering
         

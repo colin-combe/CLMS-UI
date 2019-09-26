@@ -132,6 +132,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     tooltip: "Filter to cross-links with matches with this scan number e.g. 44565",
                 },
                 {
+                    label: "Multi",
+                    id: "multipleGroup",
+                    tooltip: "Pass cross-links with matches from more than one group"
+                },
+                {
                     label: "Residue Pairs per PPI",
                     id: "urpPpi",
                     inequality: "&ge;",
@@ -143,7 +148,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             return {
                 id: group,
                 label: group,
-                tooltip: "Group "+group,
+                tooltip: "Pass matches from Group "+group,
                 inputClass: "groupToggleFilter",
                 type: "boolean",
             };
@@ -348,6 +353,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             button.append("i")
                 .attr("class", "fa fa-angle-double-right");
         }
+        
+        var groupIDs = _.pluck(defaultOptions.searchGroupToggles, "id");
+        groupIDs.push ("multipleGroup");
 
         initResetGroup.call(this);
         addFilterGroup.call (this, {id: "filterModeDiv", groupName: "Mode"}, ["manualMode", "fdrMode"]);
@@ -358,8 +366,8 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         initFDRPlaceholder.call(this);
         addFilterGroup.call (this, {id: "navFilters", groupName: "Protein"}, ["pepSeq", "protNames"]);
         addFilterGroup.call (this, {id: "navMassSpecFilters", groupName: "Mass Spec"}, ["runName", "scanNumber"]);
+        addFilterGroup.call (this, {id: "groupFilters", groupName: "Groups"}, groupIDs);
         addFilterGroup.call (this, {id: "navNumberFilters", groupName: "PPI"}, ["urpPpi"]);
-        addFilterGroup.call (this, {id: "groupFilters", groupName: "Groups"}, _.pluck(defaultOptions.searchGroupToggles, "id"));
         addScrollRightButton.call(this);
         
 
