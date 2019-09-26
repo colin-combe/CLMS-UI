@@ -339,7 +339,7 @@ CLMSUI.init.views = function() {
 
     var compModel = CLMSUI.compositeModelInst;
     var matchesFound = !_.isEmpty(compModel.get("clmsModel").get("matches"));
-    console.log("MODEL", compModel);
+    //console.log("MODEL", compModel);
 
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults

@@ -191,7 +191,7 @@
             // http://stackoverflow.com/questions/21411059/backbone-reusable-view-set-new-model-to-existing-view?lq=1
 
             if (model) {
-                console.log("model", model);
+                //console.log("model", model);
                 var modelViewID = d3.select(this.el).attr("id") + "IndView";
 
                 this.modelView = new CLMSUI.ProtAlignViewBB({

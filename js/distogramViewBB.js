@@ -657,7 +657,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
     
     // make x tick text values the rounder numbers, and remove any that overlap afterwards
     tidyXAxis: function () {
-        console.log ("TAXIS");
         var xaxis = d3.select(this.el).select(".c3-axis-x");
         if (this.chart) {
             CLMSUI.utils.niceValueAxis (xaxis, this.getAxisRange());
