@@ -181,7 +181,8 @@ CLMSUI.init.models = function(options) {
     });
 
     // Set up colour models, some (most) of which depend on data properties
-    CLMSUI.linkColour.setupColourModels();
+    //console.log ("clspec", d3.keys(CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity")));
+    CLMSUI.linkColour.setupColourModels ({distance: {domain: [15, 25], range: ['#5AAE61', '#FDB863', '#9970AB']}});
 
     // Start asynchronous GO term fetching
     //CLMSUI.modelUtils.loadGOAnnotations(); // it will call allDataLoaded when done

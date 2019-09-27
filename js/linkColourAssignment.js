@@ -176,13 +176,13 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
 
         if (proteinIDs && proteinIDs.length > 2 && proteinIDs.length < 6) {
             var groupDomain = ["same"];
-            for (var n = 0; n < proteinIDs.length; n++) {
-                for (var m = n + 1; m < proteinIDs.length; m++) {
-                    groupDomain.push(this.makeProteinPairKey(proteinIDs[n], proteinIDs[m]));
-                    labels.push(options.proteins.get(proteinIDs[n]).name + " - " + options.proteins.get(proteinIDs[m]).name);
+            proteinIDs.forEach (function (proteinID1, i) {
+                for (var m = i + 1; m < proteinIDs.length; m++) {
+                    groupDomain.push (this.makeProteinPairKey(proteinID1, proteinIDs[m]));
+                    labels.push (options.proteins.get(proteinID1).name + " - " + options.proteins.get(proteinIDs[m]).name);
                 }
-            }
-            var colArr = colorbrewer.Set3[10];
+            }, this);
+            var colArr = colorbrewer.Set3[10].slice();
             colArr.unshift("grey");
             colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
         } else {
@@ -276,11 +276,15 @@ CLMSUI.BackboneModelTypes.MapBasedLinkColourModel = CLMSUI.BackboneModelTypes.Co
 
 
 
-CLMSUI.linkColour.setupColourModels = function() {
+CLMSUI.linkColour.setupColourModels = function (userConfig) {
+    var defaultConfig = {
+        default: {domain: [0, 1, 2], range: ["#9970ab", "#35978f", "#35978f"]},
+        distance: {domain: [15, 25], range: ['#5AAE61', '#FDB863', '#9970AB']}
+    };
+    var config = $.extend (true, {}, defaultConfig, userConfig);    // true = deep merging
+    
     CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultColourModel({
-        colScale: d3.scale.ordinal().domain([0, 1, 2]).range([
-            "#9970ab", "#35978f", "#35978f"
-        ]),
+        colScale: d3.scale.ordinal().domain(config.default.domain).range(config.default.range),
         title: "Cross-Link Type",
         longDescription: "Default colour scheme, differentiates self and between Cross-Links.",
         id: "Default"
@@ -308,7 +312,7 @@ CLMSUI.linkColour.setupColourModels = function() {
     });
 
     CLMSUI.linkColour.distanceColoursBB = new CLMSUI.BackboneModelTypes.DistanceColourModel({
-        colScale: d3.scale.threshold().domain([15, 25]).range(['#5AAE61', '#FDB863', '#9970AB']),
+        colScale: d3.scale.threshold().domain(config.distance.domain).range(config.distance.range),
         title: "Distance (Å)",
         longDescription: "Colour Cross-Links by adjustable distance category. Requires PDB file to be loaded (via Load -> PDB Data).",
         id: "Distance",

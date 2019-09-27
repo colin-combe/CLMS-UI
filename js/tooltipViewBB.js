@@ -36,27 +36,23 @@ CLMSUI.TooltipViewBB = Backbone.View.extend({
             cstring = "<table>";
             var rtype = contents.tableHasHeaders ? "th" : "td";
             var headerCount = 0;
-            contents.forEach(function(row) {
+            contents.forEach (function(row) {
                 headerCount = headerCount || row.length;
                 var str = "";
                 var colspan = "";
-                for (var m = 0; m < row.length; m++) {
-                    if (m === row.length - 1 && row.length < headerCount) {
+                row.forEach (function (cell, i) {
+                    if (i === row.length - 1 && row.length < headerCount) {
                         colspan = " COLSPAN=\"" + (headerCount - row.length + 1) + "\"";
                     }
-                    var val = isNaN(row[m]) ? row[m] : self.numberFormat(row[m]);
+                    var val = isNaN(cell) ? cell : self.numberFormat(cell);
                     str += "<" + rtype + colspan + ">" + val + "</" + rtype + ">";
-                }
+                });
                 rtype = "td";
                 cstring += "<tr>" + str + "</tr>";
             });
             cstring += "</table>";
         } else if (oned) {
-            cstring = "<ul>";
-            for (var n = 0; n < contents.length; n++) {
-                cstring += "<li>" + contents[n];
-            }
-            cstring += "</ul>";
+            cstring = "<ul><li>"+contents.join("<li>")+"</ul>";
         } else {
             cstring = contents;
         }
