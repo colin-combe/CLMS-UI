@@ -550,7 +550,7 @@ CLMSUI.modelUtils = {
         var crossSpec = CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity");
         if (!crossSpec) {
             crossSpec = {
-                "default": {
+                default: {
                     name: "all",
                     searches: new Set(_.pluck (searchArray, "id")),
                     linkables: [new Set(["*"])]
