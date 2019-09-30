@@ -1,8 +1,8 @@
-//		Backbone view and controller for NGL 3D viewer
+//		xiNET controls
 //
-//		Martin Graham, Colin Combe, Rappsilber Laboratory, Alex Rose, PDB
+//		Martin Graham, Colin Combe, Rappsilber Laboratory
 //
-//		js/xiNetLayouts.js
+//		js/xiNetControlsViewBB.js
 
 var CLMSUI = CLMSUI || {};
 
@@ -28,8 +28,18 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 CLMSUI.vent.trigger("xiNetAutoLayout", true);
             },
             "click .saveLayoutButton": "saveLayout",
-            "change .showXinetLabels": function() {
+            "change .showXiNetLabels": function() {
                 CLMSUI.vent.trigger("xiNetShowLabels", d3.select(".showXinetLabels").property("checked"));
+            },
+            "change .xiNetLinkWidth": function() {
+                var lwScale = d3.select(".xiNetLinkWidth").property("value");
+                console.log("changing xlw", lwScale);
+                if (lwScale.trim() == "") {
+                   this.model.set("xiNetLinkWidthAuto", true);
+                } else {
+                   this.model.set("xiNetLinkWidthAuto", false);
+                   this.model.set("xiNetLinkWidthScale", lwScale);
+                }
             },
         });
 
@@ -98,7 +108,8 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "</span>" +
             "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>";
 
-        buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXinetLabels' checked></label>"
+        buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXiNetLabels' checked></label>"
+        buttonHtml += "&nbsp;<label>Link width:<input type='number' step='0.01' min='0' class='xiNetLinkWidth' title='pixels per Unique Linked Residue Pair'></label>"
 
         mainDivSel.html(
             buttonHtml
@@ -136,6 +147,16 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             myOptions: {
                 title: "Load ▼",
             }
+        });
+
+        this.listenTo(this.model, "change:xiNetLinkWidthScale", function() {
+            var linkWidthScale = this.model.get("xiNetLinkWidthScale");
+            d3.select(".xiNetLinkWidth").property("value", linkWidthScale);
+        });
+
+        this.listenTo(this.model, "change:xiNetLinkWidthAuto", function() {
+            var linkWidthAuto = this.model.get("xiNetLinkWidthAuto");
+            d3.select(".xiNetLinkWidth").style("color", linkWidthAuto? "#cccccc" : "#091d42" );
         });
 
     },
@@ -200,66 +221,3 @@ CLMSUI.xiNetLayoutListViewBB = CLMSUI.DropDownMenuViewBB.extend({
     },
 
 });
-
-/*
-CLMSUI.xiNetHelpViewBB = CLMSUI.utils.BaseFrameView.extend({
-
-    events: function() {
-        var parentEvents = CLMSUI.utils.BaseFrameView.prototype.events;
-        if (_.isFunction(parentEvents)) {
-            parentEvents = parentEvents();
-        }
-        return _.extend({}, parentEvents, {
-            "change .selectCSVButton": "selectCsvFile",
-            "change .selectFASTAButton": "selectFastaFile",
-            "click .uploadButton": "uploadFiles",
-        });
-    },
-    initialize: function(viewOptions) {
-        var myDefaults = {
-            expectedFormat: {
-                "Select links": "LEFT click on link; CTRL or SHIFT and LEFT click to add/remove links from selection. (The spectra matches supporting the selected links will appear in the table below xiNET.)",
-                "Select protein": "LEFT click on protein; CTRL or SHIFT and LEFT click to add/remove proteins from selection. (Selected proteins can be moved around together.)",
-                "Toggle protein between bar and circle": "RIGHT click on protein",
-                "Zoom": "Mouse wheel",
-                "Move proteins": "Click and drag on protein",
-                "Rotate bar": "Click and drag on handles that appear at end of bar",
-                "Flip self-links": "RIGHT-click on self-link",
-            }
-        };
-        viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
-        // viewOptions.myOptions = _.extend (myDefaults, viewOptions.myOptions);
-        CLMSUI.xiNetHelpViewBB.__super__.initialize.apply(this, arguments);
-
-        // this.el is the dom element this should be getting added to, replaces targetDiv
-        var mainDivSel = d3.select(this.el);
-
-        var wrapperPanel = mainDivSel.append("div")
-            .attr("class", "panelInner");
-
-        var formatPanel = wrapperPanel.append("div").attr("class", "expectedFormatPanel");
-
-
-        var sectionData = [this.options.expectedFormat];
-        sectionData[0].sectionName = "Show mouse & keyboard controls";
-
-        var headerFunc = function(d) {
-            return d.sectionName;
-        };
-        var rowFilterFunc = function(d) {
-            var rows = d3.entries(d);
-            var badKeys = d3.set (["canonicalSeq", "seq_mods", "filteredNotDecoyNotLinearCrossLinks", "hidden"]);
-            return rows.filter(function(row) {
-                return !badKeys || !badKeys.has(row.key);
-            });
-        };
-        var cellFunc = function(d) {
-            d3.select(this).html(d.value);
-        };
-
-        CLMSUI.utils.sectionTable.call(this, formatPanel, sectionData, mainDivSel.attr("id"), ["Action", "Control"], headerFunc, rowFilterFunc, cellFunc, []);
-    },
-
-    identifier: "xiNET Help",
-});
-*/

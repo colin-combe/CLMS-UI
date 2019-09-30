@@ -27,7 +27,7 @@ CLMSUI.init = CLMSUI.init || {};
 // only when sequences and blosums have been loaded, if only one or other either no align models = crash, or no blosum matrices = null
 CLMSUI.init.postDataLoaded = function() {
     console.log("DATA LOADED AND WINDOW LOADED");
-    
+
     CLMSUI.compositeModelInst.set("go", CLMSUI.go); // add pre-parsed go terms to compositeModel from placeholder
     CLMSUI.go = null;
 
@@ -87,7 +87,7 @@ CLMSUI.init.postDataLoaded = function() {
             });
         }
     });
-    
+
     // add uniprot feature types
     annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
     var annotationTypeCollection = new CLMSUI.BackboneModelTypes.AnnotationTypeCollection(annotationTypes);
@@ -113,7 +113,7 @@ CLMSUI.init.pretendLoad = function() {
 
 CLMSUI.init.blosumLoading = function (options) {
     options = options || {};
-    
+
     // Collection of blosum matrices that will be fetched from a json file
     CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection (options); // options if we want to override defaults
 
@@ -122,7 +122,7 @@ CLMSUI.init.blosumLoading = function (options) {
         console.log("ASYNC. blosum models loaded");
         allDataLoaded();
     });
-    
+
     // Start the asynchronous blosum fetching after the above events have been set up
     CLMSUI.blosumCollInst.fetch (options);
 };
@@ -138,7 +138,7 @@ CLMSUI.init.models = function(options) {
         console.log("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
     });
-    
+
     CLMSUI.init.modelsEssential(options);
 
     // following listeners require compositeModelInst etc to be set up in modelsEssential() so placed afterwards
@@ -257,7 +257,7 @@ CLMSUI.init.modelsEssential = function(options) {
     });
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel();
-    
+
     
     // Make score and distance minigram models, and add listeners to make sure they synchronise to attributes in filter model
     var minigramModels = ["matchScoreCutoff", "distanceCutoff"].map (function (filterAttrName) {
@@ -326,7 +326,7 @@ CLMSUI.init.modelsEssential = function(options) {
     CLMSUI.compositeModelInst.applyFilter(); // do it first time so filtered sets aren't empty
 
     // instead of views listening to changes in filter directly, we listen to any changes here, update filtered stuff
-    // and then tell the views that filtering has occurred via a custom event ("filteringDone") in applyFilter().
+    // and then tell the views that filtering has occurred via a custom event ("filtering Done") in applyFilter().
     // This ordering means the views are only notified once the changed data is ready.
     CLMSUI.compositeModelInst.listenTo(filterModelInst, "change", function() {
         console.log("filterChange");
@@ -427,7 +427,7 @@ CLMSUI.init.views = function() {
             label: "Legend & Colours",
             eventName: "keyShow",
             tooltip: "Explains and allows changing of current colour scheme",
-            sectionEnd: false
+            sectionEnd: true
         },
         {
             id: "goTermsChkBxPlaceholder",
@@ -627,7 +627,7 @@ CLMSUI.init.viewsEssential = function(options) {
         d3.select("#filterModeDiv").style("display", "none");
     }
 
-    
+
     // Generate minigram views
     var minigramViewConfig = [
         {id: "score", el: "#filterPlaceholdermatchScoreSliderHolder", seriesNames: ["Targets", "Decoys"], colours: ["blue", "red"], label: "Score"},
@@ -651,10 +651,10 @@ CLMSUI.init.viewsEssential = function(options) {
         .listenTo(compModel.get("clmsModel"), "change:matches", function() { this.render().redrawBrush(); }) // if the matches change (likely?) need to re-render the view too
     ;
     });
-    
+
     // redraw brush when distancesObj is changed, extent is likely to be different
     minigramViews[1]
-        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) { 
+        .listenTo(compModel.get("clmsModel"), "change:distancesObj", function (clmsModel, distObj) {
             this.render().redrawBrush();
         }) // if the distances change (likely?) need to re-render the view too
     ;

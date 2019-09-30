@@ -70,13 +70,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .attr("value", function(d) {
                 return d;
             });
-        
+
         controlDiv.append("input")
             .attr ("type", "text")
             .attr ("placeholder", "Search Go Term Names...")
             .attr ("class", "btn-1 goTextMatch")
         ;
-        
+
         controlDiv.append("span").attr("class", "goTextResult");
 
         this.chartDiv = flexWrapperPanel.append("div")
@@ -152,12 +152,12 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 return d.transform;
             })
         ;
-        
+
         // initial update done via hiddenChanged trigger above - which is called after all views are set up
         //this.update();  // can do this here as go terms are available on the view's initialisation
     },
-                 
-                 
+
+
     goTextMatch: function (evt) {
         var self = this;
         var val = evt.target.value;
@@ -166,7 +166,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         var allInteractorSet = new Set();
         var goMatchCount = 0;
-        
+
         var nodes = this.foregroundGroup.selectAll(".node")
             .each (function (d) {
                 d.strMatch = val && val.length > 1 && d.name.match(regex);
@@ -196,7 +196,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         var interactors = Array.from (allInteractorSet.values());
         var msg = (!val || val.length < 2) ? "Enter at least 2 characters" : (goMatchCount ? goMatchCount+" matching GO terms, mapping to "+interactors.length+" proteins" : "No matches");
         d3.select(this.el).select(".goTextResult").text(msg);
-        this.model[evt.key === "Enter" || evt.keyCode === 13 || evt.which === 13 ? "setSelectedProteins" : "setHighlightedProteins"](interactors, false);    
+        this.model[evt.key === "Enter" || evt.keyCode === 13 || evt.which === 13 ? "setSelectedProteins" : "setHighlightedProteins"](interactors, false);
     },
 
     update: function() {
@@ -258,7 +258,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                 nodes.set(node.id, node);
                 var interactorCount = goTerm.filtInteractorCount;
                 //interactorSet = interactorSet || goTerm.getInteractors();
-                
+
                 if (goTerm.part_of) {
                     for (var partOfId of goTerm.part_of) {
                         var partOfTerm = go.get(partOfId);
@@ -317,19 +317,19 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             "nodes": Array.from(nodes.values()),
             "links": Array.from(linksMap.values())
         };
-         
+
         return this;
     },
-    
+
     leftRightSwitch: function (d) {
         return d.x < this.sankey.size()[0] / 1.5;   // if true, right
     },
-    
+
     textOrient: function (d) {
         var orient = this.leftRightSwitch(d) ? "right" : "left";
         return "url(#sankeyColumn"+orient+")";
     },
-    
+
     textPos: function (sel, val1) {
         var self = this;
         sel
@@ -338,13 +338,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             .attr ("x", function (d) { return d.strMatch || val1(d) ? -6 : -self.colWidth + self.sankey.nodeWidth(); })
         ;
     },
-    
+
 
     render: function (renderOptions) {
         if (this.isVisible()) {
             //this.update();
             if (this.data) {
-                
+
                 renderOptions = renderOptions || {iterations: 32};
 
                 //console.log("RENDERING GO TERMS");
@@ -361,13 +361,13 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .size([width, height])
                     .layout(renderOptions.iterations)
                 ;
-                
+
                 //console.log ("res", this.sankey);
                 var maxDepth = d3.max (this.data.nodes, function (d) { return d.depth; });
                 var colWidth = (width - this.sankey.nodePadding() - this.sankey.nodeWidth()) / maxDepth;
                 this.colWidth = colWidth;
                 //console.log ("data", this.data, maxDepth, colWidth);
-                
+
                 this.svg.select("defs").selectAll("clipPath.sankeyColumn").remove();
                 var leftRight = [
                   {x: -colWidth + this.sankey.nodeWidth(), width: colWidth - this.sankey.nodeWidth(), orient: "left"},
@@ -390,9 +390,9 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
                 var path = this.sankey.link();
                 var self = this;
-                
+
                 var textPos = self.textPos.bind(self);
-                
+
 
                 var linkSel = self.backgroundGroup.selectAll(".goLink")
                     .data(this.data.links,
@@ -424,7 +424,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .data(this.data.nodes, function(d) {
                         return d.id;
                     })
-                ;        
+                ;
 
                 var nodeEnter = nodeSel.enter().append("g")
                     .attr("class", "node")
@@ -452,26 +452,27 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                             })
                             .call (textPos, function () { return true; })
                         ;
-                        
+
                         //nodeSel.style("opacity", function(d2) {
                        //     return term.isDirectRelation(d2.term) ? 1 : 0;
                         //});
                         //nodeSel.select("rect").attr("fill", function(dr) {
                             //return d == dr ? d.color = color(d.name.replace(/ .*/, "")) : "none";
                         //});
-                        
+
                         linkSel.style("display", function(dlink) {
                             return d.id == dlink.source.id || d.id == dlink.target.id ? null : "none";
                         });
-                        
-                        self.model.get("tooltipModel")
-                            .set("header", "GO Term "+d.id)
-                            .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(d.term))
-                            .set("location", {
-                                pageX: d3.event.pageX,
-                                pageY: d3.event.pageY
-                            })
-                        ;
+
+                        //i'm finding these get in the way - cc
+                        // self.model.get("tooltipModel")
+                        //     .set("header", "GO Term "+d.id)
+                        //     .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(d.term))
+                        //     .set("location", {
+                        //         pageX: d3.event.pageX,
+                        //         pageY: d3.event.pageY
+                        //     })
+                        // ;
 
                         self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
                     })
@@ -481,7 +482,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                             .style("display", null)
                             .select ("text")
                             .attr ("clip-path", function(d2) { return d2.strMatch ? null : self.textOrient(d2); })
-                            .call (textPos, function () { return false; }) 
+                            .call (textPos, function () { return false; })
                         ;
                         //nodeSel.style("opacity", 1);
                         //nodeSel.select("rect").attr("fill", function(d) {
@@ -540,7 +541,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     })
                     .attr("y", function(d) {
                         return (d.dy ? d.dy : 0) / 4;
-                    }) 
+                    })
                 ;
 
                 linkSel.attr("d", path);
@@ -561,14 +562,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         return this;
     },
-    
+
     updateThenRender: function () {
         if (this.isVisible()) {
-            return this.update().render();  
+            return this.update().render();
         }
         return this;
     },
-    
+
     relayout: function(descriptor) {
         if (descriptor && descriptor.dragEnd) { // avoids doing two renders when view is being made visible
             this.render({iterations: 6});
