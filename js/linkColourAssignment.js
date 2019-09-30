@@ -316,7 +316,7 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
         title: "Distance (Å)",
         longDescription: "Colour Cross-Links by adjustable distance category. Requires PDB file to be loaded (via Load -> PDB Data).",
         id: "Distance",
-        superDomain: [0, 35], // superdomain is used in conjunction with drawing sliders, it's the maximum that the values in the threshold can be
+        superDomain: [0, 120], // superdomain is used in conjunction with drawing sliders, it's the maximum that the values in the threshold can be
     });
 
     // add distanceColoursBB to this collection later if needed

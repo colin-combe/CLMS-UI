@@ -316,30 +316,6 @@ CLMSUI.modelUtils = {
         "Trp": "W",
         "Tyr": "Y",
         "Glx": "Z",
-        "ALA": "A",
-        "ASX": "B",
-        "CYS": "C",
-        "ASP": "D",
-        "GLU": "E",
-        "PHE": "F",
-        "GLY": "G",
-        "HIS": "H",
-        "ILE": "I",
-        "LYS": "K",
-        "LEU": "L",
-        "MET": "M",
-        "ASN": "N",
-        "PRO": "P",
-        "GLN": "Q",
-        "ARG": "R",
-        "SER": "S",
-        "THR": "T",
-        "SEC": "U",
-        "VAL": "V",
-        "TRP": "W",
-        "X": "X",
-        "TYR": "Y",
-        "GLX": "Z",
         "*": "*",
     },
 
@@ -546,36 +522,33 @@ CLMSUI.modelUtils = {
         return subIndexedMap;
     },
 
-    crosslinkerSpecificityPerLinker: function(searchArray) {
-        var crossSpec = CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity");
-        if (!crossSpec) {
-            crossSpec = {
-                default: {
-                    name: "all",
-                    searches: new Set(_.pluck (searchArray, "id")),
-                    linkables: [new Set(["*"])]
-                }
-            };
-        }
+    crosslinkerSpecificityPerLinker: function (searchArray) {
+        var crossSpec = CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity") || {
+            default: {
+                name: "all",
+                searches: new Set(_.pluck (searchArray, "id")),
+                linkables: [new Set(["*"])]
+            }
+        };
         return crossSpec;
     },
 
     // return indices of sequence whose letters match one in the residue set. Index is to the array, not to any external factor
     filterSequenceByResidueSet: function(seq, residueSet, all) {
-        var rmap = all ? d3.range(0, seq.length) : [];
+        var resIndices = all ? d3.range(0, seq.length) : [];
         if (!all) {
             for (var m = 0; m < seq.length; m++) {
                 if (residueSet.has(seq[m])) {
-                    rmap.push(m);
+                    resIndices.push(m);
                 }
             }
         }
-        return rmap;
+        return resIndices;
     },
 
     makeMultiKeyProteinMap: function(clmsModel) {
         var protMap = d3.map();
-        clmsModel.get("participants").forEach(function(value, key) {
+        clmsModel.get("participants").forEach (function(value, key) {
             protMap.set(value.accession, key);
             protMap.set(value.name, key);
             protMap.set(value.id, key);
@@ -586,7 +559,7 @@ CLMSUI.modelUtils = {
     parseProteinID: function(protMap, pid) {
         var parts = pid.split("|");
         var pkey;
-        parts.forEach(function(part) {
+        parts.forEach (function (part) {
             pkey = pkey || protMap.get(part);
         });
         return pkey;
@@ -1431,3 +1404,6 @@ CLMSUI.modelUtils = {
 
 CLMSUI.modelUtils.amino1to3Map = _.invert(CLMSUI.modelUtils.amino3to1Map);
 CLMSUI.modelUtils.amino1toNameMap = _.invert(CLMSUI.modelUtils.aminoNameto1Map);
+d3.entries(CLMSUI.modelUtils.amino3to1Map).forEach (function (entry) {
+    CLMSUI.modelUtils.amino3to1Map[entry.key.toUpperCase()] = entry.value;
+});

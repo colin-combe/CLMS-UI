@@ -181,9 +181,18 @@ CLMSUI.init.models = function(options) {
     });
 
     // Set up colour models, some (most) of which depend on data properties
-    //console.log ("clspec", d3.keys(CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity")));
-    CLMSUI.linkColour.setupColourModels ({distance: {domain: [15, 25], range: ['#5AAE61', '#FDB863', '#9970AB']}});
+    var crossLinkerKeys = d3.keys(CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity"));
+    var storedDistanceColourSettings = crossLinkerKeys.length === 1 ?  _.propertyOf(CLMSUI.utils.getLocalStorage())(["distanceColours", crossLinkerKeys[0]]) : undefined;
+    CLMSUI.linkColour.setupColourModels ({distance: storedDistanceColourSettings});
 
+    if (crossLinkerKeys.length === 1) {
+        CLMSUI.compositeModelInst.listenTo (CLMSUI.linkColour.Collection.get("Distance"), "colourModelChanged", function (attr) {
+            var obj = {distanceColours: {}};
+            obj.distanceColours[crossLinkerKeys[0]] = attr;
+            CLMSUI.utils.setLocalStorage (obj);
+        });
+    }
+                                               
     // Start asynchronous GO term fetching
     //CLMSUI.modelUtils.loadGOAnnotations(); // it will call allDataLoaded when done
 };

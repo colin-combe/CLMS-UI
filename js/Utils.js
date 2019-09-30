@@ -1020,7 +1020,7 @@ CLMSUI.utils = {
         return modernWeb;
     },
     
-    // add to local storage, partObj is object such as {crosslinkers: [{id:"BS3", colours: {domain:[1,2], range:["red", "blue"]} }] } that gets merged
+    // add to local storage, partObj is object such as {distanceColours: {"BS3": {domain:[15,25], range:["red", "blue", "green"]} }} that gets merged
     // into existing stored object
     setLocalStorage: function (partObj) {
         var storageStr = localStorage.getItem("xiView") || "{}";
