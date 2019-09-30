@@ -760,7 +760,7 @@ function callback (model) {
 		var filteredResidueMap = distObj.calcFilteredSequenceResidues (crosslinkerSpecificityList[0], distanceableSequences, alignedTerminalIndices);
 		var sampleDists = [];
 		distObj.generateSampleDistancesBySearch (filteredResidueMap[0], filteredResidueMap[1], sampleDists, {linksPerSearch: 100});
-		var actualValue = sampleDists.map (function (v) { return Math.round(v); });
+		var actualValue = sampleDists.map (Math.round);
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as sampled distances, Passed!");
 	});
@@ -783,7 +783,7 @@ function callback (model) {
 		// heterobidirectional crosslinker, between same protein id only - should be the same returned values as the previous test
         var options = {linksPerSearch: 100, heterobi: true, restrictToChain: false, restrictToProtein: true};
 		distObj.generateSubDividedSampleDistancesBySearch (filteredResidueMap, sampleDists, options);
-		var actualValue = sampleDists.map (function (v) { return Math.round(v); });
+		var actualValue = sampleDists.map (Math.round);
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as sampled distances, Passed!");
 	});
@@ -806,7 +806,7 @@ function callback (model) {
 		// heterobidirectional crosslinker, between same chains only
         var options = {linksPerSearch: 100, heterobi: true, restrictToChain: true, restrictToProtein: true};
 		distObj.generateSubDividedSampleDistancesBySearch (filteredResidueMap, sampleDists, options);
-		var actualValue = sampleDists.map (function (v) { return Math.round(v); });
+		var actualValue = sampleDists.map (Math.round);
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as sampled distances, Passed!");
 	});
@@ -830,7 +830,7 @@ function callback (model) {
 		// heterobidirectional crosslinker, between same chains only
         var options = {linksPerSearch: 100, heterobi: true, restrictToChain: false, restrictToModel: true, restrictToProtein: true};
 		distObj.generateSubDividedSampleDistancesBySearch (filteredResidueMap, sampleDists, options, cimimap);
-		var actualValue = sampleDists.map (function (v) { return Math.round(v); });
+		var actualValue = sampleDists.map (Math.round);
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as sampled distances, Passed!");
 	});
@@ -855,7 +855,7 @@ function callback (model) {
          
         var options = {linksPerSearch: 100, heterobi: true, restrictToChain: false, restrictToModel: false, restrictToProtein: true};
 		distObj.generateSubDividedSampleDistancesBySearch (filteredResidueMap, sampleDists, options, cimimap);
-		var actualValue = sampleDists.map (function (v) { return Math.round(v); });
+		var actualValue = sampleDists.map (Math.round);
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as sampled distances, Passed!");
 	});
@@ -868,7 +868,7 @@ function callback (model) {
 		var distObj = clmsModel.get("distancesObj");
 		
 		var sampleDists = distObj.getSampleDistances (100, crosslinkerSpecificityList, {withinProtein: true, withinChain: true});
-		var actualValue = sampleDists.map (function (v) { return Math.round(v); });
+		var actualValue = sampleDists.map (Math.round);
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as sampled distances, Passed!");
 	});
@@ -884,7 +884,7 @@ function callback (model) {
 		var distObj = clmsModel.get("distancesObj");
 		
 		var sampleDists = distObj.getSampleDistances (100, crosslinkerSpecificityList, {withinProtein: true, withinChain: true});
-		var actualValue = sampleDists.map (function (v) { return Math.round(v); });
+		var actualValue = sampleDists.map (Math.round);
 		
 		clmsModel.set ("crosslinkerSpecificity", crossSpec);	// restore crosslink specs
 		

@@ -26,7 +26,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         seriesNames: ["Cross-Links", "Decoys (TD-DD)", "Random", "Selected"],
         subSeriesNames: [],
         scaleOthersTo: {
-            "Random": "Cross-Links"
+            Random: "Cross-Links"
         },
         chartTitle: this.identifier,
         maxX: 90,
@@ -75,7 +75,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
         mainDivSel.append("div")
             .attr("class", "verticalFlexContainer")
-            .html("<DIV class='toolbar toolbarArea'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>");
+            .html("<DIV class='toolbar toolbarArea'></DIV><DIV class='panelInner distoDiv' flex-grow='1'></DIV>")
+        ;
 
         var buttonData = [{
             class: "downloadButton",
@@ -315,7 +316,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                         }); // if no decoys, hide the decoy total series
                     }
                 }
-                self.makeBarsSitBetweenTicks(this);
+                self.makeBarsSitBetweenTicks (this, "xAxis");
                 if (!self.options.dodgeTidyXAxis) {
                     self.tidyXAxis.call(self);
                     self.options.dodgeTidyXXAxis = true;
@@ -346,12 +347,11 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             // Reset distance attribute max value according to max cross-link distance
             var distAttr = this.options.attributeOptions.filter (function (attr) { return attr.id === "Distance"; });
             if (distAttr.length === 1) {
-                var userMax = +mainDivSel.select(".xAxisMax").property("value");
+                var userMax = +mainDivSel.select(".xAxisMax").property("value");    // user defined value from widget
                 var distObj = this.model.get("clmsModel").get("distancesObj");
                 if (!userMax) {
                     distAttr[0].maxVal = CLMSUI.utils.niceRound (distObj.maxDistance * 1.3) + 1;
                 }
-                //console.log ("MAX VAL", distObj.maxDistance, distAttr[0].maxVal);
             }
             
             if (this.getSelectedOption("X").id === "Distance") {
@@ -464,12 +464,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
             // Add sub-series data
             // split TT list into sublists for length
-            var splitSeries = colModel.get("labels").range()    // get colour scale category names  
+            var subSeries = colModel.get("labels").range()    // get colour scale category names  
                 .concat([colModel.get("undefinedLabel")])       // add an 'undefined' label (returning as new array)
                 .map(function(name) {                           // make into object with name and linkValues properties
                     return {
                         name: name,
-                        linkValues: []
+                        linkValues: [],
+                        isSubSeries: true,
                     };
                 })
             ;
@@ -478,16 +479,13 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             seriesData[TT].linkValues.forEach(function(linkDatum) {
                 var cat = colModel.getDomainIndex(linkDatum[0]);
                 if (cat === undefined) {
-                    cat = splitSeries.length - 1;
+                    cat = subSeries.length - 1;
                 }
-                splitSeries[cat].linkValues.push(linkDatum);
+                subSeries[cat].linkValues.push(linkDatum);
             });
 
             // add sub-series data to main series array
-            splitSeries.forEach(function(subSeries) {
-                subSeries.isSubSeries = true;
-                seriesData.push(subSeries);
-            });
+            seriesData.push.apply (seriesData, subSeries);
             
 
             //console.log ("seriesLengths", seriesLengths);
@@ -520,7 +518,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             var maxY = d3.max(countArrays, function(array) {
                 return d3.max(removeCatchAllCategory ? array : array.slice(0, -1)); // ignore last element in array if not already removed as it's dumping ground for everything over last value
             });
-            maxY = Math.max(maxY, 1);
+            maxY = Math.max (maxY, 1);
             //console.log ("maxY", maxY);
 
             // add names to front of arrays as c3 demands (need to wait until after we calc max otherwise the string gets returned as max)
@@ -528,10 +526,10 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 countArray.unshift(seriesData[i].name);
             }, this);
             var thresholds = aggregates.thresholds;
-            thresholds.unshift("x");
+            thresholds.unshift("x");    // add threshold x values as index data series
             countArrays.push(thresholds);
             //console.log ("thresholds", thresholds);
-            console.log ("countArrays", countArrays.slice(), seriesData.slice());
+            //console.log ("countArrays", countArrays.slice(), seriesData.slice());
 
             if (this.isEmpty(seriesData)) {
                 countArrays = [[]];
@@ -586,7 +584,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             c3.chart.internal.fn.redrawTitle = function() {};
             var chartInternal = this.chart.internal;
             
-            // Remove 'Undefined' category if empty
+            // Remove 'Undefined' and 'Selected' categories if empty
             // need to detect if these two get removed to do compareNewOldData
             removeSeries (colModel.get("undefinedLabel"), true);
             removeSeries ("Selected", true);
@@ -669,10 +667,9 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     // Hack to move bars right by half a bar width so they sit between correct values rather than over the start of an interval
-    makeBarsSitBetweenTicks: function(chartObj) {
+    makeBarsSitBetweenTicks: function (chartObj, whichXAxis) {  // can be xAxis or subXAxis
         var internal = chartObj || this.chart.internal;
-        //console.log ("internal", internal.xAxis, internal.xAxis.g, internal.axes);
-        var halfBarW = internal.getBarW(internal.xAxis, 1) / 2 || 0;
+        var halfBarW = internal.getBarW (internal[whichXAxis], 1) / 2 || 0;
         d3.select(this.el).selectAll(".c3-event-rects,.c3-chart-bars").attr("transform", "translate(" + halfBarW + ",0)");
         return this;
     },
@@ -743,7 +740,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         var linkData = this.getFilteredLinksByDecoyStatus();
         var links = linkData.links;
         var matchFilters = linkData.matchFilters;
-        //console.log ("links", links);
 
         var extras = this.attrExtraOptions[attrMetaData.id] || {
             conditions: []
@@ -823,7 +819,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         });
     },
 
-    getBinThresholds: function(seriesData, accessor) {
+    getBinThresholds: function (seriesData, accessor) {
         accessor = accessor || function(d) {
             return d;
         }; // return object/variable/number as is as standard accessor
@@ -847,7 +843,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         return this.precalcedDistributions[seriesName];
     },
 
-    aggregate: function(seriesData, precalcedDistributions, removeLastEntry) {
+    aggregate: function (seriesData, precalcedDistributions, removeLastEntry) {
 
         var thresholds = this.getBinThresholds(seriesData, function(d) {
             return d[1];
@@ -898,7 +894,6 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             });
         }
         
-        //console.log ("CA", countArrays, this.chart.internal);
         return {
             countArrays: countArrays,
             thresholds: thresholds
@@ -943,19 +938,8 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
     getSeriesColours: function(seriesNames) {
         var colModel = this.colourScaleModel;
-        var colScale = colModel.get("colScale");
-
-        /*
-        var colLabels = colModel.get("labels");
-        var colDomain = colScale.domain();
-        this.chart.xgrids([{value: colDomain[0], text: colLabels.range()[0]+' ↑'}, {value: colDomain[1], text: colLabels.range()[2]+' ↓', class:"overLengthGridRule"}]);
-        */
-
-        var colRange = colScale.range();
-        var colMap = {};
-        seriesNames.forEach(function(seriesName, i) {
-            colMap[seriesName] = colRange[i];
-        });
+        var colRange = colModel.get("colScale").range();
+        var colMap = _.object (_.zip (seriesNames, colRange));
         colMap[colModel.get("undefinedLabel")] = colModel.get("undefinedColour");
         return colMap;
     },

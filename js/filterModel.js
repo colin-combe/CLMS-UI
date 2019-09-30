@@ -21,6 +21,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 fail: false,
 
                 decoys: true,
+                //distance
+                distanceUndef: true,
                 //fdr
                 fdrThreshold: 0.05,
                 interFdrCut: undefined,
@@ -72,6 +74,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 pass: "boolean",
                 fail: "boolean",
                 decoys: "boolean",
+                //distance
+                distanceUndef: "boolean",
                 //fdr
                 fdrThreshold: "number",
                 interFdrCut: "number",
@@ -218,11 +222,12 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             },
 
             distanceFilter: function (crossLink) {
-                var dsc = this.get("distanceCutoff");
                 var dist = crossLink.getMeta("distance");
-                if (dist === undefined) {
-                    return true;
+                if (dist === undefined) {   // show undefined distances if either no distances or specifically allowed (distanceUndef flag)
+                    var noDistances = this.distanceExtent[0] === undefined;
+                    return noDistances || this.get("distanceUndef");
                 }
+                var dsc = this.get("distanceCutoff");
                 return (dsc[0] == undefined || dist >= dsc[0]) && (dsc[1] == undefined || dist <= dsc[1]); // == undefined cos shared links get undefined json'ified to null
             },
 
@@ -399,6 +404,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     fdrThreshold: "THR",
                     matchScoreCutoff: "MATCHSCORES",
                     distanceCutoff: "DIST",
+                    distanceUndef: "DISTUNK",
                     aaApart: "APART",
                     crosslinks: "XLINKS",
                     homomultimericLinks: "HOMOM",
