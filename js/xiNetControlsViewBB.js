@@ -33,11 +33,12 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             },
             "change .xiNetLinkWidth": function() {
                 var lwScale = d3.select(".xiNetLinkWidth").property("value");
-                if (isNaN(lwScale)) {
-                  this.model.set("xiNetLinkWidthAuto", true);
+                console.log("changing xlw", lwScale);
+                if (lwScale.trim() == "") {
+                   this.model.set("xiNetLinkWidthAuto", true);
                 } else {
-                  this.model.set("xiNetLinkWidthAuto", false);
-                  this.model.set("xiNetLinkWidthScale", lwScale);
+                   this.model.set("xiNetLinkWidthAuto", false);
+                   this.model.set("xiNetLinkWidthScale", lwScale);
                 }
             },
         });
@@ -108,7 +109,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>";
 
         buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXiNetLabels' checked></label>"
-        buttonHtml += "&nbsp;<label>Link width:<input type='number' class='xiNetLinkWidth'></label>"
+        buttonHtml += "&nbsp;<label>Link width:<input type='number' step='0.01' min='0' class='xiNetLinkWidth' title='pixels per Unique Linked Residue Pair'></label>"
 
         mainDivSel.html(
             buttonHtml
@@ -146,6 +147,16 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             myOptions: {
                 title: "Load ▼",
             }
+        });
+
+        this.listenTo(this.model, "change:xiNetLinkWidthScale", function() {
+            var linkWidthScale = this.model.get("xiNetLinkWidthScale");
+            d3.select(".xiNetLinkWidth").property("value", linkWidthScale);
+        });
+
+        this.listenTo(this.model, "change:xiNetLinkWidthAuto", function() {
+            var linkWidthAuto = this.model.get("xiNetLinkWidthAuto");
+            d3.select(".xiNetLinkWidth").style("color", linkWidthAuto? "#cccccc" : "#091d42" );
         });
 
     },

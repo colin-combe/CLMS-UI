@@ -802,6 +802,11 @@ input {
 	font-family: Lato-Bold;
 }
 
+input.xiNetLinkWidth {
+    width: 5em;
+    color: #cccccc;
+}
+
 sup {font-size:xx-small; vertical-align:super;}
 
 .smallHeading {

@@ -15,7 +15,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             groupColours: null, // will be d3.scale for colouring by search/group,
             TTCrossLinkCount: 0,
             groupedGoTerms: [],
-            xiNetLinkWidthAuto: false,
+            xiNetLinkWidthAuto: true,
             xiNetLinkWidthScale: 1
         });
 
