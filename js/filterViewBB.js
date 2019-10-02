@@ -47,7 +47,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {
                     label: "Ambig.",
                     id: "ambig",
-                    tooltip: "Show ambiguous cross-links",                  
+                    tooltip: "Show ambiguous cross-links",
                 },
                 {
                     label: "Between",
@@ -117,7 +117,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     label: "Protein",
                     id: "protNames",
                     chars: 7,
-                    tooltip: "Filter to cross-links involving a protein name/identifier/description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
+                    tooltip: "Filter to cross-links involving a protein name/identifier including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
                 {
                     label: "Run",
@@ -154,17 +154,17 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             };
         });
         defaultOptions.config.push.apply (defaultOptions.config, defaultOptions.searchGroupToggles);
-        
+
         // Make options into a map referenced by filter attribute id
         this.configMap = d3.map (defaultOptions.config, function(d) { return d.id; });
-        
+
         ["manualMode", "fdrMode"].forEach (function (item) {
             var entry = this.configMap.get(item);
             entry.overrideType = "radio";
             entry.inputClass = "modeToggle";
             entry.name = "modeSelect";
         }, this);
-  
+
         this.options = _.extend(defaultOptions, viewOptions.myOptions || {});
 
         var self = this;
@@ -177,7 +177,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             options = options || {};
             var div = mainDivSel.append("div").attr("class", "filterControlGroup").style("display", options.hide ? "none" : null);
             if (options.id) { div.attr("id", options.id); }
-            
+
             if (options.expandable !== false) {
                 var setPanelState = function (divSel, collapsed) {
                     divSel.select(".filterControlSpan").style ("display", collapsed ? "none" : null);
@@ -188,29 +188,29 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                         .text ((collapsed ? "+ " : "- ") + options.groupName)
                     ;
                 };
-                
+
                 div.append("div")
                     .attr ("class", "verticalTextContainer btn-1a")
                     .on("click", function() {
                         var div = d3.select(this.parentNode);
                         var panel = div.select(".filterControlSpan");
                         var collapse = panel.style("display") !== "none";
-                        div.call (setPanelState, collapse);                        
+                        div.call (setPanelState, collapse);
                     })
                     .append ("div")
                         .attr ("class", "verticalText")
                 ;
-                
+
                 div.call (setPanelState, false);
             }
-            
+
             var nestedDiv = div.append ("div").attr("class", "filterControlSpan");
             if (options.class) { nestedDiv.classed (options.class, true); }
             return nestedDiv;
         }
-        
-        
-        
+
+
+
         function initResetGroup() {
             var resetDivSel = makeFilterControlDiv ({class: "verticalFlexContainer", expandable: false});
             resetDivSel.append("p").attr("class", "smallHeading").text("Filter Bar");
@@ -221,7 +221,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             ;
         }
 
-        
+
         function addFilterGroup (config, filterIDs) {
             var divSel = makeFilterControlDiv (config);
             var filters = filterIDs.map (function (id) { return this.configMap.get(id); }, this);
@@ -300,7 +300,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                         self.model.set (config.attr, newVals);
                     })
                 ;
-                
+
                 if (config.undefAttr) {
                     var cbox = new CLMSUI.utils.checkBoxView({
                         el: sliderSection.select("div.undef").node(),
@@ -316,7 +316,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                         .select("label").classed("btn", false)
                     ;
                 }
-                
+
                 this.listenTo (this.model, "change:"+config.attr, function (model, val) {
                     sliderSection.select(".vmin input").property("value", val[0]); // min label
                     sliderSection.select(".vmax input").property("value", val[1]); // max label
@@ -330,7 +330,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             var fdrPanel = makeFilterControlDiv ({id: "fdrPanelHolder", groupName: "FDR"});
             fdrPanel.attr("id", "fdrPanel");
         }
-        
+
 
         function addScrollRightButton() {
             var fixedBox = mainDivSel
@@ -353,7 +353,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             button.append("i")
                 .attr("class", "fa fa-angle-double-right");
         }
-        
+
         var groupIDs = _.pluck(defaultOptions.searchGroupToggles, "id");
         groupIDs.push ("multipleGroup");
 
@@ -369,7 +369,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         addFilterGroup.call (this, {id: "groupFilters", groupName: "Groups"}, groupIDs);
         addFilterGroup.call (this, {id: "navNumberFilters", groupName: "PPI"}, ["urpPpi"]);
         addScrollRightButton.call(this);
-        
+
 
         // hide toggle options if no point in them being there (i.e. no between / self link toggle if only 1 protein)
         if (this.options.hide) {
@@ -396,7 +396,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         }); // Forces first call of setInputValuesFromModel
         this.processModeChanged();
     },
-    
+
     // Add a text-based filter widget to a d3 selection, using the attached data
     addTextFilter: function (d3sel) {
         var textFilter = d3sel
@@ -418,7 +418,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             })
         ;
 
-        // add patterns to inputs that have them 
+        // add patterns to inputs that have them
         var patterns = this.model.patterns;
         tfilters.filter(function(d) {
                 return patterns[d.id];
@@ -428,7 +428,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             })
         ;
     },
-    
+
     addNumberFilter: function (d3sel) {
         var numberFilter = d3sel
             .attr("title", function(d) {
@@ -454,12 +454,12 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             })
             .filter(function(d) { return d.chars !== undefined; })
             .style ("width", function (d) {
-                return d.chars + "em";   
+                return d.chars + "em";
             })
         ;
     },
 
-    
+
     // toggle filter
     addBooleanFilter: function (d3sel) {
         var toggle = d3sel
@@ -477,7 +477,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             })
         ;
         toggle.append("input")
-            .attr("class", function(d) { 
+            .attr("class", function(d) {
                 return d.inputClass || "filterTypeToggle";
             })
             .attr("type", function(d) { return d.overrideType || "checkbox"; })
@@ -485,9 +485,9 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             .attr("name", function (d) { return d.name; })
         ;
     },
-    
+
     datumFromTarget: function (target) {
-        return d3.select(target).datum() || {};    
+        return d3.select(target).datum() || {};
     },
 
     processBooleanFilter: function (evt) {
@@ -507,11 +507,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
             this.model.set (data.id, target.value);
         }
     },
-    
+
     processGroupToggleFilter: function (evt) {
         var target = evt.target;
         var data = this.datumFromTarget (target);
-        
+
         if (data) {
             var current = d3.set(this.model.get("searchGroups"));
             current[target.checked ? "add" : "remove"](data.id);
@@ -557,7 +557,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 return Boolean(model.get(d.id));
             })
         ;
-        
+
         var groupSet = d3.set (model.get("searchGroups"));
         mainDiv.selectAll("input.groupToggleFilter")
             .property("checked", function(d) {
@@ -575,7 +575,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 this.model.set("ambig", false);
             }
             d3el.select("#toggles_ambig").property("disabled", fdrMode == true);
-            
+
             // hide groups control if only 1 group
             d3el.select("#groupFilters").style ("display", this.model.possibleSearchGroups && this.model.possibleSearchGroups.length < 2 ? "none" : null);
             d3el.select("#distanceFilter").style ("display", this.model.distanceExtent[0] == undefined ? "none" : null);    // == matches null as well
