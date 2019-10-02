@@ -142,7 +142,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             preprocessFilterInputValues: function (searchArray) {
                 var protSplit1 = this.get("protNames").toLowerCase().split(","); // split by commas
                 this.preprocessedInputValues.set("protNames", protSplit1.map(function(prot) {
-                    return prot.split("-");
+                    return prot.split("-").map(function(protSplit2) {
+                        return protSplit2.trim();
+                    });
                 })); // split these in turn by hyphens
                 //console.log ("preprocessedValues", this.preprocessedValues.get("protNames"));
 
