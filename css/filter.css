@@ -124,6 +124,10 @@ div.filterItem, div.scoreSlider > div {
 	transform: scale(1.1);
 }
 
+#toggles_multipleGroup {
+    border-left: 1px dashed #668;
+}
+
 
 .filterResultGroup {
     position: absolute;

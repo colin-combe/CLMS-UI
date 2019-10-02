@@ -181,8 +181,18 @@ CLMSUI.init.models = function(options) {
     });
 
     // Set up colour models, some (most) of which depend on data properties
-    CLMSUI.linkColour.setupColourModels();
+    var crossLinkerKeys = d3.keys(CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity"));
+    var storedDistanceColourSettings = crossLinkerKeys.length === 1 ?  _.propertyOf(CLMSUI.utils.getLocalStorage())(["distanceColours", crossLinkerKeys[0]]) : undefined;
+    CLMSUI.linkColour.setupColourModels ({distance: storedDistanceColourSettings});
 
+    if (crossLinkerKeys.length === 1) {
+        CLMSUI.compositeModelInst.listenTo (CLMSUI.linkColour.Collection.get("Distance"), "colourModelChanged", function (attr) {
+            var obj = {distanceColours: {}};
+            obj.distanceColours[crossLinkerKeys[0]] = attr;
+            CLMSUI.utils.setLocalStorage (obj);
+        });
+    }
+                                               
     // Start asynchronous GO term fetching
     //CLMSUI.modelUtils.loadGOAnnotations(); // it will call allDataLoaded when done
 };
@@ -340,7 +350,7 @@ CLMSUI.init.views = function() {
 
     var compModel = CLMSUI.compositeModelInst;
     var matchesFound = !_.isEmpty(compModel.get("clmsModel").get("matches"));
-    console.log("MODEL", compModel);
+    //console.log("MODEL", compModel);
 
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults

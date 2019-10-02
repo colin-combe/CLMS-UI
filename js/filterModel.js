@@ -27,6 +27,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 fdrThreshold: 0.05,
                 interFdrCut: undefined,
                 intraFdrCut: undefined,
+                // groups
+                multipleGroup: true,
                 //navigation
                 pepSeq: "",
                 protNames: "",
@@ -80,6 +82,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 fdrThreshold: "number",
                 interFdrCut: "number",
                 intraFdrCut: "number",
+                //groups,
+                multipleGroup: "boolean",
                 //navigation
                 pepSeq: "text",
                 protNames: "text",
@@ -135,7 +139,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             preprocessFilterInputValues: function (searchArray) {
                 var protSplit1 = this.get("protNames").toLowerCase().split(","); // split by commas
                 this.preprocessedInputValues.set("protNames", protSplit1.map(function(prot) {
-                    return prot.split("-");
+                    return prot.split("-").map(function(protSplit2) {
+                        return protSplit2.trim();
+                    });
                 })); // split these in turn by hyphens
                 //console.log ("preprocessedValues", this.preprocessedValues.get("protNames"));
 
@@ -265,7 +271,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                                     var pidCount = pids.length;
                                     for (var p = 0; p < pidCount; p++) {
                                         var interactor = participants.get(pids[p]);
-                                        var toSearch = interactor.name + " " + interactor.description;
+                                        var toSearch = interactor.name;// + " " + interactor.description;
                                         if (toSearch.toLowerCase().indexOf(nameString) != -1) {
                                             found = true;
                                             used[i] = true; // so can't match two strings to same peptide e.g. "dog-cat" to protein associated with same peptide
@@ -377,6 +383,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             },
 
 
+            // If activated, this only passes matches whose search ids belong to particular groups
             groupFilter: function (match) {
                 if (this.possibleSearchGroups.length > 1) {
                     var matchGroup = this.precalcedSearchToGroupMap.get (match.searchId);
@@ -385,7 +392,17 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return true;
             },
 
-
+            // If activated, this only passes an array of matches if they are of the same group
+            groupFilter2: function (matchArr) {
+                if (matchArr.length > 1 && this.possibleSearchGroups.length > 1 && !this.get("multipleGroup")) {
+                    var smap = this.precalcedSearchToGroupMap;
+                    var firstMatchGroup = smap.get (matchArr[0].match.searchId);
+                    return matchArr.every (function (match) {
+                        return smap.get(match.match.searchId) === firstMatchGroup;
+                    }, this);
+                }
+                return true;
+            },
 
             stateString: function() {
                 // https://library.stanford.edu/research/data-management-services/case-studies/case-study-file-naming-done-well
@@ -409,6 +426,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     crosslinks: "XLINKS",
                     homomultimericLinks: "HOMOM",
                     searchGroups: "GROUPS",
+                    multipleGroup: "MGRP",
                 };
                 var zeroFormatFields = d3.set(["intraFdrCut", "interFdrCut", "scores"]);
                 if (this.get("fdrMode")) {
