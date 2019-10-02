@@ -219,15 +219,26 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 homomultiSwitchers.push (crossLink);
             }
         }
-        this.getCrossLinkDistances (homomultiSwitchers);
+        this.getCrossLinkDistances (homomultiSwitchers);    // recalculate distances for crosslinks whose homomultimer status has changed
 
+        // Filters after this point are those that depend on results of previous filtering
+        
+        // Remove crosslinks with matches in multiple groups if filterModel's multipleGroup setting set to false
+        if (filterModel && !filterModel.get("multipleGroup")) {
+            crossLinksArr.forEach (function (crossLink) {
+                if (!filterModel.groupFilter2 (crossLink.filteredMatches_pp)) {
+                    crossLink.filteredMatches_pp = [];
+                }
+            }, this);
+        }
+        
         var b = performance.now();
         console.log("ser filtering time", (b - a), "ms");
 
 
         //hack for francis, take out protein-protein links with only one supporting cross-link
-        if (this.get("filterModel")) {
-            var uniqueResiduePairsPerPPI = this.get("filterModel").get("urpPpi");
+        if (filterModel) {
+            var uniqueResiduePairsPerPPI = filterModel.get("urpPpi");
             if (uniqueResiduePairsPerPPI > 1) {
                 var value, key, crossLink;
                 var ppiMap = new Map();

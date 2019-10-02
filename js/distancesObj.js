@@ -313,21 +313,18 @@ CLMSUI.DistancesObj.prototype = {
 
     // Make one or two lists of residues from distanceableSequences that could map to each end of a crosslinker.
     // If the crosslinker is not heterobifunctional we only do one as it'll be the same at both ends.
-    calcFilteredSequenceResidues: function(crosslinkerSpecificity, distanceableSequences, alignedTerminalIndices) {
-        var linkableResidues = crosslinkerSpecificity.linkables;
-        var rmap = [
-            [],
-            []
-        ];
+    calcFilteredSequenceResidues: function (crosslinkerSpecificity, distanceableSequences, alignedTerminalIndices) {
+        var linkableResidueSets = crosslinkerSpecificity.linkables;
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
 
-        for (var n = 0; n < linkableResidues.length; n++) { // might be >1 set, some linkers bind differently at each end (heterobifunctional)
-            var all = linkableResidues[n].has("*") || linkableResidues[n].has("X") || linkableResidues[n].size === 0;
-            distanceableSequences.forEach(function(distSeq) {
+        var rmaps = linkableResidueSets.map (function (linkableResSet) {  // might be >1 set, some linkers bind differently at each end (heterobifunctional)
+            var all = linkableResSet.has("*") || linkableResSet.has("X") || linkableResSet.size === 0;
+            var rmap = [];
+            distanceableSequences.forEach (function (distSeq) {
                 CLMSUI.utils.xilog("distSeq", distSeq);
                 var protID = distSeq.protID;
                 var alignID = distSeq.alignID;
-                var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet(distSeq.subSeq, linkableResidues[n], all);
+                var filteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (distSeq.subSeq, linkableResSet, all);
                 for (var m = 0; m < filteredSubSeqIndices.length; m++) {
                     var searchIndex = distSeq.first + filteredSubSeqIndices[m];
                     // assign if residue position has definite hit between search and pdb sequence, but not if it's a gap (even a single-letter gap).
@@ -342,20 +339,23 @@ CLMSUI.DistancesObj.prototype = {
                             protID: protID,
                             seqIndex: seqIndex,
                         };
-                        rmap[n].push(datum);
+                        rmap.push(datum);
                     }
                 }
             }, this);
-            if (linkableResidues[n].has("CTERM")) {
-                rmap[n].push.apply(rmap[n], alignedTerminalIndices.ctermList);
+            if (linkableResSet.has("CTERM")) {
+                rmap.push.apply (rmap, alignedTerminalIndices.ctermList);
             }
-            if (linkableResidues[n].has("NTERM")) {
-                rmap[n].push.apply(rmap[n], alignedTerminalIndices.ntermList);
+            if (linkableResSet.has("NTERM")) {
+                rmap.push.apply (rmap, alignedTerminalIndices.ntermList);
             }
-        }
+            return rmap;
+        }, this);
+        
+        if (rmaps.length === 1) { rmaps.push ([]); }    // add empty second array for non-heterobi crosslinkers
 
-        CLMSUI.utils.xilog("rmap", rmap, linkableResidues);
-        return rmap;
+        CLMSUI.utils.xilog ("rmaps", rmaps, linkableResidueSets);
+        return rmaps;
     },
 
     makeChainIndexToModelIndexMap: function() {

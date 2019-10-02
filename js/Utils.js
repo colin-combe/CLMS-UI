@@ -1020,6 +1020,31 @@ CLMSUI.utils = {
         return modernWeb;
     },
     
+    // add to local storage, partObj is object such as {distanceColours: {"BS3": {domain:[15,25], range:["red", "blue", "green"]} }} that gets merged
+    // into existing stored object
+    setLocalStorage: function (partObj) {
+        var storageStr = localStorage.getItem("xiView") || "{}";
+        var storage = JSON.parse (storageStr);
+        storage = $.extend (true, storage, partObj);
+        localStorage.setItem ("xiView", JSON.stringify(storage));
+	},
+    
+    getLocalStorage: function () {
+        var storageStr = localStorage.getItem("xiView") || "{}";
+        return JSON.parse (storageStr);
+    },
+	
+	// is local storage viable?
+	canLocalStorage: function () {
+		try {
+			localStorage.setItem ('mod_xi', 'mod');
+			localStorage.removeItem ('mod_xi');
+			return true;
+		} catch(e) {
+			return false;
+		}
+	},
+    
     BaseFrameView: Backbone.View.extend({
 
         events: {
@@ -1339,7 +1364,7 @@ CLMSUI.utils = {
                 var activeDivs = d3.selectAll(".dynDiv").filter(function() {
                     return CLMSUI.utils.isZeptoDOMElemVisible($(this));
                 });
-                console.log("this view", this);
+                //console.log("this view", this);
 
                 // Push objects containing the individual divs as selections along with their z-indexes to an array
                 activeDivs.each(function() {
