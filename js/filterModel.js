@@ -39,7 +39,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 scanNumber: "",
                 urpPpi: 1,
             },
-            
+
             extents: {
                 aaApart: {
                     min: 0,
@@ -58,11 +58,11 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     max: 100
                 }
             },
-            
+
             patterns: {
                 pepSeq: "[A-Za-z]+-?[A-Za-z]*",
             },
-            
+
             types: {
                 manualMode: "boolean",
                 fdrMode: "boolean",
@@ -106,13 +106,13 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 }
                 // scoreExtent used to restrain text input values
                 this.scoreExtent = (secondarySettings ? secondarySettings.scoreExtent : undefined) || this.get("matchScoreCutoff").slice(0);
-                
-                
+
+
                 if (!this.get("distanceCutoff")) {
                     this.set("distanceCutoff", [undefined, undefined]);
                 }
                 this.distanceExtent = (secondarySettings ? secondarySettings.distanceExtent : undefined) || this.get("distanceCutoff").slice(0);
-                
+
                 // possibleSearchGroups used to restrain searchGroup options
                 this.possibleSearchGroups = (secondarySettings ? secondarySettings.possibleSearchGroups : undefined) || this.get("searchGroups").slice(0);
                 //this.scoreExtent = this.matches.extent (fu)
@@ -129,10 +129,10 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                         silent: true
                     })
                     .set(this.resetValues);
-                
+
                 return this;
             },
-            
+
             getMinExtent: function (attrID) {
                 var extents = this.extents[attrID];
                 return extents ? extents.min : null;
@@ -146,7 +146,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             preprocessFilterInputValues: function (searchArray) {
                 var protSplit1 = this.get("protNames").toLowerCase().split(","); // split by commas
                 this.preprocessedInputValues.set("protNames", protSplit1.map(function(prot) {
-                    return prot.split("-");
+                    return prot.split("-").map(function(protSplit2) {
+                        return protSplit2.trim();
+                    });
                 })); // split these in turn by hyphens
                 //console.log ("preprocessedValues", this.preprocessedValues.get("protNames"));
 
@@ -158,13 +160,13 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     };
                 });
                 this.preprocessedInputValues.set("pepSeq", splitPepSeq);
-                
+
                 // Search group pre calculations
                 this.precalcedSearchGroupsSet = d3.set(this.get("searchGroups"));
-                
+
                 var searchGroupMap = d3.map ();
                 searchArray.forEach (function (search) {
-                    searchGroupMap.set (search.id, search.group);    
+                    searchGroupMap.set (search.id, search.group);
                 });
                 this.precalcedSearchToGroupMap = searchGroupMap;
             },
@@ -231,7 +233,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             decoyFilter: function(match) {
                 return !match.isDecoy() || this.get("decoys");
             },
-            
+
             distanceFilter: function (crossLink) {
                 var dist = crossLink.getMeta("distance");
                 if (dist === undefined) {   // show undefined distances if either no distances or specifically allowed (distanceUndef flag)
@@ -239,7 +241,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     return noDistances || this.get("distanceUndef");
                 }
                 var dsc = this.get("distanceCutoff");
-                return (dsc[0] == undefined || dist >= dsc[0]) && (dsc[1] == undefined || dist <= dsc[1]); // == undefined cos shared links get undefined json'ified to null 
+                return (dsc[0] == undefined || dist >= dsc[0]) && (dsc[1] == undefined || dist <= dsc[1]); // == undefined cos shared links get undefined json'ified to null
             },
 
             validationStatusFilter: function(match) {
@@ -277,7 +279,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                                     var pidCount = pids.length;
                                     for (var p = 0; p < pidCount; p++) {
                                         var interactor = participants.get(pids[p]);
-                                        var toSearch = interactor.name + " " + interactor.description;
+                                        var toSearch = interactor.name;// + " " + interactor.description;
                                         if (toSearch.toLowerCase().indexOf(nameString) != -1) {
                                             found = true;
                                             used[i] = true; // so can't match two strings to same peptide e.g. "dog-cat" to protein associated with same peptide
@@ -379,7 +381,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                             aggMatchedCount |= matchCount; // logically aggregate to aggMatchedCount
                         }
                         // If 1, both pepstrings matched first peptide. If 2, both pepstrings matched second peptide.
-                        // Can't be one pepstring matching both peptides and the other neither, as an individual zero matchcount would return false in the loop 
+                        // Can't be one pepstring matching both peptides and the other neither, as an individual zero matchcount would return false in the loop
                         // (so can't be 0 in total either)
                         // So 3 must be the case where both peptides contain the pepstrings, such that one or both pepstrings are present at alternate ends
                         return aggMatchedCount === 3;
@@ -387,8 +389,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     return true;
                 }
             },
-            
-            
+
+
             // If activated, this only passes matches whose search ids belong to particular groups
             groupFilter: function (match) {
                 if (this.possibleSearchGroups.length > 1) {
@@ -397,7 +399,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 }
                 return true;
             },
-            
+
             // If activated, this only passes an array of matches if they are of the same group
             groupFilter2: function (matchArr) {
                 if (matchArr.length > 1 && this.possibleSearchGroups.length > 1 && !this.get("multipleGroup")) {
