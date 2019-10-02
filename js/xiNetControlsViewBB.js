@@ -29,7 +29,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             },
             "click .saveLayoutButton": "saveLayout",
             "change .showXiNetLabels": function() {
-                CLMSUI.vent.trigger("xiNetShowLabels", d3.select(".showXinetLabels").property("checked"));
+                CLMSUI.vent.trigger("xiNetShowLabels", d3.select(".showXiNetLabels").property("checked"));
             },
             "change .xiNetLinkWidth": function() {
                 var lwScale = d3.select(".xiNetLinkWidth").property("value");
