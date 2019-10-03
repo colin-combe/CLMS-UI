@@ -51,21 +51,21 @@ CLMSUI.modelUtils = {
         residueString: function(singleLetterCode) {
             return singleLetterCode + " (" + CLMSUI.modelUtils.amino1to3Map[singleLetterCode] + ")";
         },
-        
+
         formatDictionary: {
             formats: {distance: d3.format(".2f")},
             units: {distance: " Å"},
             unknownText: {distance : "Unknown"}
         },
-        
+
         niceFormat: function (key, value) {
             var fd = CLMSUI.modelUtils.makeTooltipContents.formatDictionary;
             var noFormat = function (v) { return v; };
-            
+
             var format = fd.formats[key] || noFormat;
             var unit = fd.units[key] || "";
             var unknown = fd.unknownText[key] || "";
-            
+
             return value !== undefined ? (format (value) + (unit || "")) : unknown;
         },
 
@@ -121,7 +121,7 @@ CLMSUI.modelUtils = {
                     return [linear ? "Linear" : xlink.toProtein.name, linear ? "---" : xlink.toResidue, residueCode, xlink.filteredMatches_pp.length];
                 }
             });
-            
+
             var extraEntries = d3.entries(extras);
             extraEntries.forEach(function(extraEntry) {
                 var key = extraEntry.key.toLocaleLowerCase();
@@ -183,7 +183,7 @@ CLMSUI.modelUtils = {
         linkList: function(linkList, extras) {
             var extraEntries = d3.entries(extras);
             var fromProtein, toProtein;
-            
+
             var details = linkList.map(function(crossLink, i) {
                 var from3LetterCode = CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(crossLink, false));
                 var to3LetterCode = CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(crossLink, true));
@@ -716,7 +716,11 @@ CLMSUI.modelUtils = {
         });
 
         if (columns) {
-            CLMSUI.vent.trigger("proteinMetadataUpdated", {
+          if (columns.indexOf("colour") != -1 /* || columns.indexOf("color") != -1 */) {
+              var proteinColourModel = CLMSUI.linkColour.makeColourModel("colour", "colour", proteins);//new CLMSUI.BackboneModelTypes.NodeColourModel();
+              CLMSUI.compositeModelInst.set("proteinColourModel", proteinColourModel);
+          }
+          CLMSUI.vent.trigger("proteinMetadataUpdated", {
                 columns: columns,
                 items: proteins,
                 matchedItemCount: matchedProteinCount
@@ -801,8 +805,8 @@ CLMSUI.modelUtils = {
             source: "file"
         });
     },
-    
-    
+
+
     convertGO_OBOtoJson: function (url) {
         d3.text (url, function(error, txt) {
             if (error) {
@@ -823,7 +827,7 @@ CLMSUI.modelUtils = {
         var term;
         var i = 0, l = 0;
         var first = true;
-        
+
         //for (var l = 0; l < lines.length; l++) {
         while (i !== 0 || first) {
             first = false;
@@ -862,7 +866,7 @@ CLMSUI.modelUtils = {
             }
             i = endi + 1;
             l++;
-        } 
+        }
         go.set(term.id, term); // last one left over
 
         var zz = performance.now();
@@ -886,10 +890,10 @@ CLMSUI.modelUtils = {
         }
         console.log (zz-z, "ms. first pass (is_a, part_of)", performance.now() - zz, "ms. second pass (subclasses, parts)");
         console.log ("for obo parsing", l, "lines into map size", go.size);
-        
+
         return go;
     },
-    
+
     jsonifyGoMap (goMap) {
         var json = {};
         goMap.forEach (function (v, k) {
@@ -905,7 +909,7 @@ CLMSUI.modelUtils = {
             });
             json[k] = JSON.parse(JSON.stringify(newv));
         });
-        
+
         return json;
     },
 
