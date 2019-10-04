@@ -63,37 +63,34 @@ CLMSUI.SearchSummaryViewBB = CLMSUI.utils.BaseFrameView.extend({
                 return arr.length < 2 ? arr.join("") : arr.slice(0, -1).join(', ') + ' and ' + arr.slice(-1);
             };
 
+            var codonsToNames = function (codonArray) {
+                return codonArray
+                    .map(function(code) {
+                        var name = CLMSUI.modelUtils.amino1toNameMap[code];
+                        return name ? name.replace("_", "-") : "(codon "+code+")";  // state codon if no long name
+                    })
+                ;
+            };
+            
             // crosslinker descriptions for each search
             var crossLinkerDescs = search.crosslinkers ? search.crosslinkers.map(function(clink) {
                 var linkerDatum = linkerData[clink.name];
                 var linkables = linkerDatum.linkables;
                 var obj = {
                     name: linkerDatum.name,
-                    first: niceJoin(
-                        Array.from(linkables[0].values())
-                        .map(function(code) {
-                            return CLMSUI.modelUtils.amino1toNameMap[code].replace("_", "-");
-                        })
-                    )
+                    first: niceJoin (codonsToNames (Array.from (linkables[0].values())))
                 };
                 if (linkerDatum.heterobi) {
-                    obj.second = niceJoin(
-                        Array.from(linkables[1].values())
-                        .map(function(code) {
-                            return CLMSUI.modelUtils.amino1toNameMap[code].replace("_", "-");
-                        })
-                    );
+                    obj.second = niceJoin (codonsToNames (Array.from (linkables[1].values())));
                 }
                 return obj;
             }) : "";
 
+            // modification descriptions
             var modDesc = function(mod) {
                 var residueList = mod.description.match(modRegex);
                 if (residueList && residueList[1]) {
-                    var residues = residueList[1].split(",").map(function(letterCode) {
-                        return CLMSUI.modelUtils.amino1toNameMap[letterCode].replace("_", "-");
-                    });
-                    return mod.name + " of " + niceJoin(residues);
+                    return mod.name + " of " + niceJoin (codonsToNames (residueList[1].split(",")));
                 }
                 return "";
             };
