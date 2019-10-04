@@ -242,7 +242,7 @@
 		var success = function (json) {
 			try {
                 if (json.error) {
-                    throw new Exception ("Error from server");
+                    throw "Error from server";
                 }
                 if (json.times) {
                     json.times.io = (Date.now() / 1000) - json.times.endAbsolute;
