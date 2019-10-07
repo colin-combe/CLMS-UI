@@ -2,7 +2,7 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.clearFdr = function (crossLinksArr) {
     // clear fdr information from crosslinks (usually because we've gone into none-fdr mode and don't want it showing in tooltips)
-    CLMSUI.modelUtils.clearCrossLinkMetaData (crossLinksArr, ["fdr", "meanMatchScore"]);
+    CLMSUI.modelUtils.clearObjectMetaData (crossLinksArr, ["fdr", "meanMatchScore"]);
 };
 
 CLMSUI.fdr = function(crossLinksArr, options) {

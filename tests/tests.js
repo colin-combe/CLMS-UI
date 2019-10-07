@@ -1173,7 +1173,7 @@ function callback (model) {
 		CLMSUI.vent.listenToOnce (CLMSUI.vent, "proteinMetadataUpdated", function (actualValue) {
 			assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as proteinmetadata event data, Passed!");
 			
-			var actualValue2 = clmsModel.get("participants").get("P02768-A").meta;
+			var actualValue2 = clmsModel.get("participants").get("P02768-A").getMeta();
 			var expectedValue2 = {cat: 2, dog: 4};
 			assert.deepEqual (actualValue2, expectedValue2, "Expected "+JSON.stringify(expectedValue2)+" as protein meta value, Passed!");
 		});

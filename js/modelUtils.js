@@ -648,19 +648,6 @@ CLMSUI.modelUtils = {
         }
     },
 
-    clearCrossLinkMetaData: function(crossLinkArr, metaFields) {
-        crossLinkArr.forEach(function(crossLink) {
-            if (crossLink.getMeta()) {
-                metaFields.forEach(function(metaField) {
-                    if (crossLink.getMeta(metaField) !== undefined) {
-                        crossLink.setMeta(metaField, undefined);
-                    }
-                });
-            }
-        });
-    },
-
-
     updateProteinMetadata: function(metaDataFileContents, clmsModel) {
         var proteins = clmsModel.get("participants");
         var first = true;
@@ -691,8 +678,8 @@ CLMSUI.modelUtils = {
                     matchedProteinCount++;
                     protein.name = d.name || d.Name || protein.name;
 
-                    protein.meta = protein.meta || {};
-                    var meta = protein.meta;
+                    //protein.meta = protein.meta || {};
+                    //var meta = protein.meta;
                     d3.entries(d).forEach(function(entry) {
                         var key = entry.key;
                         var val = entry.value;
@@ -701,7 +688,7 @@ CLMSUI.modelUtils = {
                             if (!isNaN(val)) {
                                 val = +val;
                             }
-                            meta[column] = val;
+                            protein.setMeta (column, val);
                         }
                     });
                 }
@@ -722,19 +709,19 @@ CLMSUI.modelUtils = {
             });
         }
     },
-
-    clearProteinMetaData: function(proteinArr, metaFields) {
-        proteinArr.forEach(function(protein) {
-            if (protein.meta) {
+    
+    // objectArr can be crossLinks or protein interactors (or a mix of)
+    clearObjectMetaData: function (objectArr, metaFields) {
+        objectArr.forEach (function (obj) {
+            if (obj.getMeta()) {
                 metaFields.forEach(function(metaField) {
-                    if (protein.meta[metaField] !== undefined) {
-                        protein.meta[metaField] = undefined;
+                    if (obj.getMeta(metaField) !== undefined) {
+                        obj.setMeta(metaField, undefined);
                     }
                 });
             }
         });
     },
-
 
     updateUserAnnotationsMetadata: function(userAnnotationsFileContents, clmsModel) {
         var proteins = clmsModel.get("participants");
@@ -1129,7 +1116,7 @@ CLMSUI.modelUtils = {
         var zdistances = clusterfck.hcluster(zScoresByLink, options.distance, options.linkage);
         var treeOrder = this.flattenBinaryTree(zdistances.tree);
 
-        CLMSUI.modelUtils.clearCrossLinkMetaData(allCrossLinks, ["kmcluster", "treeOrder"]);
+        CLMSUI.modelUtils.clearObjectMetaData(allCrossLinks, ["kmcluster", "treeOrder"]);
 
         kmeans.forEach(function(cluster, i) {
             cluster.forEach(function(arr) {
