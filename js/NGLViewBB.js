@@ -335,7 +335,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             modelindex: "Model Index",
             resname: "Residue Name",
             chainname: "Chain Name",
-            sstruc: "Sub Structure",
+            sstruc: "Secondary Structure",
             entityindex: "Entity Index",
             entitytype: "Entity Type",
             partialcharge: "Partial Charge",

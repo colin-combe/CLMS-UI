@@ -15,9 +15,7 @@ CLMSUI.modelUtils = {
     },
 
     matchScoreRange: function(matches, integerise) {
-        var extent = d3.extent(matches, function(m) {
-            return m.score();
-        });
+        var extent = d3.extent (matches, function(m) { return m.score(); });
         if (integerise) {
             extent = extent.map(function(val, i) {
                 return val !== undefined ? Math[i === 0 ? "floor" : "ceil"](val) : val;
@@ -28,19 +26,18 @@ CLMSUI.modelUtils = {
     },
 
     getResidueType: function(protein, seqIndex, seqAlignFunc) {
-        var seq = protein.sequence;
         // Some sequence alignment stuff can be done if you pass in a func
         seqIndex = seqAlignFunc ? seqAlignFunc(seqIndex) : seqIndex;
         // seq is 0-indexed, but seqIndex is 1-indexed so -1
-        return seq[seqIndex - 1];
+        return protein.sequence[seqIndex - 1];
     },
 
     getDirectionalResidueType: function(xlink, getTo, seqAlignFunc) {
         return CLMSUI.modelUtils.getResidueType(getTo ? xlink.toProtein : xlink.fromProtein, getTo ? xlink.toResidue : xlink.fromResidue, seqAlignFunc);
     },
 
-    filterOutDecoyInteractors: function(interactors) {
-        return interactors.filter(function(i) {
+    filterOutDecoyInteractors: function (interactorArr) {
+        return interactorArr.filter (function(i) {
             return !i.is_decoy;
         });
     },
@@ -373,17 +370,16 @@ CLMSUI.modelUtils = {
     // return array of indices of first occurrence of a sequence when encountering a repetition
     // e.g. ["CAT", "DOG", "CAT", "DOG"] -> [undefined, undefined, 0, 1];
     indexSameSequencesToFirstOccurrence: function(sequences) {
-        var firstIndex = [];
-        sequences.forEach(function(seq, i) {
-            firstIndex[i] = undefined;
+        return sequences.map (function(seq, i) {
+            var val = undefined;
             for (var j = 0; j < i; j++) {
                 if (seq === sequences[j]) {
-                    firstIndex[i] = j;
+                    val = j;
                     break;
                 }
             }
+            return val;
         });
-        return firstIndex;
     },
 
     filterRepeatedSequences: function(sequences) {
@@ -391,10 +387,10 @@ CLMSUI.modelUtils = {
         var sameSeqIndices = CLMSUI.modelUtils.indexSameSequencesToFirstOccurrence(sequences);
         var uniqSeqs = sequences.filter(function(seq, i) {
             return sameSeqIndices[i] === undefined;
-        }); // unique sequences...
+        }); // get unique sequences...
         var uniqSeqIndices = d3.range(0, sequences.length).filter(function(i) {
             return sameSeqIndices[i] === undefined;
-        }); // ...and their indices in 'seqs'...
+        }); // ...and their original indices in 'seqs'...
         var uniqSeqReverseIndex = _.invert(uniqSeqIndices); // ...and a reverse mapping of their index in 'seqs' to their place in 'uniqSeqs'
         return {
             sameSeqIndices: sameSeqIndices,
@@ -467,16 +463,14 @@ CLMSUI.modelUtils = {
     getLegalAccessionIDs: function(interactorCollection) {
         var ids = [];
         if (interactorCollection) {
-            if (interactorCollection.length === undefined) {
+            if (interactorCollection.length === undefined) {    // obj to array if necessary
                 interactorCollection = CLMS.arrayFromMapValues(interactorCollection);
             }
-            ids = CLMSUI.modelUtils.filterOutDecoyInteractors(interactorCollection)
-                .map(function(prot) {
-                    return prot.accession;
-                })
+            ids = _.pluck (CLMSUI.modelUtils.filterOutDecoyInteractors(interactorCollection), "accession")
                 .filter(function(accession) {
                     return accession.match(CLMSUI.utils.commonRegexes.uniprotAccession);
-                });
+                })
+            ;
         }
         return ids;
     },
@@ -523,17 +517,16 @@ CLMSUI.modelUtils = {
     },
 
     crosslinkerSpecificityPerLinker: function (searchArray) {
-        var crossSpec = CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity") || {
+        return CLMSUI.compositeModelInst.get("clmsModel").get("crosslinkerSpecificity") || {
             default: {
                 name: "all",
                 searches: new Set(_.pluck (searchArray, "id")),
                 linkables: [new Set(["*"])]
             }
         };
-        return crossSpec;
     },
 
-    // return indices of sequence whose letters match one in the residue set. Index is to the array, not to any external factor
+    // return indices of sequence where letters match ones in the residue set. Index is to the array, not to any external factor
     filterSequenceByResidueSet: function(seq, residueSet, all) {
         var resIndices = all ? d3.range(0, seq.length) : [];
         if (!all) {
@@ -1196,15 +1189,17 @@ CLMSUI.modelUtils = {
             var fromProtein = crossLink.fromProtein;
             var toProtein = crossLink.toProtein;
             var key = fromProtein.id + "-" + toProtein.id;
-            if (!obj[key]) {
-                obj[key] = {
+            var pairing = obj[key];
+            if (!pairing) {
+                pairing = {
                     crossLinks: [],
                     fromProtein: fromProtein,
                     toProtein: toProtein,
                     label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
                 };
+                obj[key] = pairing;
             }
-            obj[key].crossLinks.push(crossLink);
+            pairing.crossLinks.push(crossLink);
         });
         return obj;
     },

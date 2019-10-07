@@ -988,6 +988,21 @@ function callback (model) {
 		
 		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as crosslink protein pairing value, Passed!");
 	});
+    
+    
+    QUnit.test ("Legal accession ID Filter", function (assert) {
+		var interactors = [
+            {is_decoy: true, accession: "Q10276"},  // is decoy, good accession
+            {is_decoy: false, accession: "P12345"}, // good accession
+            {is_decoy: false, accession: "GIBBER"}, // bad accession
+            {is_decoy: false, accession: "A0A022YWF9"},   // good accession
+            {is_decoy: false, accession: "WH&T"},   // bad accession
+        ];
+		var expectedValue = ["P12345", "A0A022YWF9"];
+		var actualValue = CLMSUI.modelUtils.getLegalAccessionIDs (interactors);	
+		
+		assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as crosslink protein pairing value, Passed!");
+	});
 	
 	
 	QUnit.test ("Merge contiguous features", function (assert) {
