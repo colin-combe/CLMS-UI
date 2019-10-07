@@ -291,7 +291,7 @@
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches
         }
-        
+
         // 2. Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
         url = "./go.obo";
         d3.text (url, function(error, txt) {
@@ -306,7 +306,7 @@
 
         // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation
         CLMSUI.init.blosumLoading ();
-    
+
     //]]>
     </script>
 
