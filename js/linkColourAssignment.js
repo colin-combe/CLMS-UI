@@ -42,10 +42,7 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend({
         return val !== undefined ? this.get("colScale")(val) : this.get("undefinedColour");
     },
     triggerColourModelChanged: function(obj) {
-        this.trigger("colourModelChanged", obj);
-        if (this.collection) {
-            this.collection.trigger("aColourModelChanged", this, obj);
-        }
+        this.trigger("colourModelChanged", this, obj);
     },
     isCategorical: function() {
         return this.get("type") !== "linear";
@@ -188,6 +185,7 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
         } else {
             colScale = d3.scale.ordinal().range(["blue", "grey"]).domain(["other", "same"]);
             labels = ["Other", "Same"];
+            this.overload = true;
         }
 
         this
@@ -203,7 +201,7 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
     getValue: function(crossLink) {
         var id1 = crossLink.fromProtein.id;
         var id2 = crossLink.toProtein ? crossLink.toProtein.id : undefined;
-        return (id2 === undefined || id1 === id2) ? "same" : this.makeProteinPairKey(id1, id2);
+        return (id2 === undefined || id1 === id2) ? "same" : (this.overload ? "other" : this.makeProteinPairKey(id1, id2));
     },
 });
 

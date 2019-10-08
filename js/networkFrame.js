@@ -186,7 +186,7 @@ CLMSUI.init.models = function(options) {
     CLMSUI.linkColour.setupColourModels ({distance: storedDistanceColourSettings});
 
     if (crossLinkerKeys.length === 1) {
-        CLMSUI.compositeModelInst.listenTo (CLMSUI.linkColour.Collection.get("Distance"), "colourModelChanged", function (attr) {
+        CLMSUI.compositeModelInst.listenTo (CLMSUI.linkColour.Collection.get("Distance"), "colourModelChanged", function (colourModel, attr) {
             var obj = {distanceColours: {}};
             obj.distanceColours[crossLinkerKeys[0]] = attr;
             CLMSUI.utils.setLocalStorage (obj);
@@ -955,13 +955,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         },
     });
 
-    compModel.listenTo(CLMSUI.linkColour.Collection, "aColourModelChanged", function(colourModel, newDomain) {
-        console.log("col change args", arguments, this);
-        if (this.get("linkColourAssignment") === colourModel) {
-            this.trigger("currentColourModelChanged", colourModel, newDomain);
+    // A colour model's attributes have changed - is it the currently used model? If so, fire the currentColourModelChanged event
+    compModel.listenTo(CLMSUI.linkColour.Collection, "colourModelChanged", function (colourModel, changedAttrs) {
+        if (this.get("linkColourAssignment").id === colourModel.id) {
+            this.trigger ("currentColourModelChanged", colourModel, changedAttrs);
         }
     });
-
+    
     // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
     compModel.set("linkColourAssignment",
         compModel.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
