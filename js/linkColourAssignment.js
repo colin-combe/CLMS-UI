@@ -25,8 +25,8 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend({
         });
         return this;
     },
-    getDomainIndex: function(crossLink) {
-        var val = this.getValue(crossLink);
+    getDomainIndex: function (obj) {    // obj is generally a crosslink, but is non-specific at this point
+        var val = this.getValue(obj);
         var dom = this.get("colScale").domain();
         return val != undefined ? (this.get("type") !== "ordinal" ? d3.bisect(dom, val) : dom.indexOf(val)) : undefined;
     },
@@ -34,15 +34,15 @@ CLMSUI.BackboneModelTypes.ColourModel = Backbone.Model.extend({
         var domain = this.get("colScale").domain();
         return this.isCategorical() ? (this.get("type") === "threshold" ? domain.length + 1 : domain.length) : domain[1] - domain[0] + 1;
     },
-    getColour: function(crossLink) {
-        var val = this.getValue(crossLink);
+    getColour: function(obj) {  // obj is generally a crosslink, but is non-specific at this point
+        var val = this.getValue(obj);
         return val !== undefined ? this.get("colScale")(val) : this.get("undefinedColour");
     },
     getColourByValue: function(val) {
         return val !== undefined ? this.get("colScale")(val) : this.get("undefinedColour");
     },
-    triggerColourModelChanged: function(obj) {
-        this.trigger("colourModelChanged", this, obj);
+    triggerColourModelChanged: function(changedAttrs) {
+        this.trigger("colourModelChanged", this, changedAttrs);
     },
     isCategorical: function() {
         return this.get("type") !== "linear";
@@ -61,11 +61,12 @@ CLMSUI.BackboneModelTypes.ColourModelCollection = Backbone.Collection.extend({
 });
 
 
-CLMSUI.BackboneModelTypes.DefaultColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend({
+CLMSUI.BackboneModelTypes.DefaultLinkColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend({
     initialize: function() {
         this
             .set("labels", this.get("colScale").copy().range(["Self Cross-Links", "Self Cross-Links (Overlapping Peptides)", "Between Protein Cross-Links"]))
-            .set("type", "ordinal");
+            .set("type", "ordinal")
+        ;
     },
     getValue: function(crossLink) {
         return crossLink.isSelfLink() || crossLink.isLinearLink() ? (crossLink.confirmedHomomultimer ? 1 : 0) : 2;
@@ -120,19 +121,18 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         //check if link uniquely belongs to one group
         var filteredMatchesAndPepPositions = crossLink.filteredMatches_pp;
 
-        var foundGroup = null;
+        var value = null;
         for (var fm_pp = filteredMatchesAndPepPositions.length; --fm_pp >= 0;) {
             var match = filteredMatchesAndPepPositions[fm_pp].match;
             var group = this.searchMap.get(match.searchId).group;
-            if (!foundGroup) {
-                foundGroup = group;
-            } else if (foundGroup !== group) {
-                foundGroup = -1;    //undefined;
+            if (!value) {
+                value = group;
+            } else if (value !== group) {
+                value = -1;    //undefined;
                 break;
             }
         }
-        // choose value if link definitely belongs to just one group or set as undefined
-        var value = foundGroup;
+        // choose value if link definitely belongs to just one group or set as undefined (-1)
         return value;
     },
     getColourByValue: function(val) {
@@ -146,8 +146,7 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
         return scale(val);
     },
     getColour: function(crossLink) {
-        var val = this.getValue(crossLink);
-        return this.getColourByValue(val);
+        return this.getColourByValue (this.getValue (crossLink));
     },
 });
 
@@ -185,7 +184,7 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
         } else {
             colScale = d3.scale.ordinal().range(["blue", "grey"]).domain(["other", "same"]);
             labels = ["Other", "Same"];
-            this.overload = true;
+            this.overload = true;   // too many proteins for sensible number of colours
         }
 
         this
@@ -227,8 +226,8 @@ CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.Colour
 
         this.set("labels", this.get("colScale").copy().range(labels));
     },
-    getValue: function(crossLink) {
-        return crossLink.getMeta(this.get("field"));
+    getValue: function (obj) {  // obj can be anything with a getMeta function - crosslink or, now, proteins
+        return obj.getMeta(this.get("field"));
     },
 });
 
@@ -246,7 +245,8 @@ CLMSUI.BackboneModelTypes.NonCrossLinkColourModel = CLMSUI.BackboneModelTypes.Co
         this
             .set("labels", this.get("colScale").copy().range(labels))
             .set("title", this.get("id"))
-            .set("longDescription", this.get("id"));
+            .set("longDescription", this.get("id"))
+        ;
     },
     getValue: function() {
         return undefined;
@@ -264,11 +264,10 @@ CLMSUI.BackboneModelTypes.MapBasedLinkColourModel = CLMSUI.BackboneModelTypes.Co
             labels[i] += " (" + domVal + ")";
         });
 
-        this
-            .set("labels", this.get("colScale").copy().range(labels));
+        this.set("labels", this.get("colScale").copy().range(labels));
     },
-    getValue: function(crossLink) {
-        return this.get("valueMap")[crossLink.id];
+    getValue: function(obj) {   // obj is generally a crosslink, but can be any object with an id property that is a key in a supplied valueMap
+        return this.get("valueMap")[obj.id];
     },
 });
 
@@ -281,7 +280,7 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
     };
     var config = $.extend (true, {}, defaultConfig, userConfig);    // true = deep merging
     
-    CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultColourModel({
+    CLMSUI.linkColour.defaultColoursBB = new CLMSUI.BackboneModelTypes.DefaultLinkColourModel({
         colScale: d3.scale.ordinal().domain(config.default.domain).range(config.default.range),
         title: "Cross-Link Type",
         longDescription: "Default colour scheme, differentiates self and between Cross-Links.",
@@ -318,7 +317,7 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
     });
 
     // add distanceColoursBB to this collection later if needed
-    CLMSUI.linkColour.Collection = new CLMSUI.BackboneModelTypes.ColourModelCollection([
+    var linkColourCollection = new CLMSUI.BackboneModelTypes.ColourModelCollection([
         CLMSUI.linkColour.defaultColoursBB,
         CLMSUI.linkColour.interProteinColoursBB,
         CLMSUI.linkColour.groupColoursBB,
@@ -326,7 +325,7 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
     ]);
 
     // If necessary, swap in newly added colour scale with same id as removed (but current) scale pointed to by linkColourAssignment
-    var replaceCurrentLinkColourAssignment = function(collection) {
+    var replaceCurrentLinkColourAssignment = function (collection) {
         var currentColourModel = CLMSUI.compositeModelInst.get("linkColourAssignment");
         if (currentColourModel && !currentColourModel.collection) {
             CLMSUI.compositeModelInst.set("linkColourAssignment", collection.get(currentColourModel.get("id")));
@@ -335,7 +334,7 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
 
     // Just the group colour scale is replaced for this event
     //CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "csvLoadingDone", function () {
-    CLMSUI.linkColour.Collection.listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
+    linkColourCollection.listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
         this.remove("Group");
         CLMSUI.linkColour.groupColoursBB = makeGroupColourModel();
         this.add(CLMSUI.linkColour.groupColoursBB);
@@ -344,7 +343,7 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
     });
 
     // All colour scales with ids in metadataFields array are removed (if already extant) and added
-    CLMSUI.linkColour.Collection.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaMetaData) {
+    linkColourCollection.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaMetaData) {
         var columns = metaMetaData.columns;
         var crossLinks = metaMetaData.items;
         var colMaps = columns.map(function(field) {
@@ -356,14 +355,14 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
         replaceCurrentLinkColourAssignment(this);
     });
 
-    CLMSUI.linkColour.Collection.listenTo(CLMSUI.vent, "addNonCrossLinkColourModel", function(data) {
+    linkColourCollection.listenTo(CLMSUI.vent, "addNonCrossLinkColourModel", function(data) {
         this.remove(data.id);
         var newModel = CLMSUI.linkColour.makeNonCrossLinkColourModel(data.id, data.domain);
         this.add(newModel);
         replaceCurrentLinkColourAssignment(this);
     });
 
-    CLMSUI.linkColour.Collection.listenTo(CLMSUI.vent, "addMapBasedLinkColourModel", function(data) {
+    linkColourCollection.listenTo(CLMSUI.vent, "addMapBasedLinkColourModel", function(data) {
         console.log("AMB", data);
         this.remove(data.id);
         var newModel = CLMSUI.linkColour.makeMapBasedLinkColourModel(data.columnIndex, data.label, data.linkMap);
@@ -372,6 +371,8 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
         CLMSUI.compositeModelInst.set("linkColourAssignment", newModel);
         replaceCurrentLinkColourAssignment(this);
     });
+    
+    CLMSUI.linkColour.Collection = linkColourCollection;
 };
 
 CLMSUI.linkColour.colourRangeMaker = function (extents) {
