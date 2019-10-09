@@ -529,7 +529,10 @@ CLMSUI.NGLUtils = {
         interModelLinks.forEach (function (link) {
             var origLink = origCrossLinks.get(link.origId);
             // get crosslinkers used by this crosslink
-            var crossLinkerIDs = origLink ? d3.set (origLink.filteredMatches_pp.map (function (match) { return match.match.crosslinker_id; })).values() : [];
+            var crossLinkerIDs = 
+                (origLink ? d3.set (origLink.filteredMatches_pp.map (function (match) { return match.match.crosslinker_id; })).values() : [])
+                .map (function (clid) { return clid === "undefined" ? "default" : clid; })
+            ;
             if (_.isEmpty (crossLinkerIDs)) { crossLinkerIDs = ["default"]; }
             
             // add a restraint line for each different crosslinker

@@ -364,7 +364,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             // Then sort links by top remaining match score for each link
             .sort(function(a, b) {
                 return b.matches[0].score() - a.matches[0].score();
-            });
+            })
+        ;
 
         // filter to top match per link if requested
         if (options.topMatchesOnly) {
@@ -411,6 +412,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
             this.setPage(this.page);
         }
+        
+        d3.select(this.el).select("table").style("display", this.matchCountIndices.length ? null : "none");
     },
 
     pageIncrement: function (incr) {
