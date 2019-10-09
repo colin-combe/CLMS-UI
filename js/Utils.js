@@ -1490,12 +1490,13 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend({
         d3.select(this.el).attr("class", "btn selectHolder")
             .append("span")
             .attr("class", "noBreak")
-            .html("<span class='rainbow'></span>Choose Cross-Link Colour Scheme ►");
+            .html("<span class='rainbow'></span>"+(options.label || "Choose Cross-Link Colour Scheme")+" ►");
 
         var addOptions = function(selectSel) {
             var optionSel = selectSel
                 .selectAll("option")
-                .data(self.model.toJSON());
+                .data(self.model.toJSON())
+            ;
             optionSel.exit().remove();
             optionSel.enter().append("option");
             optionSel

@@ -696,12 +696,8 @@ CLMSUI.modelUtils = {
         });
 
         if (columns) {
-          if (columns.indexOf("colour") != -1 /* || columns.indexOf("color") != -1 */) {
-              var proteinColourModel = CLMSUI.linkColour.makeColourModel("colour", "colour", proteins);//new CLMSUI.BackboneModelTypes.NodeColourModel();
-              CLMSUI.compositeModelInst.set("proteinColourModel", proteinColourModel);
-          }
           CLMSUI.vent.trigger("proteinMetadataUpdated", {
-                columns: columns,
+                columns: _.difference (columns, ["name", "Name"]),
                 items: proteins,
                 matchedItemCount: matchedProteinCount
             }, {

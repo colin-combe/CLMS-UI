@@ -567,7 +567,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", function() {
             self.renderPartial(["links"]);
         }); // either colour change or new colour model
-        this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {
+        this.listenTo(this.model, "change:proteinColourAssignment currentProteinColourModelChanged", function() {
+            self.renderPartial(["nodes"]);
+        }); // either colour change or new colour model
+        this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {   // generally a name change
             self.renderPartial(["nodes"]);
         });
         this.listenTo(this.model.get("annotationTypes"), "change:shown", function() {
@@ -1062,10 +1065,12 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
 
         var multipleNodes = true; //this.filterInteractors(this.model.get("clmsModel").get("participants")).length > 1;
-
+        var colourScheme = this.model.get("proteinColourAssignment");
+        var interactors = this.model.get("clmsModel").get("participants");
+        
         var nodeLayer = this.addOrGetGroupLayer(g, "nodeLayer");
         var nodeJoin = nodeLayer.selectAll(".circleNode").data(nodes, self.idFunc);
-
+        
         nodeJoin.exit().remove();
 
         nodeJoin.enter()
@@ -1089,7 +1094,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             })
         ;
 
-        nodeJoin.attr("d", this.arc);
+        nodeJoin
+            .attr("d", this.arc)
+            .attr("fill", function(d) { colourScheme.getColour(interactors.get(d.id)); })
+        ;
 
         this.showAccentOnTheseNodes(nodeJoin, "selection");
 

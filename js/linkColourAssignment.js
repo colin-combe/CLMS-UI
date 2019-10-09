@@ -71,7 +71,6 @@ CLMSUI.BackboneModelTypes.DefaultLinkColourModel = CLMSUI.BackboneModelTypes.Col
     getValue: function(crossLink) {
         return crossLink.isSelfLink() || crossLink.isLinearLink() ? (crossLink.confirmedHomomultimer ? 1 : 0) : 2;
     },
-
 });
 
 
@@ -272,8 +271,22 @@ CLMSUI.BackboneModelTypes.MapBasedLinkColourModel = CLMSUI.BackboneModelTypes.Co
 });
 
 
+CLMSUI.BackboneModelTypes.DefaultProteinColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend({
+    initialize: function() {
+        this
+            .set("labels", this.get("colScale").copy().range(["Protein"]))
+            .set("type", "ordinal")
+        ;
+    },
+    getValue: function (protein) {
+        return 0;
+    },
+});
+
+
 
 CLMSUI.linkColour.setupColourModels = function (userConfig) {
+    console.log ("BLOOO");
     var defaultConfig = {
         default: {domain: [0, 1, 2], range: ["#9970ab", "#35978f", "#35978f"]},
         distance: {domain: [15, 25], range: ['#5AAE61', '#FDB863', '#9970AB']}
@@ -333,16 +346,14 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
     };
 
     // Just the group colour scale is replaced for this event
-    //CLMSUI.linkColour.Collection.listenTo (CLMSUI.vent, "csvLoadingDone", function () {
     linkColourCollection.listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
-        this.remove("Group");
+        this.remove("Group");   // remove old group scale
         CLMSUI.linkColour.groupColoursBB = makeGroupColourModel();
-        this.add(CLMSUI.linkColour.groupColoursBB);
-
-        replaceCurrentLinkColourAssignment(this);
+        this.add (CLMSUI.linkColour.groupColoursBB);    // add new group scale
+        replaceCurrentLinkColourAssignment(this);   // replace existing selected scale if necessary
     });
 
-    // All colour scales with ids in metadataFields array are removed (if already extant) and added
+    // All colour scales with ids in metadataFields array are removed (if already extant) and new scales added
     linkColourCollection.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaMetaData) {
         var columns = metaMetaData.columns;
         var crossLinks = metaMetaData.items;
@@ -351,7 +362,6 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
         });
         this.remove(columns);
         this.add(colMaps);
-
         replaceCurrentLinkColourAssignment(this);
     });
 
@@ -373,6 +383,45 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
     });
     
     CLMSUI.linkColour.Collection = linkColourCollection;
+    
+    
+    // Protein colour schemes
+    
+    CLMSUI.linkColour.defaultProteinColoursBB = new CLMSUI.BackboneModelTypes.DefaultProteinColourModel ({
+        colScale: d3.scale.ordinal().domain([0]).range(["#aaa"]),
+        title: "Default Protein Colour",
+        longDescription: "Default protein colour.",
+        id: "Default Protein"
+    });
+    
+    console.log ("GHJHJK", CLMSUI.linkColour.defaultProteinColoursBB);
+    
+    // Can add other metdata-based schemes to this collection later
+    var proteinColourCollection = new CLMSUI.BackboneModelTypes.ColourModelCollection([
+        CLMSUI.linkColour.defaultProteinColoursBB,
+    ]);
+    
+    // If necessary, swap in newly added colour scale with same id as removed (but current) scale pointed to by linkColourAssignment
+    var replaceCurrentProteinColourAssignment = function (collection) {
+        var currentColourModel = CLMSUI.compositeModelInst.get("proteinColourAssignment");
+        if (currentColourModel && !currentColourModel.collection) {
+            CLMSUI.compositeModelInst.set("proteinColourAssignment", collection.get(currentColourModel.get("id")));
+        }
+    };
+    
+    // All colour scales with ids in metadataFields array are removed (if already extant) and new scales added
+    proteinColourCollection.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function(metaMetaData) {
+        var columns = metaMetaData.columns;
+        var proteins = metaMetaData.items;
+        var colMaps = columns.map(function(field) {
+            return CLMSUI.linkColour.makeColourModel(field, field, proteins);
+        });
+        this.remove(columns);
+        this.add(colMaps);
+        replaceCurrentProteinColourAssignment(this);
+    });
+    
+    CLMSUI.linkColour.ProteinCollection = proteinColourCollection;
 };
 
 CLMSUI.linkColour.colourRangeMaker = function (extents) {
