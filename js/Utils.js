@@ -663,7 +663,7 @@ CLMSUI.utils = {
 
 
     // Function for making a cross-link colour key as an svg group element
-    updateColourKey: function(model, svgElem) {
+    updateColourKey: function (colourAssign, svgElem) {
         svgElem.attr("height", "200");
 
         var keyGroup = svgElem.selectAll("g.key").data([0]);
@@ -672,7 +672,6 @@ CLMSUI.utils = {
             .append("text").attr("class", "keyTitle")
         ;
 
-        var colourAssign = model.get("linkColourAssignment");
         if (colourAssign) {
             keyGroup.select("text.keyTitle")
                 .attr("y", 12)
@@ -775,7 +774,6 @@ CLMSUI.utils = {
             }
             
             // add undefined category
-            
         }
     },
 
@@ -1223,7 +1221,7 @@ CLMSUI.utils = {
         addKey: function (options) {
             options = options || {};
             var tempSVG = (options.addToSelection || d3.select(this.el).select("svg")).append("svg").attr("class", "tempKey");
-            CLMSUI.utils.updateColourKey(CLMSUI.compositeModelInst, tempSVG);
+            CLMSUI.utils.updateColourKey(CLMSUI.compositeModelInst.get("linkColourAssignment"), tempSVG);
             if (options.addOrigin) {
                 tempSVG.select("g.key").attr("transform", "translate(0,20)");
                 var link = this.model.get("filterModel") ? 

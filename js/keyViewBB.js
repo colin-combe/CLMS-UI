@@ -17,12 +17,12 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         var topDiv = d3.select(this.el).append("div")
             .attr("class", "verticalFlexContainer keyPanel")
-            .html("<!-- <div class='toolbar'></div> --><div class='panelInner' flex-grow='1'></div>");
-        //this.controlDiv = topDiv.select(".toolbar");
-        //this.controlDiv.append("label").attr("id", "linkColourDropdownPlaceholder");
-        //this.controlDiv.append("label").attr("id", "proteinColourDropdownPlaceholder");
+        ;
 
-        var chartDiv = topDiv.select(".panelInner");
+        var chartDiv = topDiv.append("div")
+            .attr("class", "panelInner")
+            .attr("flex-grow", "1")
+        ;
 
         this.setupColourSection(chartDiv);
         this.setupLegendSection(chartDiv);
@@ -42,12 +42,14 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         var sectionData = [
             {
                 id: "colourKey",
+                colourModelKey: "linkColourAssignment",
                 header: "Current Cross-Link Colour Scheme",
                 controlPlaceholderID: "linkColourDropdownPlaceholder",
                 rows: [],
             },
             {
                 id: "proteinColourKey",
+                colourModelKey: "proteinColourAssignment",
                 header: "Current Protein Colour Scheme",
                 controlPlaceholderID: "proteinColourDropdownPlaceholder",
                 rows: [],
@@ -83,7 +85,9 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
             .insert("label", ":first-child").attr("id", function(d) { return d.controlPlaceholderID; })
         ;
 
-        sectionDiv.append("button")
+        // add download colour scheme svg button
+        sectionDiv.selectAll("section")
+            .append("button")
             .attr("class", "downloadButton3 btn btn-1 btn-1a")
             .text("Download This Colour Scheme as SVG")
         ;
@@ -411,9 +415,10 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    downloadKey: function() {
+    downloadKey: function(evt) {
+        var d = d3.select(evt.target).datum();  // d3 datum for this button
         var tempSVG = d3.select(this.el).append("svg").attr("class", "tempKey");
-        CLMSUI.utils.updateColourKey(this.model, tempSVG);
+        CLMSUI.utils.updateColourKey (this.model.get(d.colourModelKey), tempSVG);
         this.downloadSVG(null, tempSVG);
         tempSVG.remove();
     },
