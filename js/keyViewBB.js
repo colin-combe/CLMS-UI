@@ -17,10 +17,10 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         var topDiv = d3.select(this.el).append("div")
             .attr("class", "verticalFlexContainer keyPanel")
-            .html("<div class='toolbar'></div><div class='panelInner' flex-grow='1'></div>");
-        this.controlDiv = topDiv.select(".toolbar");
-        this.controlDiv.append("label").attr("id", "linkColourDropdownPlaceholder");
-        this.controlDiv.append("label").attr("id", "proteinColourDropdownPlaceholder");
+            .html("<!-- <div class='toolbar'></div> --><div class='panelInner' flex-grow='1'></div>");
+        //this.controlDiv = topDiv.select(".toolbar");
+        //this.controlDiv.append("label").attr("id", "linkColourDropdownPlaceholder");
+        //this.controlDiv.append("label").attr("id", "proteinColourDropdownPlaceholder");
 
         var chartDiv = topDiv.select(".panelInner");
 
@@ -43,11 +43,13 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
             {
                 id: "colourKey",
                 header: "Current Cross-Link Colour Scheme",
+                controlPlaceholderID: "linkColourDropdownPlaceholder",
                 rows: [],
             },
             {
                 id: "proteinColourKey",
                 header: "Current Protein Colour Scheme",
+                controlPlaceholderID: "proteinColourDropdownPlaceholder",
                 rows: [],
             },
         ];
@@ -68,12 +70,18 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         };
         var self = this;
         var clickFunc = function(showSection, d, i) {
-            if (showSection && d.id === "colourKey" && self.sliderSubViews[i]) {
+            if (showSection && (d.id === "colourKey") && self.sliderSubViews[i]) {
                 self.sliderSubViews[i].show(true);
             }
         };
 
         CLMSUI.utils.sectionTable.call(this, sectionDiv, sectionData, "colourInfo", ["Colour (Editable)", "Meaning"], headerFunc, rowFilterFunc, cellFunc, [0], clickFunc);
+        
+        // add colour scheme selection placeholders (added in networkFrame.js)
+        sectionDiv.selectAll("section")
+            .classed("colourKeyBottomGap", true)
+            .insert("label", ":first-child").attr("id", function(d) { return d.controlPlaceholderID; })
+        ;
 
         sectionDiv.append("button")
             .attr("class", "downloadButton3 btn btn-1 btn-1a")
@@ -261,8 +269,10 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     changeColour: function(evt) {
-        console.log ("DATUM", evt.target, d3.select(evt.target).datum(), d3.select(evt.target.parentNode.parentNode).datum(), d3.select(evt.target.parentNode.parentNode.parentNode).datum());
-        var colourAssign = this.model.get("linkColourAssignment");
+        var parentDatum = d3.select(evt.target.parentNode.parentNode.parentNode).datum();
+        var colourModelKey = parentDatum.colourModelKey;
+        var colourAssign = this.model.get(colourModelKey);
+        
         if (colourAssign) {
             var newValue = evt.target.value;
             var rowData = d3.select(evt.target.parentNode.parentNode).datum();
@@ -293,39 +303,42 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     render: function() {
 
+        var self = this;
         var colourSections = [
             {
                 header: "Current Cross-Link Colour Scheme",
-                rows: []
+                rows: [],
+                colourModelKey: "linkColourAssignment",
             },
             {
                 header: "Current Protein Colour Scheme",
-                rows: []
+                rows: [],
+                colourModelKey: "proteinColourAssignment",
             },
         ];
 
         // Update colour key sections
-        var colourAssigns = [this.model.get("linkColourAssignment"), this.model.get("proteinColourAssignment")];
-        colourAssigns.forEach (function (colourAssign, i) {
+        colourSections.forEach (function (colourSection) {
             
+            var colourAssign = this.model.get(colourSection.colourModelKey);
             if (colourAssign) {
                 var labelColourPairings = colourAssign.getLabelColourPairings ();
 
-                colourSections[i].rows = labelColourPairings.map(function(val, i) {
+                colourSection.rows = labelColourPairings.map(function(val, i) {
                     var rgbCol = val[1];
                     var rgbHex = d3.rgb(rgbCol).toString();
                     var span = "<input type='color' value='" + rgbHex + "' title='Press to change colour for " + val[0] + "'/>";
                     return [span, val[0], i];
                 });
             }
-        });
+        }, this);
 
         var updateSection = d3.select(this.el).selectAll("section").data(colourSections, function(d) {
             return d.header;
         });
-        updateSection.select("h2 span").text(function(d, i) {
-            console.log ("US", d, i, colourAssigns);
-            return d.header + ": " + colourAssigns[i].get("title");
+        updateSection.select("h2 span").text(function(d) {
+            var colourAssign = self.model.get(d.colourModelKey);
+            return d.header + ": " + colourAssign.get("title");
         });
 
         var rowSel = updateSection.select("tbody").selectAll("tr")
@@ -344,8 +357,9 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         cellSel.html(function(d) { return d; });
         
         // hide / disable various pieces of the tables if color schemes are uneditable
-        updateSection.each (function (d,i) {
-            var isFixed = colourAssigns[i].get("fixed");
+        updateSection.each (function (d) {
+            var colourAssign = self.model.get(d.colourModelKey);
+            var isFixed = colourAssign.get("fixed");
             var section = d3.select(this);
             if (isFixed) {
                 section.selectAll("input[type='color']").attr("title", "Not editable.");
@@ -363,7 +377,8 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         }
 
         // add in new sliderview if appropriate
-        colourAssigns.forEach (function (colourAssign, i) {
+        colourSections.forEach (function (colourSection, i) {
+            var colourAssign = self.model.get(colourSection.colourModelKey);
             if (colourAssign) {
                 if (colourAssign.get("type") === "threshold") {
                     var pid = this.el.id;
@@ -391,7 +406,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
                     d3.select("#" + pid).selectAll(".brushValueText").style("display", "none");
                 }
             }
-        });
+        }, this);
 
         return this;
     },

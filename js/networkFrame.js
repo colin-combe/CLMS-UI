@@ -215,8 +215,6 @@ CLMSUI.init.models = function(options) {
         )
         .set("proteinColourAssignment", CLMSUI.linkColour.defaultProteinColoursBB)
     ;
-    
-    console.log ("COM<MM", CLMSUI.compositeModelInst.get("proteinColourAssignment"));
 };
 
 
@@ -334,7 +332,6 @@ CLMSUI.init.modelsEssential = function(options) {
             //console.log ("minigram arguments", arguments, this);
             var max = Math.ceil(distObj.maxDistance);
             this.set ("extent", [0, max + 1]);
-            //console.log ("MM", this);
             filterModelInst.distanceExtent = [0, max];
             filterModelInst
                 .trigger ("change:distanceCutoff", filterModelInst, [this.get("domainStart"), this.get("domainEnd")])

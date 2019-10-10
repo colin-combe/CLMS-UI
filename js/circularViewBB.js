@@ -1096,7 +1096,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         nodeJoin
             .attr("d", this.arc)
-            .attr("fill", function(d) { colourScheme.getColour(interactors.get(d.id)); })
+            .style("fill", function(d) { return colourScheme.getColour(interactors.get(d.id)); })
         ;
 
         this.showAccentOnTheseNodes(nodeJoin, "selection");

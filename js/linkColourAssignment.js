@@ -278,7 +278,7 @@ CLMSUI.BackboneModelTypes.DefaultProteinColourModel = CLMSUI.BackboneModelTypes.
             .set("type", "ordinal")
         ;
     },
-    getValue: function (protein) {
+    getValue: function () {
         return 0;
     },
 });
@@ -286,7 +286,6 @@ CLMSUI.BackboneModelTypes.DefaultProteinColourModel = CLMSUI.BackboneModelTypes.
 
 
 CLMSUI.linkColour.setupColourModels = function (userConfig) {
-    console.log ("BLOOO");
     var defaultConfig = {
         default: {domain: [0, 1, 2], range: ["#9970ab", "#35978f", "#35978f"]},
         distance: {domain: [15, 25], range: ['#5AAE61', '#FDB863', '#9970AB']}
@@ -373,7 +372,7 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
     });
 
     linkColourCollection.listenTo(CLMSUI.vent, "addMapBasedLinkColourModel", function(data) {
-        console.log("AMB", data);
+        //console.log("AMB", data);
         this.remove(data.id);
         var newModel = CLMSUI.linkColour.makeMapBasedLinkColourModel(data.columnIndex, data.label, data.linkMap);
         newModel.set("id", data.id);
@@ -388,13 +387,11 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
     // Protein colour schemes
     
     CLMSUI.linkColour.defaultProteinColoursBB = new CLMSUI.BackboneModelTypes.DefaultProteinColourModel ({
-        colScale: d3.scale.ordinal().domain([0]).range(["#aaa"]),
+        colScale: d3.scale.ordinal().domain([0]).range(["#dde"]),
         title: "Default Protein Colour",
         longDescription: "Default protein colour.",
         id: "Default Protein"
     });
-    
-    console.log ("GHJHJK", CLMSUI.linkColour.defaultProteinColoursBB);
     
     // Can add other metdata-based schemes to this collection later
     var proteinColourCollection = new CLMSUI.BackboneModelTypes.ColourModelCollection([
