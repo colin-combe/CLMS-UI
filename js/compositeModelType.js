@@ -172,6 +172,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                                 filterModel.scoreFilter(match) &&
                                 filterModel.decoyFilter(match);
 
+
                             // Either 1.
                             // this beforehand means navigation filters do affect ambiguous state of crosslinks
                             // pass = pass && filterModel.navigationFilter(match);
@@ -183,6 +184,9 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                             // Or 2.
                             // this afterwards means navigation filters don't affect ambiguous state of crosslinks
                             pass = pass && filterModel.navigationFilter(match) && filterModel.groupFilter(match);
+
+                            pass = true;
+
 
                             if (pass) {
                                 crossLink.filteredMatches_pp.push(matchAndPepPos);
@@ -222,7 +226,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.getCrossLinkDistances (homomultiSwitchers);    // recalculate distances for crosslinks whose homomultimer status has changed
 
         // Filters after this point are those that depend on results of previous filtering
-        
+
         // Remove crosslinks with matches in multiple groups if filterModel's multipleGroup setting set to false
         if (filterModel && !filterModel.get("multipleGroup")) {
             crossLinksArr.forEach (function (crossLink) {
@@ -231,7 +235,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }, this);
         }
-        
+
         var b = performance.now();
         console.log("ser filtering time", (b - a), "ms");
 
@@ -306,13 +310,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         //hiding linkless participants
         CLMS.arrayFromMapValues(clmsModel.get("participants")).forEach(function(participant) {
-            participant.hidden = true;
+            participant.hidden = false;
             var partCls = participant.crossLinks;
             for (var pCl = 0; pCl < partCls.length; ++pCl) {
                 var pCrossLink = partCls[pCl];
                 if (pCrossLink.filteredMatches_pp.length &&
-                    !pCrossLink.isDecoyLink() &&
-                    !pCrossLink.isLinearLink()) {
+                    !pCrossLink.isDecoyLink() /*&&
+                    !pCrossLink.isLinearLink()*/) {
                     participant.hidden = false;
                     break;
                 }
