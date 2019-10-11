@@ -95,6 +95,15 @@ CLMSUI.modelUtils = {
                 ["Size", interactor.size],
                 ["Desc.", interactor.description]
             ];
+            
+            d3.entries(interactor.getMeta()).forEach(function(entry) {
+                var val = entry.value;
+                var key = entry.key.toLocaleLowerCase();
+                if (val !== undefined && !_.isObject(val)) {
+                    contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
+                }
+            });
+            
             if (interactor.go) {
                 var goTermsMap = CLMSUI.compositeModelInst.get("go");
                 var goTermsText = "";

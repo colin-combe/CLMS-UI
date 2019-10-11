@@ -387,7 +387,7 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
     // Protein colour schemes
     
     CLMSUI.linkColour.defaultProteinColoursBB = new CLMSUI.BackboneModelTypes.DefaultProteinColourModel ({
-        colScale: d3.scale.ordinal().domain([0]).range(["#dde"]),
+        colScale: d3.scale.ordinal().domain([0]).range(["#fff"]),
         title: "Default Protein Colour",
         longDescription: "Default protein colour.",
         id: "Default Protein"
