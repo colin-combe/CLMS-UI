@@ -186,15 +186,35 @@ CLMSUI.init.models = function(options) {
     CLMSUI.linkColour.setupColourModels ({distance: storedDistanceColourSettings});
 
     if (crossLinkerKeys.length === 1) {
-        CLMSUI.compositeModelInst.listenTo (CLMSUI.linkColour.Collection.get("Distance"), "colourModelChanged", function (attr) {
+        CLMSUI.compositeModelInst.listenTo (CLMSUI.linkColour.Collection.get("Distance"), "colourModelChanged", function (colourModel, attr) {
             var obj = {distanceColours: {}};
             obj.distanceColours[crossLinkerKeys[0]] = attr;
             CLMSUI.utils.setLocalStorage (obj);
         });
     }
-                                               
-    // Start asynchronous GO term fetching
-    //CLMSUI.modelUtils.loadGOAnnotations(); // it will call allDataLoaded when done
+    
+    // A colour model's attributes have changed - is it the currently used model? If so, fire the currentColourModelChanged event
+    CLMSUI.compositeModelInst.listenTo(CLMSUI.linkColour.Collection, "colourModelChanged", function (colourModel, changedAttrs) {
+        if (this.get("linkColourAssignment").id === colourModel.id) {
+            this.trigger ("currentColourModelChanged", colourModel, changedAttrs);
+        }
+    });
+    
+    // same for protein colour models
+    CLMSUI.compositeModelInst.listenTo(CLMSUI.linkColour.ProteinCollection, "colourModelChanged", function (colourModel, changedAttrs) {
+        if (this.get("proteinColourAssignment").id === colourModel.id) {
+            this.trigger ("currentProteinColourModelChanged", colourModel, changedAttrs);
+        }
+    });
+    
+    // Set initial colour scheme choices
+    // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
+    CLMSUI.compositeModelInst
+        .set("linkColourAssignment",
+            CLMSUI.compositeModelInst.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
+        )
+        .set("proteinColourAssignment", CLMSUI.linkColour.defaultProteinColoursBB)
+    ;
 };
 
 
@@ -312,7 +332,6 @@ CLMSUI.init.modelsEssential = function(options) {
             //console.log ("minigram arguments", arguments, this);
             var max = Math.ceil(distObj.maxDistance);
             this.set ("extent", [0, max + 1]);
-            //console.log ("MM", this);
             filterModelInst.distanceExtent = [0, max];
             filterModelInst
                 .trigger ("change:distanceCutoff", filterModelInst, [this.get("domainStart"), this.get("domainEnd")])
@@ -328,7 +347,6 @@ CLMSUI.init.modelsEssential = function(options) {
         filterModel: filterModelInst,
         tooltipModel: tooltipModelInst,
         alignColl: options.alignmentCollectionInst,
-        linkColourAssignment: CLMSUI.linkColour.defaultColoursBB,
         minigramModels: {distance: minigramModels[1], score: minigramModels[0]},
     });
 
@@ -954,18 +972,16 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
             attr: "linkColourAssignment"
         },
     });
-
-    compModel.listenTo(CLMSUI.linkColour.Collection, "aColourModelChanged", function(colourModel, newDomain) {
-        console.log("col change args", arguments, this);
-        if (this.get("linkColourAssignment") === colourModel) {
-            this.trigger("currentColourModelChanged", colourModel, newDomain);
-        }
+    
+    new CLMSUI.utils.ColourCollectionOptionViewBB({
+        el: "#proteinColourDropdownPlaceholder",
+        model: CLMSUI.linkColour.ProteinCollection,
+        storeSelectedAt: {
+            model: compModel,
+            attr: "proteinColourAssignment"
+        },
+        label: "Choose Protein Colour Scheme"
     });
-
-    // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
-    compModel.set("linkColourAssignment",
-        compModel.get("clmsModel").get("searches").size > 1 ? CLMSUI.linkColour.groupColoursBB : CLMSUI.linkColour.defaultColoursBB
-    );
 
     new CLMS.xiNET.CrosslinkViewer({
         el: "#networkDiv",
