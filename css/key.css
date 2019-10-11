@@ -161,3 +161,7 @@ changes there are automatically reflected in the legend
 .keyPanel .colourKeyBottomGap {
     margin-bottom: 1.5em;
 }
+
+.keyPanel .sectionTable H2 {
+    text-transform: capitalize;
+}

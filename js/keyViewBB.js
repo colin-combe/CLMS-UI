@@ -11,6 +11,22 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .downloadButton3": "downloadKey",
         });
     },
+    
+    defaultOptions: {
+        colourConfigs: [
+            {
+                id: "cross-link",
+                modelID: "linkColourAssignment",
+                collectionID : "Collection",
+                placeholderID: "linkColourDropdownPlaceholder",
+            }, {
+                id: "protein",
+                modelID: "proteinColourAssignment",
+                collectionID : "ProteinCollection",
+                placeholderID: "proteinColourDropdownPlaceholder",
+            }
+        ],
+    },
 
     initialize: function(viewOptions) {
         CLMSUI.KeyViewBB.__super__.initialize.apply(this, arguments);
@@ -28,9 +44,16 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.setupLegendSection(chartDiv);
         this.sliderSubViews = [];
 
-        this.listenTo(this.model, "change:linkColourAssignment", this.render);
+        // re-render if colour models changed outside of here
+        var changeString = this.options.colourConfigs.map (function (config) {
+            return "change:" + config.modelID;
+        }).join(" ");
+        this.listenTo(this.model, changeString, this.render);
+        
         // update is only triggered once when adding/removing multiple models to/from a collection
-        this.listenTo(CLMSUI.linkColour.Collection, "update", this.render);
+        this.options.colourConfigs.forEach (function (config) {
+            this.listenTo (CLMSUI.linkColour[config.collectionID], "update", this.render);
+        }, this);
 
         return this;
     },
@@ -39,22 +62,16 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         var sectionDiv = chartDiv.append("div");
         //sectionDiv.append("h3").text("Chosen Colour Scheme Legend").attr("class", "groupHeader");
 
-        var sectionData = [
-            {
-                id: "colourKey",
-                colourModelKey: "linkColourAssignment",
-                header: "Current Cross-Link Colour Scheme",
-                controlPlaceholderID: "linkColourDropdownPlaceholder",
+        var sectionData = this.options.colourConfigs.map (function (config) {
+            return {
+                id: config.id+"colourKey",
+                header: "Current "+config.id+" Colour Scheme",
+                controlPlaceholderID: config.placeholderID,
+                colourModelKey: config.modelID,
                 rows: [],
-            },
-            {
-                id: "proteinColourKey",
-                colourModelKey: "proteinColourAssignment",
-                header: "Current Protein Colour Scheme",
-                controlPlaceholderID: "proteinColourDropdownPlaceholder",
-                rows: [],
-            },
-        ];
+                sectionType: "colourModel"
+            }; 
+        });
 
         var headerFunc = function(d) {
             return d.header.replace("_", " ");
@@ -72,7 +89,7 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         };
         var self = this;
         var clickFunc = function(showSection, d, i) {
-            if (showSection && (d.id === "colourKey") && self.sliderSubViews[i]) {
+            if (showSection && (d.sectionType === "colourModel") && self.sliderSubViews[i]) {
                 self.sliderSubViews[i].show(true);
             }
         };
@@ -296,30 +313,24 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     relayout: function() {
         //console.log ("dragend fired");
-        var colourAssigns = [this.model.get("linkColourAssignment"), this.model.get("proteinColourAssignment")];
+        var colourAssigns = _.pluck(this.options.colourConfigs, "modelID").map (this.model.get, this.model);
         colourAssigns.forEach (function (colourAssign, i) {
             if (colourAssign && colourAssign.get("type") === "threshold" && this.sliderSubViews[i]) {
                 this.sliderSubViews[i].resize().render();
             }
-        });
+        }, this);
         return this;
     },
 
     render: function() {
-
         var self = this;
-        var colourSections = [
-            {
-                header: "Current Cross-Link Colour Scheme",
+        var colourSections = this.options.colourConfigs.map (function (config) {
+            return {
+                header: "Current "+config.id+" Colour Scheme",
                 rows: [],
-                colourModelKey: "linkColourAssignment",
-            },
-            {
-                header: "Current Protein Colour Scheme",
-                rows: [],
-                colourModelKey: "proteinColourAssignment",
-            },
-        ];
+                colourModelKey: config.modelID
+            }; 
+        });
 
         // Update colour key sections
         colourSections.forEach (function (colourSection) {

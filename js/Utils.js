@@ -1561,12 +1561,12 @@ CLMSUI.utils.sectionTable = function(domid, data, idPrefix, columnHeaders, heade
     var newElems = dataJoin.enter().append("section").attr("class", "sectionTable");
 
     var newHeaders = newElems.append("h2")
-        .on("click", function(d) {
+        .on("click", function(d, i) {
             var assocTable = d3.select("#" + idPrefix + d.id);
             var tableIsHidden = (assocTable.style("display") == "none");
             assocTable.style("display", tableIsHidden ? "table" : "none");
             if (clickFunc) {
-                clickFunc(tableIsHidden, d);
+                clickFunc(tableIsHidden, d, i);
             }
             setArrow.call(this, d);
         })
