@@ -198,6 +198,11 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 toPos: convEnd
             };
         };
+        
+        // if protein default colour model use this instead for legibility
+        this.replacementDefaultNodeColourModel = {
+            getColour: function () { return "#dde"; }
+        };
 
         CLMSUI.CircularViewBB.__super__.initialize.apply(this, arguments);
 
@@ -567,7 +572,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", function() {
             self.renderPartial(["links"]);
         }); // either colour change or new colour model
-        this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {
+        this.listenTo(this.model, "change:proteinColourAssignment currentProteinColourModelChanged", function() {
+            self.renderPartial(["nodes"]);
+        }); // either colour change or new colour model
+        this.listenTo(CLMSUI.vent, "proteinMetadataUpdated", function() {   // generally a name change
             self.renderPartial(["nodes"]);
         });
         this.listenTo(this.model.get("annotationTypes"), "change:shown", function() {
@@ -1062,10 +1070,15 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
 
         var multipleNodes = true; //this.filterInteractors(this.model.get("clmsModel").get("participants")).length > 1;
-
+        var colourScheme = this.model.get("proteinColourAssignment");
+        if (colourScheme.id === "Default Protein") {
+            colourScheme = this.replacementDefaultNodeColourModel;
+        }
+        var interactors = this.model.get("clmsModel").get("participants");
+        
         var nodeLayer = this.addOrGetGroupLayer(g, "nodeLayer");
         var nodeJoin = nodeLayer.selectAll(".circleNode").data(nodes, self.idFunc);
-
+        
         nodeJoin.exit().remove();
 
         nodeJoin.enter()
@@ -1089,7 +1102,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             })
         ;
 
-        nodeJoin.attr("d", this.arc);
+        nodeJoin
+            .attr("d", this.arc)
+            .style("fill", function(d) { return colourScheme.getColour(interactors.get(d.id)); })
+        ;
 
         this.showAccentOnTheseNodes(nodeJoin, "selection");
 
