@@ -1185,18 +1185,20 @@ CLMSUI.modelUtils = {
         crossLinkArr.forEach(function(crossLink) {
             var fromProtein = crossLink.fromProtein;
             var toProtein = crossLink.toProtein;
-            var key = fromProtein.id + "-" + (toProtein ? toProtein.id : "mono");
-            var pairing = obj[key];
-            if (!pairing) {
-                pairing = {
-                    crossLinks: [],
-                    fromProtein: fromProtein,
-                    toProtein: toProtein,
-                    label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
-                };
-                obj[key] = pairing;
+            if (toProtein) {
+                var key = fromProtein.id + "-" + toProtein.id;
+                var pairing = obj[key];
+                if (!pairing) {
+                    pairing = {
+                        crossLinks: [],
+                        fromProtein: fromProtein,
+                        toProtein: toProtein,
+                        label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
+                    };
+                    obj[key] = pairing;
+                }
+                pairing.crossLinks.push(crossLink);
             }
-            pairing.crossLinks.push(crossLink);
         });
         return obj;
     },
