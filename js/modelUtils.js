@@ -1185,7 +1185,7 @@ CLMSUI.modelUtils = {
         crossLinkArr.forEach(function(crossLink) {
             var fromProtein = crossLink.fromProtein;
             var toProtein = crossLink.toProtein;
-            var key = fromProtein.id + "-" + toProtein.id;
+            var key = fromProtein.id + "-" + (toProtein ? toProtein.id : "mono");
             var pairing = obj[key];
             if (!pairing) {
                 pairing = {
