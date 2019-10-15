@@ -172,7 +172,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                                 filterModel.scoreFilter(match) &&
                                 filterModel.decoyFilter(match);
 
-
                             // Either 1.
                             // this beforehand means navigation filters do affect ambiguous state of crosslinks
                             // pass = pass && filterModel.navigationFilter(match);
@@ -184,9 +183,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                             // Or 2.
                             // this afterwards means navigation filters don't affect ambiguous state of crosslinks
                             pass = pass && filterModel.navigationFilter(match) && filterModel.groupFilter(match);
-
-                            pass = true;
-
 
                             if (pass) {
                                 crossLink.filteredMatches_pp.push(matchAndPepPos);
@@ -310,13 +306,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         //hiding linkless participants
         CLMS.arrayFromMapValues(clmsModel.get("participants")).forEach(function(participant) {
-            participant.hidden = false;
+            participant.hidden = true;
             var partCls = participant.crossLinks;
             for (var pCl = 0; pCl < partCls.length; ++pCl) {
                 var pCrossLink = partCls[pCl];
                 if (pCrossLink.filteredMatches_pp.length &&
-                    !pCrossLink.isDecoyLink() /*&&
-                    !pCrossLink.isLinearLink()*/) {
+                    !pCrossLink.isDecoyLink() &&
+                    !pCrossLink.isLinearLink()) {
                     participant.hidden = false;
                     break;
                 }
@@ -353,7 +349,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var clmsModel = this.get("clmsModel");
         if (clmsModel) {
             var ttCrossLinks = this.getAllCrossLinks().filter(function(link) {
-                return !link.isDecoyLink() && !link.isLinearLink();
+                return !link.isDecoyLink() && !link.isLinearLink() && !link.isMonoLink();
             });
             return ttCrossLinks;
         }

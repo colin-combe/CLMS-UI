@@ -27,7 +27,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {
                     label: "Manual",
                     id: "manualMode",
-                    tooltip: "Filter using cross-link metadata",
+                    tooltip: "Filter using crosslink metadata",
                 },
                 {
                     label: "FDR",
@@ -40,14 +40,19 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     tooltip: "Show linear peptides",
                 },
                 {
-                    label: "Cross-links",
+                    label: "Monolinks",
+                    id: "monolinks",
+                    tooltip: "Show monolinks",
+                },
+                {
+                    label: "Crosslinks",
                     id: "crosslinks",
-                    tooltip: "Show cross-links",
+                    tooltip: "Show crosslinks",
                 },
                 {
                     label: "Ambig.",
                     id: "ambig",
-                    tooltip: "Show ambiguous cross-links",
+                    tooltip: "Show ambiguous crosslinks",
                 },
                 {
                     label: "Between",
@@ -342,7 +347,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         initResetGroup.call(this);
         // addFilterGroup.call (this, {id: "filterModeDiv", groupName: "Mode"}, ["manualMode", "fdrMode"]);
         addFilterGroup.call (this, {id: "validationStatus", groupName: "Threshhold"}, ["pass", "fail"]);
-        addFilterGroup.call (this, {groupName: "Crosslinks"}, ["linears", "crosslinks", "ambig", "betweenLinks", "selfLinks", "homomultimericLinks", "aaApart", "pepLength"]);
+        addFilterGroup.call (this, {groupName: "Crosslinks"}, ["linears", "monolinks", "crosslinks", "ambig", "betweenLinks", "selfLinks", "homomultimericLinks", "aaApart", "pepLength"]);
         initMinigramFilterGroup.call(this, {attr: "distanceCutoff", extentProperty: "distanceExtent", undefAttr: "distanceUndef", label: "Distance", id: "distanceFilter", groupName: "Distances", tooltipIntro: "Filter out crosslinks with distance"});
         //addFilterGroup.call (this, {id: "validationStatus", groupName: "Auto Val"}, ["A", "B", "C", "Q", "AUTO", "unval", "decoys"]);
         initMinigramFilterGroup.call(this, {attr: "matchScoreCutoff", extentProperty: "scoreExtent", label: "Match Score", id: "matchScore", groupName: "Scores", tooltipIntro: "Filter out matches with scores"});
