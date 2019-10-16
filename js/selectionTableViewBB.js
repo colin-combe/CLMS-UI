@@ -530,7 +530,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             var matchCount = crosslink.runningTotalEnd - crosslink.runningTotalStart;
             crosslink = crosslink.link;
             return /*(i+1)+". "+*/ matchCount + " Selected Match" + (matchCount > 1 ? "es" : "") + " for " + crosslink.fromProtein.name + ", " +
-                (crosslink.isLinearLink() ? "linear peptides" : (crosslink.isMonoLink() ? "monolink" + crosslink.fromResidue : (crosslink.fromResidue + " - " +
+                (crosslink.isLinearLink() ? "linear peptides" : (crosslink.isMonoLink() ? "monolink @ " + crosslink.fromResidue : (crosslink.fromResidue + " - " +
                     crosslink.toProtein.name + ", " + crosslink.toResidue)));
         };
 
