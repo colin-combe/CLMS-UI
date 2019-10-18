@@ -1,0 +1,11 @@
+cp go.obo goTrim.obo;
+sed -i "/subsetdef/d" goTrim.obo;
+sed -i "/subset:/d" goTrim.obo;
+sed -i "/alt_id:/d" goTrim.obo;
+sed -i "/synonym:/d" goTrim.obo;
+sed -i "/obsolete:/d" goTrim.obo;
+sed -i "/xref:/d" goTrim.obo;
+sed -i "/consider:/d" goTrim.obo;
+sed -i "/intersection_of:/d" goTrim.obo;
+sed -i "/comment:/d" goTrim.obo;
+sed -i "/creat/d" goTrim.obo;
