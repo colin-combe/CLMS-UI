@@ -458,7 +458,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo(this.model, "change:selection change:highlights", function() {
             colourRows(this.d3table.getAllRowsSelection());
         });
-        this.listenTo(CLMSUI.linkColour.Collection, "aColourModelChanged", this.render); // redraw if any colour model chanegs
+        this.listenTo(CLMSUI.linkColour.Collection, "colourModelChanged", this.render); // redraw if any colour model chanegs
         this.listenTo(this.model.get("clmsModel"), "change:distancesObj", this.render); // Entire new set of distances 
         // Entire new set of new matches added (via csv generally)
         this.listenTo(this.model.get("clmsModel"), "change:matches", function() {

@@ -11,24 +11,49 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click .downloadButton3": "downloadKey",
         });
     },
+    
+    defaultOptions: {
+        colourConfigs: [
+            {
+                id: "cross-link",
+                modelID: "linkColourAssignment",
+                collectionID : "Collection",
+                placeholderID: "linkColourDropdownPlaceholder",
+            }, {
+                id: "protein",
+                modelID: "proteinColourAssignment",
+                collectionID : "ProteinCollection",
+                placeholderID: "proteinColourDropdownPlaceholder",
+            }
+        ],
+    },
 
     initialize: function(viewOptions) {
         CLMSUI.KeyViewBB.__super__.initialize.apply(this, arguments);
 
         var topDiv = d3.select(this.el).append("div")
             .attr("class", "verticalFlexContainer keyPanel")
-            .html("<div class='toolbar'></div><div class='panelInner' flex-grow='1'></div>");
-        this.controlDiv = topDiv.select(".toolbar");
-        this.controlDiv.append("label").attr("id", "linkColourDropdownPlaceholder");
+        ;
 
-        var chartDiv = topDiv.select(".panelInner");
+        var chartDiv = topDiv.append("div")
+            .attr("class", "panelInner")
+            .attr("flex-grow", "1")
+        ;
 
         this.setupColourSection(chartDiv);
         this.setupLegendSection(chartDiv);
+        this.sliderSubViews = [];
 
-        this.listenTo(this.model, "change:linkColourAssignment", this.render);
+        // re-render if colour models changed outside of here
+        var changeString = this.options.colourConfigs.map (function (config) {
+            return "change:" + config.modelID;
+        }).join(" ");
+        this.listenTo(this.model, changeString, this.render);
+        
         // update is only triggered once when adding/removing multiple models to/from a collection
-        this.listenTo(CLMSUI.linkColour.Collection, "update", this.render);
+        this.options.colourConfigs.forEach (function (config) {
+            this.listenTo (CLMSUI.linkColour[config.collectionID], "update", this.render);
+        }, this);
 
         return this;
     },
@@ -37,11 +62,16 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
         var sectionDiv = chartDiv.append("div");
         //sectionDiv.append("h3").text("Chosen Colour Scheme Legend").attr("class", "groupHeader");
 
-        var sectionData = [{
-            id: "colourKey",
-            header: "Current Cross-Link Colour Scheme",
-            rows: [],
-        }, ];
+        var sectionData = this.options.colourConfigs.map (function (config) {
+            return {
+                id: config.id+"colourKey",
+                header: "Current "+config.id+" Colour Scheme",
+                controlPlaceholderID: config.placeholderID,
+                colourModelKey: config.modelID,
+                rows: [],
+                sectionType: "colourModel"
+            }; 
+        });
 
         var headerFunc = function(d) {
             return d.header.replace("_", " ");
@@ -58,17 +88,26 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
             d3.select(this).text(d.value);
         };
         var self = this;
-        var clickFunc = function(showSection, d) {
-            if (showSection && d.id === "colourKey" && self.sliderSubView) {
-                self.sliderSubView.show(true);
+        var clickFunc = function(showSection, d, i) {
+            if (showSection && (d.sectionType === "colourModel") && self.sliderSubViews[i]) {
+                self.sliderSubViews[i].show(true);
             }
         };
 
         CLMSUI.utils.sectionTable.call(this, sectionDiv, sectionData, "colourInfo", ["Colour (Editable)", "Meaning"], headerFunc, rowFilterFunc, cellFunc, [0], clickFunc);
+        
+        // add colour scheme selection placeholders (added in networkFrame.js)
+        sectionDiv.selectAll("section")
+            .classed("colourKeyBottomGap", true)
+            .insert("label", ":first-child").attr("id", function(d) { return d.controlPlaceholderID; })
+        ;
 
-        sectionDiv.append("button")
+        // add download colour scheme svg button
+        sectionDiv.selectAll("section")
+            .append("button")
             .attr("class", "downloadButton3 btn btn-1 btn-1a")
-            .text("Download This Colour Scheme as SVG");
+            .text("Download This Colour Scheme as SVG")
+        ;
     },
 
     setupLegendSection: function(chartDiv) {
@@ -251,7 +290,10 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     changeColour: function(evt) {
-        var colourAssign = this.model.get("linkColourAssignment");
+        var parentDatum = d3.select(evt.target.parentNode.parentNode.parentNode).datum();
+        var colourModelKey = parentDatum.colourModelKey;
+        var colourAssign = this.model.get(colourModelKey);
+        
         if (colourAssign) {
             var newValue = evt.target.value;
             var rowData = d3.select(evt.target.parentNode.parentNode).datum();
@@ -271,109 +313,123 @@ CLMSUI.KeyViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     relayout: function() {
         //console.log ("dragend fired");
-        var colourAssign = this.model.get("linkColourAssignment");
-        if (colourAssign && colourAssign.get("type") === "threshold" && this.sliderSubView) {
-            this.sliderSubView.resize().render();
-        }
+        var colourAssigns = _.pluck(this.options.colourConfigs, "modelID").map (this.model.get, this.model);
+        colourAssigns.forEach (function (colourAssign, i) {
+            if (colourAssign && colourAssign.get("type") === "threshold" && this.sliderSubViews[i]) {
+                this.sliderSubViews[i].resize().render();
+            }
+        }, this);
         return this;
     },
 
     render: function() {
+        var self = this;
+        var colourSections = this.options.colourConfigs.map (function (config) {
+            return {
+                header: "Current "+config.id+" Colour Scheme",
+                rows: [],
+                colourModelKey: config.modelID
+            }; 
+        });
 
-        var colourSection = [{
-            header: "Current Cross-Link Colour Scheme",
-            rows: []
-        }];
-
-        // Update colour key section
-        var colourAssign = this.model.get("linkColourAssignment");
-        if (colourAssign) {
-            var labelColourPairings = colourAssign.getLabelColourPairings ();
+        // Update colour key sections
+        colourSections.forEach (function (colourSection) {
             
-            colourSection[0].rows = labelColourPairings.map(function(val, i) {
-                var rgbCol = val[1];
-                var rgbHex = d3.rgb(rgbCol).toString();
-                var span = "<input type='color' value='" + rgbHex + "' title='Press to change colour for " + val[0] + "'/>";
-                return [span, val[0], i];
-            });
+            var colourAssign = this.model.get(colourSection.colourModelKey);
+            if (colourAssign) {
+                var labelColourPairings = colourAssign.getLabelColourPairings ();
 
-            var updateSection = d3.select(this.el).selectAll("section").data(colourSection, function(d) {
-                return d.header;
-            });
-            updateSection.select("h2 span").text(function(d) {
-                return d.header + ": " + colourAssign.get("title");
-            });
+                colourSection.rows = labelColourPairings.map(function(val, i) {
+                    var rgbCol = val[1];
+                    var rgbHex = d3.rgb(rgbCol).toString();
+                    var span = "<input type='color' value='" + rgbHex + "' title='Press to change colour for " + val[0] + "'/>";
+                    return [span, val[0], i];
+                });
+            }
+        }, this);
 
-            var rowSel = updateSection.select("tbody").selectAll("tr")
-                .data(function(d) {
-                    return d.rows;
-                }, function(d) {
-                    return !d.rows ? d.join(",") : "";
-                }) // key function = all fields joined
-            ;
-            rowSel.exit().remove();
-            rowSel.enter().append("tr");
-            rowSel.sort (function (a,b) { return a[2] - b[2]; });   // sort so rows are in same order as colourSection[0].rows
+        var updateSection = d3.select(this.el).selectAll("section").data(colourSections, function(d) {
+            return d.header;
+        });
+        updateSection.select("h2 span").text(function(d) {
+            var colourAssign = self.model.get(d.colourModelKey);
+            return d.header + ": " + colourAssign.get("title");
+        });
 
-            var cellSel = rowSel.selectAll("td").data(function(d) {
-                return d.slice(0, 2);
-            });
-            cellSel
-                .enter()
-                .append("td")
-            ;
-            cellSel.html(function(d) {
-                    return d;
-                })
-            ;
+        var rowSel = updateSection.select("tbody").selectAll("tr")
+            .data(function(d) {
+                return d.rows;
+            }, function(d) {
+                return !d.rows ? d.join(",") : "";
+            }) // key function = all fields joined
+        ;
+        rowSel.exit().remove();
+        rowSel.enter().append("tr");
+        rowSel.sort (function (a,b) { return a[2] - b[2]; });   // sort so rows are in same order as colourSection[0].rows
 
-            // hide / disable various pieces of the table if the color scheme is uneditable
+        var cellSel = rowSel.selectAll("td").data(function(d) { return d.slice(0, 2); });
+        cellSel.enter().append("td");
+        cellSel.html(function(d) { return d; });
+        
+        // hide / disable various pieces of the tables if color schemes are uneditable
+        updateSection.each (function (d) {
+            var colourAssign = self.model.get(d.colourModelKey);
             var isFixed = colourAssign.get("fixed");
+            var section = d3.select(this);
             if (isFixed) {
-                updateSection.selectAll("input[type='color']").attr("title", "Not editable.");
+                section.selectAll("input[type='color']").attr("title", "Not editable.");
             }
-            updateSection.select("tbody").selectAll("input").property("disabled", isFixed);
-            updateSection.select("caption").text(isFixed ? "Colour scheme is active, but not editable." : "");
+            section.select("tbody").selectAll("input").property("disabled", isFixed);
+            section.select("caption").text(isFixed ? "Colour scheme is active, but not editable." : "");
+        });
 
-            // always remove old sliderSubView if present
-            if (this.sliderSubView) {
-                this.sliderSubView.remove();
-                this.sliderSubView = null;
-            }
-
-            // add in new sliderview if appropriate
-            if (colourAssign.get("type") === "threshold") {
-                var pid = this.el.id;
-                var tcs = updateSection.select(".threecs");
-                if (tcs.empty()) {
-                    updateSection.select("table tbody").append("tr").append("td")
-                        .attr("colspan", 2)
-                        .append("div")
-                        .attr("id", pid + "3cs")
-                        .attr("class", "threecs");
-                }
-
-                this.sliderSubView = new CLMSUI.ThreeColourSliderBB({
-                        el: "#" + pid + "3cs",
-                        model: colourAssign,
-                        unitText: " "+colourAssign.get("unit"),
-                        title: colourAssign.get("title") + " Cutoffs",
-                        orientation: "horizontal",
-                        absolutePosition: false,
-                        sliderThickness: 25,
-                    })
-                    .show(true);
-
-                d3.select("#" + pid).selectAll(".brushValueText").style("display", "none");
-            }
+        // always remove old sliderSubViews if present
+        if (this.sliderSubViews) {
+            this.sliderSubViews.forEach (function (slider) {
+                slider.remove();
+            });
+            this.sliderSubViews = [];
         }
+
+        // add in new sliderview if appropriate
+        colourSections.forEach (function (colourSection, i) {
+            var colourAssign = self.model.get(colourSection.colourModelKey);
+            if (colourAssign) {
+                if (colourAssign.get("type") === "threshold") {
+                    var pid = this.el.id;
+                    var tcs = updateSection.select(".threecs");
+                    if (tcs.empty()) {
+                        updateSection.select("table tbody").append("tr").append("td")
+                            .attr("colspan", 2)
+                            .append("div")
+                            .attr("id", pid + "3cs" + i)
+                            .attr("class", "threecs");
+                    }
+
+                    this.sliderSubViews[i] = new CLMSUI.ThreeColourSliderBB({
+                            el: "#" + pid + "3cs" + i,
+                            model: colourAssign,
+                            unitText: " "+colourAssign.get("unit"),
+                            title: colourAssign.get("title") + " Cutoffs",
+                            orientation: "horizontal",
+                            absolutePosition: false,
+                            sliderThickness: 25,
+                        })
+                        .show(true)
+                    ;
+
+                    d3.select("#" + pid).selectAll(".brushValueText").style("display", "none");
+                }
+            }
+        }, this);
 
         return this;
     },
 
-    downloadKey: function() {
+    downloadKey: function(evt) {
+        var d = d3.select(evt.target).datum();  // d3 datum for this button
         var tempSVG = d3.select(this.el).append("svg").attr("class", "tempKey");
-        CLMSUI.utils.updateColourKey(this.model, tempSVG);
+        CLMSUI.utils.updateColourKey (this.model.get(d.colourModelKey), tempSVG);
         this.downloadSVG(null, tempSVG);
         tempSVG.remove();
     },

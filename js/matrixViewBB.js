@@ -132,32 +132,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.setAndShowPairing(selectedDatum.value);
                 var selElem = d3.select(d3.event.target);
                 setSelectTitleString(selElem);
-            });
-
-        // Various view options set up, then put in a dropdown menu
-        this.chainDropdowns = ["prot1", "prot2"].map(function(prot) {
-            var optid = this.el.id + "Options_" + prot;
-            this.controlDiv.append("p").attr("id", optid);
-            return new CLMSUI.DropDownMenuViewBB({
-                el: "#" + optid,
-                model: CLMSUI.compositeModelInst.get("clmsModel"),
-                myOptions: {
-                    title: "Chain " + prot + " ▼",
-                    tooltipModel: this.model.get("tooltipModel"),
-                    titleTooltip: {
-                        header: "PDB Chains",
-                        contents: "Turn on/off plotting of individual PDB chains along this axis."
-                    },
-                    menu: [],
-                    closeOnClick: false,
-                    classed: "chainDropdown",
-                }
-            });
-        }, this);
-
-        // Hide chain choices at first
-        d3.select(this.el).selectAll(".chainDropdown").style("display", "none");
-
+            })
+        ;
 
         var chartDiv = flexWrapperPanel.append("div")
             .attr("class", "panelInner")
@@ -390,12 +366,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     // New PDB File in town
     distancesChanged: function() {
-        // comment out, let chain visibility be controlled by distanceobj chain permissions - set in turn in 3d view assembly choice
-        //d3.select(this.el).selectAll(".chainDropdown").style("display", null);  // show chain dropdowns - null restores default display state
-        this
-            .makeNewChainShowSets()
-            .makeChainOptions(this.getCurrentProteinIDs())
-            .render();
+        this.render();
         return this;
     },
 
@@ -404,8 +375,8 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.vis.selectAll("g.label text").data(protIDs)
             .text(function(d) {
                 return d.labelText;
-            });
-        this.makeChainOptions(protIDs);
+            })
+        ;
     },
 
     matrixChosen: function(proteinPairValue) {
@@ -426,91 +397,11 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-
-    // 3 chain set object wrapper routines
-    makeNewChainShowSets: function() {
-        var distanceObj = this.model.get("clmsModel").get("distancesObj");
-        if (distanceObj) {
-            var chainVals = _.pluck (d3.merge(d3.values(distanceObj.chainMap)), "index");
-            this.showChains = [
-                d3.set(chainVals),
-                d3.set(chainVals)
-            ];
-        }
-        return this;
-    },
-
     // chain may show if checked in dropdown and if allowed by chainset in distancesobj (i.e. not cutoff by assembly choice)
     chainMayShow: function(dropdownIndex, chainIndex) {
         var distanceObj = this.model.get("clmsModel").get("distancesObj");
         var allowedChains = distanceObj ? distanceObj.permittedChainIndicesSet : null;
-        return this.showChains[dropdownIndex].has(chainIndex) && (allowedChains ? allowedChains.has(chainIndex) : true);
-    },
-
-    setChainShowState: function(dropdownIndex, chainIndex, show) {
-        this.showChains[dropdownIndex][show ? "add" : "remove"](chainIndex);
-        return this;
-    },
-
-
-    makeChainOptions: function(proteinIDs) {
-        var self = this;
-
-        var clickFunc = function(d3target) {
-            var datum = d3target.datum(); //this;
-            var index = datum.index;
-            var dropdownIndex = datum.dropdownIndex;
-            var checked = d3target.property("checked");
-            self
-                .setChainShowState(dropdownIndex, index, checked)
-                .renderBackgroundMap();
-        };
-
-        var distanceObj = self.model.get("clmsModel").get("distancesObj");
-        var allowedChains = distanceObj ? distanceObj.permittedChainIndicesSet : null;
-        var axisOrientations = ["X", "Y"];
-        this.chainDropdowns.forEach(function(dropdown, i) {
-
-            if (distanceObj) {
-                var pid = proteinIDs[i].proteinID;
-                var chainMap = distanceObj.chainMap;
-                var chains = chainMap[pid] || [];
-                chains = chains.filter(function(chainInfo) {
-                    return allowedChains.has(chainInfo.index);
-                });
-
-                dropdown.updateTitle(axisOrientations[i] + ": " + proteinIDs[i].labelText + " Chains ▼");
-
-                // make button data for this protein and dropdown combination
-                var toggleButtonData = chains.map(function(chain, ii) {
-                    return {
-                        initialState: self.chainMayShow(i, chain.index),
-                        class: "chainChoice",
-                        label: "Chain " + chain.name + ":" + chain.index,
-                        id: chain.name + "-" + chain.index + "-" + pid,
-                        dropdownIndex: i,
-                        index: chain.index,
-                        type: "checkbox",
-                        inputFirst: true,
-                        func: clickFunc,
-                    };
-                });
-
-                var dropEl = dropdown.el;
-                // make buttons for this protein and dropdown combination using the button data
-                CLMSUI.utils.makeBackboneButtons(d3.select(dropEl), dropEl.id, toggleButtonData);
-                // tell the dropdown that these buttons are the new menu and to rerender the dropdown menu with them
-                dropdown.options.menu = toggleButtonData.map(function(d) {
-                    return {
-                        id: dropEl.id + d.id,
-                        func: clickFunc
-                    };
-                });
-                dropdown.render();
-            }
-        }, this);
-
-        return this;
+        return allowedChains ? allowedChains.has(chainIndex) : true;
     },
 
     alignedIndexAxisFormat: function(searchIndex) {
