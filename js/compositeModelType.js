@@ -222,7 +222,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.getCrossLinkDistances (homomultiSwitchers);    // recalculate distances for crosslinks whose homomultimer status has changed
 
         // Filters after this point are those that depend on results of previous filtering
-        
+
         // Remove crosslinks with matches in multiple groups if filterModel's multipleGroup setting set to false
         if (filterModel && !filterModel.get("multipleGroup")) {
             crossLinksArr.forEach (function (crossLink) {
@@ -231,7 +231,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }, this);
         }
-        
+
         var b = performance.now();
         console.log("ser filtering time", (b - a), "ms");
 
@@ -349,7 +349,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var clmsModel = this.get("clmsModel");
         if (clmsModel) {
             var ttCrossLinks = this.getAllCrossLinks().filter(function(link) {
-                return !link.isDecoyLink() && !link.isLinearLink();
+                return !link.isDecoyLink() && !link.isLinearLink() && !link.isMonoLink();
             });
             return ttCrossLinks;
         }

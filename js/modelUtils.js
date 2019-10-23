@@ -67,10 +67,11 @@ CLMSUI.modelUtils = {
         },
 
         link: function(xlink, extras) {
-            var linear = xlink.isLinearLink();
-            var info = [
+          var linear = xlink.isLinearLink();
+          var mono = xlink.isMonoLink();
+          var info = [
                 ["From", xlink.fromProtein.name, xlink.fromResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, false))],
-                linear ? ["To", "Linear", "---", "---"] : ["To", xlink.toProtein.name, xlink.toResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, true))],
+                linear ? ["To", "Linear", "---", "---"] : mono ? ["To", "Monolink", "---", "---"] : ["To", xlink.toProtein.name, xlink.toResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, true))],
                 ["Matches", xlink.filteredMatches_pp.length],
                 ["Highest Score", CLMSUI.modelUtils.highestScore(xlink)]
             ];
@@ -95,7 +96,7 @@ CLMSUI.modelUtils = {
                 ["Size", interactor.size],
                 ["Desc.", interactor.description]
             ];
-            
+
             d3.entries(interactor.getMeta()).forEach(function(entry) {
                 var val = entry.value;
                 var key = entry.key.toLocaleLowerCase();
@@ -103,7 +104,7 @@ CLMSUI.modelUtils = {
                     contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
                 }
             });
-            
+
             if (interactor.go) {
                 var goTermsMap = CLMSUI.compositeModelInst.get("go");
                 var goTermsText = "";
@@ -714,7 +715,7 @@ CLMSUI.modelUtils = {
             });
         }
     },
-    
+
     // objectArr can be crossLinks or protein interactors (or a mix of)
     clearObjectMetaData: function (objectArr, metaFields) {
         objectArr.forEach (function (obj) {
@@ -1184,18 +1185,20 @@ CLMSUI.modelUtils = {
         crossLinkArr.forEach(function(crossLink) {
             var fromProtein = crossLink.fromProtein;
             var toProtein = crossLink.toProtein;
-            var key = fromProtein.id + "-" + toProtein.id;
-            var pairing = obj[key];
-            if (!pairing) {
-                pairing = {
-                    crossLinks: [],
-                    fromProtein: fromProtein,
-                    toProtein: toProtein,
-                    label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
-                };
-                obj[key] = pairing;
+            if (toProtein) {
+                var key = fromProtein.id + "-" + toProtein.id;
+                var pairing = obj[key];
+                if (!pairing) {
+                    pairing = {
+                        crossLinks: [],
+                        fromProtein: fromProtein,
+                        toProtein: toProtein,
+                        label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
+                    };
+                    obj[key] = pairing;
+                }
+                pairing.crossLinks.push(crossLink);
             }
-            pairing.crossLinks.push(crossLink);
         });
         return obj;
     },
