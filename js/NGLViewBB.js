@@ -298,7 +298,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         });
 
 
-        // Residue colour scheme dropdown
+        // Residue colour scheme
         NGL.ColormakerRegistry.add ("external", function () {
             this.lastResidueIndex = null;
             this.lastColour = null;
@@ -324,6 +324,37 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             this.filterSensitive = true;
         });
         
+        
+        // Current cross-view protein colour scheme
+        NGL.ColormakerRegistry.add ("external2", function () {
+            this.lastChainIndex = null;
+            this.lastColour = null;
+            this.dontGrey = true;
+            this.atomColor = function (atom) {
+                var acindex = atom.chainIndex;
+                if (this.lastChainIndex === acindex) {    // saves recalculating, as colour is per residue
+                    return this.lastColour;
+                }
+                this.lastChainIndex = acindex;
+                
+                var chainMap = self.model.get("stageModel").get("chainMap");
+                var proteinID = CLMSUI.NGLUtils.getProteinFromChainIndex (chainMap, acindex);
+                var protein = self.model.get("clmsModel").get("participants").get(proteinID);
+                
+                if (protein !== undefined) {
+                    var rgb = d3.rgb(self.model.get("proteinColourAssignment").getColour (protein));
+                    var number = (rgb.r << 16) + (rgb.g << 8) + rgb.b;
+                    this.lastColour = number
+                    //console.log ("lastCOlour", protein, this.lastColour);
+                } else {
+                    this.lastColour = 0xcccccc;
+                }
+                //console.log ("rid", arindex, this.lastColour);
+                return this.lastColour;
+            };
+            this.filterSensitive = true;
+        });
+        
         var allColourSchemes = d3.values(NGL.ColormakerRegistry.getSchemes());
         var ignoreColourSchemes = ["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "densityfit", "chainid", "randomcoilindex"];
         var aliases = {
@@ -340,6 +371,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             entitytype: "Entity Type",
             partialcharge: "Partial Charge",
             external: "Residues with Half-Links",
+            external2: "Xi Legend Protein Scheme",
         };
         var labellabel = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
         var mainColourSchemes = _.difference(allColourSchemes, ignoreColourSchemes);
