@@ -19,7 +19,7 @@
 -->
 <?php
     session_start();
-    $cacheBuster = '?v='.microtime(true);
+    $cacheBuster = '';//?v='.microtime(true);
 ?>
 
 <!DOCTYPE html>
@@ -43,6 +43,7 @@
         <link rel="stylesheet" href="../vendor/css/reset.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/common.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="../vendor/css/jquery-ui.css<?php echo $cacheBuster ?>"/>
 
         <!-- Spectrum Viewer styles  -->
         <link rel="stylesheet" href="../spectrum/css/spectrum.css<?php echo $cacheBuster ?>">
@@ -100,6 +101,7 @@
     		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
     		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3-octree.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/jquery-ui.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>
@@ -208,6 +210,10 @@
                 <p id='hiddenProteinsText'>Manually Hidden Message</p>
                 <!-- not very backbone but its only a button -->
                 <button class='btn btn-1 btn-1a showHidden' onclick="CLMSUI.compositeModelInst.showHiddenProteins()">Show</button>
+            </div>"
+
+            <div id='sslOption'>
+                <form><input type="text" style="z-index:10000" name="sslOption" value="L" size=1><br></form>
             </div>"
 
             <div class="controls">

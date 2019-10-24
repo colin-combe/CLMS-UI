@@ -34,6 +34,10 @@ span, label {
   text-align: right;
 }
 
+#sslOption{
+  display: none;
+}
+
 .showHidden{
   margin: 0px;
 }
