@@ -149,7 +149,7 @@ header('Content-type: text/html; charset=utf-8');
                     <?php echo $_SESSION['session_name'] ?>
                 </span>
                 <p id="expDropdownPlaceholder"></p>
-                <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
+                <button class='btn btn-1 btn-1a' onclick="window.location = './network.php'+window.location.search;" title="View results">Done</button>
             </div> <!-- page-header -->
 
             <div class="mainContent">
