@@ -113,7 +113,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             el: "#" + optid,
             model: CLMSUI.compositeModelInst.get("clmsModel"),
             myOptions: {
-                title: "Export ▼",
+                title: "3D Export ▼",
                 menu: saveExportButtonData.map(function(d) {
                     d.id = self.el.id + d.id;
                     d.tooltip = d.d3tooltip;
