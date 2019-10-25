@@ -380,14 +380,6 @@ CLMSUI.NGLUtils = {
     make3DAlignID: function(baseID, chainName, chainIndex) {
         return baseID + ":" + chainName + ":" + chainIndex;
     },
-    
-    getProteinFromChainIndex: function(chainMap, chainIndex) {
-        var entries = d3.entries(chainMap);
-        var matchProts = entries.filter(function(entry) {
-            return _.includes(_.pluck(entry.value, "index"), chainIndex);
-        });
-        return _.isEmpty(matchProts) ? null : matchProts[0].key;
-    },
 
     // this avoids going via the ngl functions using data in a chainMap
     getChainNameFromChainIndex: function(chainMap, chainIndex) {
