@@ -160,6 +160,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     };
                 });
                 this.preprocessedInputValues.set("pepSeq", splitPepSeq);
+                
+                this.preprocessedInputValues.set("scanNumber", parseInt(this.get("scanNumber")));
 
                 // Search group pre calculations
                 this.precalcedSearchGroupsSet = d3.set(this.get("searchGroups"));
@@ -317,7 +319,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 }
 
                 //scan number check
-                var scanNumberFilter = parseInt (this.get("scanNumber"));
+                var scanNumberFilter = this.preprocessedInputValues.get("scanNumber");
                 if (!isNaN(scanNumberFilter) &&
                     match.scanNumber !== scanNumberFilter
                     //match.scanNumber.toString().toLowerCase().indexOf(scanNumberFilter.toLowerCase()) == -1
