@@ -716,7 +716,6 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     col.s = 0.4; // - (0.1 * i);
                     col.l = 0.85; // - (0.1 * i);
                     var col2 = col.rgb();
-                    //return [col2.r, col2.g, col2.b];
                     return (255 << 24) + (col2.b << 16) + (col2.g << 8) + col2.r;   // 32-bit value of colour
                 });
 
@@ -738,7 +737,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                         return alignColl.getAlignedIndex(seqIndex + 1, alignInfo2.proteinID, true, alignInfo2.alignID, true) - 1;
                     });
                     var preCalcRowIndices = preCalcSearchIndices.map (function (i) { return i >= 0 ? (seqLengthB - i) * pw : -1; });
-                    //console.log ("pcsi", preCalcSearchIndices, preCalcRowIndices);
+                    //console.log ("pcsi", preCalcSearchIndices);
                     //console.log ("atoms", atoms1, atoms2);
 
                     // draw chain values, aligned to search sequence
@@ -752,7 +751,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                         if (searchIndex1 >= 0) {
                             var row = distanceMatrix[i];
                             for (var j = 0; j < len; j++) { // was seqLength
-                                var distance2 = row ? row[j] * row[j] : CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]);
+                                var distance2 = row && row[j] ? row[j] * row[j] : CLMSUI.modelUtils.getDistanceSquared (atoms1[i], atoms2[j]);
                                 if (distance2 < max2) {
                                     var searchIndex2 = preCalcRowIndices[j];
                                     if (searchIndex2 >= 0) {
