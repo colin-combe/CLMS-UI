@@ -449,7 +449,27 @@ function getLinksCSV() {
             validationStats.push(match.validated);
             searchesFound.add(match.searchId);
         }
-        row.push(highestScore, filteredMatchCount, linkAutovalidated, validationStats.toString(), crossLink.getMeta("fdr"));
+        var decoyType;
+        if (linear) {
+            if (crossLink.fromProtein.is_decoy) {
+                decoyType = "D";
+            }
+            else {
+                decoyType = "T";
+            }
+        } else {
+            var decoy1 = crossLink.fromProtein.is_decoy;
+            var decoy2 = crossLink.toProtein.is_decoy;
+            if (decoy1 && decoy2) {
+                decoyType = "DD";
+            } else if (decoy1 || decoy2) {
+                decoyType = "TD";
+            } else {
+                decoyType = "TT";
+            }
+        }
+
+        row.push(highestScore, filteredMatchCount, decoyType, linkAutovalidated, validationStats.toString(), crossLink.getMeta("fdr"));
 
         // Distance info
         var pDist = physicalDistances[i];
