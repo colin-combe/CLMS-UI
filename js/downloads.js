@@ -402,7 +402,7 @@ function getLinksCSV() {
     var validatedTypes = ["A", "B", "C", "?", "R"]; //todo - what is this for - cc
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
 
-    var headerArray = ["Protein1", "SeqPos1", "LinkedRes1", "Protein2", "SeqPos2", "LinkedRes2", "Highest Score", "Match Count", "AutoValidated", "Validated", "Link FDR", "3D Distance", "From Chain", "To Chain", "PDB SeqPos 1", "PDB SeqPos 2"];
+    var headerArray = ["Protein1", "SeqPos1", "LinkedRes1", "Protein2", "SeqPos2", "LinkedRes2", "Highest Score", "Match Count", "DecoyType", "AutoValidated", "Validated", "Link FDR", "3D Distance", "From Chain", "To Chain", "PDB SeqPos 1", "PDB SeqPos 2"];
     var searchIDs = Array.from(clmsModel.get("searches").keys());
     searchIDs.forEach(function(sid) {
         headerArray.push("Search_" + sid);
@@ -449,7 +449,27 @@ function getLinksCSV() {
             validationStats.push(match.validated);
             searchesFound.add(match.searchId);
         }
-        row.push(highestScore, filteredMatchCount, linkAutovalidated, validationStats.toString(), crossLink.getMeta("fdr"));
+        var decoyType;
+        if (linear) {
+            if (crossLink.fromProtein.is_decoy) {
+                decoyType = "D";
+            }
+            else {
+                decoyType = "T";
+            }
+        } else {
+            var decoy1 = crossLink.fromProtein.is_decoy;
+            var decoy2 = crossLink.toProtein.is_decoy;
+            if (decoy1 && decoy2) {
+                decoyType = "DD";
+            } else if (decoy1 || decoy2) {
+                decoyType = "TD";
+            } else {
+                decoyType = "TT";
+            }
+        }
+
+        row.push(highestScore, filteredMatchCount, decoyType, linkAutovalidated, validationStats.toString(), crossLink.getMeta("fdr"));
 
         // Distance info
         var pDist = physicalDistances[i];

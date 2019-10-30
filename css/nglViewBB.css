@@ -39,3 +39,8 @@ label.btn input[type=file] {
 .inputPDBCode {
     margin-left: 0.5em;
 }
+
+
+#nglPanel .ddSectionHeader {
+    color: #666;
+}

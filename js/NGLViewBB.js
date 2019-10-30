@@ -113,7 +113,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             el: "#" + optid,
             model: CLMSUI.compositeModelInst.get("clmsModel"),
             myOptions: {
-                title: "Export ▼",
+                title: "3D Export ▼",
                 menu: saveExportButtonData.map(function(d) {
                     d.id = self.el.id + d.id;
                     d.tooltip = d.d3tooltip;
@@ -298,7 +298,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         });
 
 
-        // Residue colour scheme dropdown
+        // Residue colour scheme
         NGL.ColormakerRegistry.add ("external", function () {
             this.lastResidueIndex = null;
             this.lastColour = null;
@@ -324,6 +324,34 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             this.filterSensitive = true;
         });
         
+        
+        // Current cross-view protein colour scheme
+        NGL.ColormakerRegistry.add ("external2", function () {
+            this.lastChainIndex = null;
+            this.lastColour = null;
+            this.dontGrey = true;
+            this.atomColor = function (atom) {
+                var acindex = atom.chainIndex;
+                if (this.lastChainIndex === acindex) {    // saves recalculating, as colour is per residue
+                    return this.lastColour;
+                }
+                this.lastChainIndex = acindex;
+                
+                var proteinID = self.model.get("stageModel").get("reverseChainMap").get(acindex);
+                var protein = self.model.get("clmsModel").get("participants").get(proteinID);
+                
+                if (protein !== undefined) {
+                    var rgb = d3.rgb(self.model.get("proteinColourAssignment").getColour (protein));
+                    this.lastColour = (rgb.r << 16) + (rgb.g << 8) + rgb.b;
+                } else {
+                    this.lastColour = 0xcccccc;
+                }
+                //console.log ("rid", arindex, this.lastColour);
+                return this.lastColour;
+            };
+            this.filterSensitive = true;
+        });
+        
         var allColourSchemes = d3.values(NGL.ColormakerRegistry.getSchemes());
         var ignoreColourSchemes = ["electrostatic", "volume", "geoquality", "moleculetype", "occupancy", "random", "value", "densityfit", "chainid", "randomcoilindex"];
         var aliases = {
@@ -340,6 +368,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             entitytype: "Entity Type",
             partialcharge: "Partial Charge",
             external: "Residues with Half-Links",
+            external2: "Xi Legend Protein Scheme",
         };
         var labellabel = d3.set(["uniform", "chainindex", "chainname", "modelindex"]);
         var mainColourSchemes = _.difference(allColourSchemes, ignoreColourSchemes);
@@ -388,8 +417,13 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.listenTo(this.model.get("filterModel"), "change", this.showFiltered); // any property changing in the filter model means rerendering this view
         this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", function () {
-            this.rerenderColourSchemes ([this.xlRepr ? {nglRep: this.xlRepr.linkRepr, colourScheme: this.xlRepr.colorOptions.linkColourScheme} : {nglRep: null, colourSchcme: null}]);
-        }); // if colour model changes internally, or is swapped for new one
+            this.rerenderColourSchemes ([this.xlRepr ? {nglRep: this.xlRepr.linkRepr, colourScheme: this.xlRepr.colorOptions.linkColourScheme} : {nglRep: null, colourScheme: null}]);
+        }); // if crosslink colour model changes internally, or is swapped for new one
+        
+        this.listenTo(this.model, "change:proteinColourAssignment currentProteinColourModelChanged", function () {
+            this.rerenderColourSchemes ([this.xlRepr ? {nglRep: this.xlRepr.sstrucRepr, colourScheme: this.xlRepr.colorOptions.residueColourScheme} : {nglRep: null, colourScheme: null}]);
+        }); // if cross-view protein colour model changes, or is swapped for new one
+        
         this.listenTo(this.model, "change:selection", this.showSelectedLinks);
         this.listenTo(this.model, "change:highlights", this.showHighlightedLinks);
         //this.listenTo(CLMSUI.vent, "PDBPermittedChainSetsUpdated", this.showHighlightedLinks);
@@ -1160,7 +1194,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 if (residue) {
                     // this is to find the index of the residue in searchindex (crosslink) terms
                     // thought I could rely on residue.seqIndex + chain.residueOffset but nooooo.....
-                    var proteinId = CLMSUI.NGLUtils.getProteinFromChainIndex(crosslinkData.get("chainMap"), residue.chainIndex);
+                    var proteinId = crosslinkData.get("reverseChainMap").get(residue.chainIndex);
                     var alignId = CLMSUI.NGLUtils.make3DAlignID (crosslinkData.getStructureName(), atom.chainname, atom.chainIndex);
                     // align from 3d to search index. seqIndex is 0-indexed so +1 before querying
                     //CLMSUI.utils.xilog ("alignid", alignId, proteinId);
