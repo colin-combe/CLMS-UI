@@ -758,7 +758,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
         // return parts of current url query string that aren't filter flags or values
         var search = window.location.search.slice(1);
-        var nonFilterKeys = d3.set(["sid", "decoys", "unval", "lowestScore", "anon"]);
+        var nonFilterKeys = d3.set(["sid", "upload", "decoys", "unval", "lowestScore", "anon"]);
         var nonFilterParts = search.split("&").filter(function(nfpart) {
             return nonFilterKeys.has(nfpart.split("=",1)[0]);
         });
