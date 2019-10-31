@@ -55,6 +55,22 @@ function callback (model) {
 		assert.deepEqual(actual, expected, "Expected "+JSON.stringify(expected)+" search to protein map, Passed!");
 	});
     
+    QUnit.test ("Readable ID Generation", function (assert) {
+        var decoys = [
+            {id: "10001001", name: "REV", accession: "REV_P02768-A", is_decoy: true},
+            {id: "10001002", name: "RAN", accession: "RAN_P02768-A", is_decoy: true},
+        ];
+        decoys.forEach (function (decoy) { clmsModel.get("participants").set (decoy.accession, decoy); });
+        
+        var fakeMatch = {matchedPeptides: [{prt: ["P02768-A", "REV_P02768-A"]}, {prt: ["P02768-A"]}] };
+        var expected = mostReadableMultipleId (fakeMatch, 0, clmsModel);
+        decoys.forEach (function (decoy) { clmsModel.get("participants").delete (decoy.accession); });
+        
+        var actual = "sp|P02768-A|ALBU;sp|REV_P02768-A|REV";
+        
+		assert.deepEqual(actual, expected, "Expected "+JSON.stringify(expected)+" decoy to real protein match, Passed!");
+    });
+    
 	
 	QUnit.module ("Filtering");
 	QUnit.test("Filter testing", function (assert) {
