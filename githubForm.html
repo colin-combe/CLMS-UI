@@ -77,19 +77,17 @@
                         "../vendor/php/githubIssue.php",
                         $("#issueForm").serialize()+"&"+"g-recaptcha-response="+grecaptcha.getResponse(),
                     ).done (function (data) {
-                        console.log (data);
-                        if (data.slice(0, 6) === '{"url"') {
-                            $("#submitLabel").text("Thankyou, issue has been submitted");
-                            $("#submitButton").prop ("disabled", true);
-                        } else {
-                            try {
-                                var json = JSON.parse (data);
-                                if (json.status === "fail") {
-                                    $("#submitLabel").text(json.error+": "+json.field);
-                                }
-                            } catch (err) {
-                                $("#submitLabel").text("An error occurred. Please contact your Xi Administrator.");
+                        //console.log (data);
+                        try {
+                            var json = JSON.parse (data);
+                            if (json.success) {
+                                $("#submitLabel").html("Thankyou, issue has been submitted: "+json.msg);
+                                $("#submitButton").prop ("disabled", true);
+                            } else if (json.fail || json.status === "fail") {
+                                $("#submitLabel").text(json.msg || (json.error+": "+json.field));
                             }
+                        } catch (err) {
+                            $("#submitLabel").text("An error occurred. Please contact your Xi Administrator.");
                         }
                     })
                 });
