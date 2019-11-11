@@ -41,11 +41,18 @@
     <div class="wideDivider"/>
     <h1>Report a XiView Issue</h1>
     <form action="" name="issueForm" id="issueForm" method="post">
+        
         <h2>Title</h2>
         <input type="text" id="issueName" name="issueName" form="issueForm" size="50" required>
+        
         <h2>Details</h2>
         <h4>Required (Plain text only, but please be as descriptive as possible, include search IDs etc)</h4>
         <textarea id="issueText" class="text" cols="86" rows ="16" name="issueText" form="issueForm" required></textarea>
+        
+        <div id="recaptchaWidget" data-sitekey="getFromConfig.json"></div>
+        <span class="error">&lt; Please check the captcha form</span>
+        <br/>
+        
         <h2 id="submitLabel">Submit Issue</h2>
        <input type="submit" value="SUBMIT" id="submitButton">
     </form>
@@ -53,21 +60,42 @@
     <div class="wideDivider"/>
     
     <script>
-        $("#issueForm").submit(function (event) {
-            event.preventDefault();
-            $.post (
-                "../vendor/php/githubIssue.php",
-                $("#issueForm").serialize(),
-            ).done (function (data) {
-                if (data.slice(0, 6) === '{"url"') {
-                    $("#submitLabel").text("Thankyou, issue has been submitted");
-                    $("#submitButton").prop ("disabled", true);
-                } else {
-                    $("#submitLabel").text("An error occurred. Please contact your Xi Administrator.");
-                }
-                //$()
-            })
-        });
+        var onloadCallback = function () {
+            $.when (
+                $.getJSON("publicKey.json"),
+            ).done (function (config) {
+                // set recaptcha public key in widget
+                $("#recaptchaWidget")
+                    .attr("class", "g-recaptcha")
+                    .attr("data-sitekey", config.googleRecaptchaPublicKey)
+                ;
+                grecaptcha.render('recaptchaWidget', {'sitekey': config.googleRecaptchaPublicKey});
+                
+                $("#issueForm").submit(function (event) {
+                    event.preventDefault();
+                    $.post (
+                        "../vendor/php/githubIssue.php",
+                        $("#issueForm").serialize()+"&"+"g-recaptcha-response="+grecaptcha.getResponse(),
+                    ).done (function (data) {
+                        if (data.slice(0, 6) === '{"url"') {
+                            $("#submitLabel").text("Thankyou, issue has been submitted");
+                            $("#submitButton").prop ("disabled", true);
+                        } else {
+                            try {
+                                var json = JSON.parse (data);
+                                if (json.status === "fail") {
+                                    $("#submitLabel").text(json.error+": "+json.field);
+                                }
+                            } catch (err) {
+                                $("#submitLabel").text("An error occurred. Please contact your Xi Administrator.");
+                            }
+                        }
+                    })
+                });
+            });
+        }
     </script>
+    
+    <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
 </body>
 </html>
