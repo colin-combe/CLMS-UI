@@ -26,7 +26,23 @@ function downloadMatches() {
 }
 
 function downloadSSL() {
-    download(getSSL(), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
+
+// $("#sslOption").dialog({
+//   modal: true,
+//   buttons: {
+//     'OK': function () {
+//       var sslOption = $('input[name="sslOption"]').val();
+//       alert(name);
+      download(getSSL(sslOption), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
+//       // storeData(name);
+//       $(this).dialog('close');
+//     },
+//     'Cancel': function () {
+//       $(this).dialog('close');
+//     }
+//   }
+// });
+
 }
 
 function downloadLinks() {
@@ -175,6 +191,15 @@ function mostReadableId(protein) {
 }
 
 
+function mostReadableMultipleId (match, matchedPeptideIndex, clmsModel) {
+    var mpeptides = match.matchedPeptides[matchedPeptideIndex];
+    var proteins = mpeptides ? mpeptides.prt.map(function(pid) {
+        return clmsModel.get("participants").get(pid);
+    }) : [];
+    return proteins.map (function (prot) { return mostReadableId (prot); }, this).join(";");
+}
+
+
 function getMatchesCSV() {
     var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","PeakListFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","Decoy1","Decoy2","3D Distance","From Chain","To Chain","PDB SeqPos 1","PDB SeqPos 2","LinkType","DecoyType","Retention Time"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
@@ -236,7 +261,7 @@ function getMatchesCSV() {
         var retentionTime = match.retentionTime !== undefined ? match.retentionTime : (match.elution_time_end === -1 ? match.elution_time_start : "");
 
         var data = [
-            match.id, CLMSUI.utils.proteinConcat(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? CLMSUI.utils.proteinConcat(match, 1, clmsModel) : ""), lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.precursorCharge, match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(), match.autovalidated, match.validated, match.searchId, match.runName(), match.peakListFileName(), match.scanNumber, match.scanIndex, match.crossLinkerModMass(), match.fragmentToleranceString(), "" /*match.ionTypesString()*/, decoy1, decoy2, distancesJoined.join('","'), linkType, decoyType, retentionTime
+            match.id, mostReadableMultipleId(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? mostReadableMultipleId(match, 1, clmsModel) : ""), lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.precursorCharge, match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(), match.autovalidated, match.validated, match.searchId, match.runName(), match.peakListFileName(), match.scanNumber, match.scanIndex, match.crossLinkerModMass(), match.fragmentToleranceString(),  "" /*match.ionTypesString()*/, decoy1, decoy2, distancesJoined.join('","'), linkType, decoyType, retentionTime
         ];
         csv += '"' + data.join('","') + '"\r\n';
         /*
@@ -251,7 +276,7 @@ function getMatchesCSV() {
     return csv;
 }
 
-function getSSL() {
+function getSSL(sslOption) {
     var csv = 'file\tscan\tcharge\tsequence\tscore-type\tscore\tId\tProtein1\tSeqPos1\tPepPos1\tPepSeq1\tLinkPos1\tProtein2\tSeqPos2\tPepPos2\tPepSeq2\tLinkPos2\tCharge\tExpMz\tExpMass\tCalcMz\tCalcMass\tMassError\tAutoValidated\tValidated\tSearch\tRawFileName\tPeakListFileName\tScanNumber\tScanIndex\tCrossLinkerModMass\tFragmentTolerance\tIonTypes\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     //var mass6dp = d3.format(".6f");
@@ -449,6 +474,7 @@ function getLinksCSV() {
             validationStats.push(match.validated);
             searchesFound.add(match.searchId);
         }
+
         var decoyType;
         if (linear) {
             if (crossLink.fromProtein.is_decoy) {

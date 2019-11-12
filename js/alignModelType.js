@@ -33,8 +33,10 @@
             this.set({
                 refAlignment: refResult,
                 compAlignment: compResult,
-                alignStr: fullResult.fmt[0]
+                alignStr: fullResult.fmt[0],
             });
+            
+            this.dirtyBlocks = true;    // do blockify results need recalculated from scratch when called?
 
             return this;
         },
@@ -92,26 +94,29 @@
             return {first: first, last: last, subSeq: subSeq};
         },
         
-        // For a given sequence return a list of the sequential indices
+        // For a given sequence return a list of the sequential indices (i.e. returned in terms of search sequence, not PDB, indices)
         // i.e. as above but split for gaps
         blockify: function () {
-            var seq = this.get("compAlignment");
-			var index = seq.convertToRef;
-			var blocks = [];
-			var start = index[0];
-			for (var n = 0; n < index.length - 1; n++) {
-				if (Math.abs (index[n+1] - index[n]) > 1) {  // if non-contiguous numbers i.e. a break
-                    if (index[n] >= 0) {
-					   blocks.push ({begin: start + 1, end: index[n] + 1});
+            if (this.dirtyBlocks || this.dirtyBlocks === undefined) { // realigning this sequence makes dirtyBlocks true, so recalculate
+                var seq = this.get("compAlignment");
+                var index = seq.convertToRef;
+                var blocks = [];
+                var start = index[0];
+                for (var n = 0; n < index.length - 1; n++) {
+                    if (Math.abs (index[n+1] - index[n]) > 1) {  // if non-contiguous numbers i.e. a break
+                        if (index[n] >= 0) {
+                           blocks.push ({begin: start + 1, end: index[n] + 1});
+                        }
+                        start = index[n + 1];
                     }
-					start = index[n + 1];
-				}
-			}
-			blocks.push ({begin: start + 1, end: _.last(index) + 1});
+                }
+                blocks.push ({begin: start + 1, end: _.last(index) + 1});
+
+                this.blocks = CLMSUI.modelUtils.mergeContiguousFeatures (blocks);
+                this.dirtyBlocks = false;
+            }
             
-            blocks = CLMSUI.modelUtils.mergeContiguousFeatures (blocks);
-            
-			return blocks;
+			return this.blocks;
         },
         
         
@@ -135,10 +140,24 @@
             return alignPos;
         },
         
-        
-        PDBAlignmentAsFeature: function () {
+        PDBAlignmentAsFeatures: function () {
             var alignment = this.get("compAlignment");
-            return {
+            var blocks = this.blockify();
+            var blockFeatures = blocks.slice().map (function (block) {
+                block.start = block.begin;
+                block.name = alignment.label;
+                block.protID = this.collection.containingModel.id;
+                block.id = this.collection.containingModel.id+" "+alignment.label; 
+                block.category = "Alignment";
+                block.type = "PDB aligned region";
+                //block.alignmentID = this.get("compID")   // not needed if indices already in search index terms (which blockify results are)
+                return block;
+            }, this);
+            
+            //console.log ("BF", blockFeatures);
+            return blockFeatures;
+            /*
+            return [{
                 begin: 1, 
                 start: 1, //todo - why begin and start
                 end: alignment.convertToRef.length, 
@@ -147,8 +166,9 @@
                 id: this.collection.containingModel.id+" "+alignment.label, 
                 category: "Alignment", 
                 type: "PDB aligned region", 
-                alignmentID: this.get("compID")
-            };
+                alignmentID: this.get("compID")   // not needed if indices already in search index terms
+            }];
+            */
         }
     });
 
@@ -347,10 +367,13 @@
         },
         
         PDBAlignmentsAsFeatures: function (includeCanonical) {
-            return this.get("seqCollection")
+            var featuresPerSeq = this.get("seqCollection")
                 .map (function (seqModel) {
-                    return seqModel.PDBAlignmentAsFeature ();
+                    return seqModel.PDBAlignmentAsFeatures ();
                 }, this)
+            ;
+            
+            return d3.merge (featuresPerSeq)
                 .filter(function (alignFeature) {
                     return includeCanonical || alignFeature.name !== "Canonical";     
                 })

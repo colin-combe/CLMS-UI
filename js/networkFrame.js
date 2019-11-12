@@ -883,13 +883,28 @@ CLMSUI.init.viewsEssential = function(options) {
                 func: function() {
                     window.open("https://vimeo.com/user64900020", "_blank");
                 },
-                tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage"
+                tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage",
+                sectionEnd: true,
             }, {
                 name: "Report Issue on Github",
                 func: function() {
                     window.open("https://github.com/Rappsilber-Laboratory/xiView_container/issues", "_blank");
                 },
                 tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"
+            }, {
+                name: "Report Issue via Form",
+                func: function() {
+                    window.open("githubForm.html", "_blank");
+                },
+                tooltip: "Opens a form to report an issue which will be forwarded to GitHub. Plain text only.",
+                sectionEnd: true,
+            }, {
+            name: "XiView Survey",
+                func: function() {
+                    window.open("https://edinburgh.onlinesurveys.ac.uk/xiview-usability", "_blank");
+                },
+                tooltip: "We want your feedback",
+                sectionEnd: true,
             }, {
                 name: "About Xi View",
                 func: function() {
