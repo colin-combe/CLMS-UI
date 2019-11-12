@@ -367,12 +367,14 @@
         },
         
         PDBAlignmentsAsFeatures: function (includeCanonical) {
+            // get array of arrays = each sequence in the model can have a number of blocks
             var featuresPerSeq = this.get("seqCollection")
                 .map (function (seqModel) {
                     return seqModel.PDBAlignmentAsFeatures ();
                 }, this)
             ;
             
+            // flatten this array and remove canonical sequences if requested
             return d3.merge (featuresPerSeq)
                 .filter(function (alignFeature) {
                     return includeCanonical || alignFeature.name !== "Canonical";     

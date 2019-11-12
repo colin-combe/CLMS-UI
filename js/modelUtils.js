@@ -569,6 +569,7 @@ CLMSUI.modelUtils = {
 
     updateLinkMetadata: function(metaDataFileContents, clmsModel) {
         var crossLinks = clmsModel.get("crossLinks");
+        var crossLinksArr = CLMS.arrayFromMapValues (crossLinks);
         var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
         var first = true;
         var columns = [];
@@ -588,18 +589,33 @@ CLMSUI.modelUtils = {
         var matchedCrossLinks = [];
         d3.csv.parse(metaDataFileContents, function(d) {
             var linkID = d.linkID || d.LinkID;
-            var crossLink = crossLinks.get(linkID);
+            var singleCrossLink = crossLinks.get(linkID);
+            var rowCrossLinkArr;
 
             // Maybe need to generate key from several columns
-            if (!crossLink) {
-                var pkey1 = parseProteinID2(1, d);
-                var pkey2 = parseProteinID2(2, d);
-                linkID = pkey1 + "_" + getValueN("SeqPos", 1, d) + "-" + pkey2 + "_" + getValueN("SeqPos", 2, d);
-                crossLink = crossLinks.get(linkID);
+            var pkey1, pkey2;
+            if (!singleCrossLink) {
+                pkey1 = parseProteinID2(1, d);
+                pkey2 = parseProteinID2(2, d);
+                var spos1 = getValueN("SeqPos", 1, d);
+                var spos2 = getValueN("SeqPos", 2, d);
+                linkID = pkey1 + "_" + spos1 + "-" + pkey2 + "_" + spos2;
+                singleCrossLink = crossLinks.get(linkID);
+                
+                if (singleCrossLink == null && spos1 == null && spos2 == null) {   // PPI
+                    rowCrossLinkArr = crossLinksArr.filter (function (crossLink) {
+                        return (crossLink.toProtein.id === pkey1 && crossLink.fromProtein.id === pkey2) || (crossLink.toProtein.id === pkey2 && crossLink.fromProtein.id === pkey1);
+                    });
+                    //console.log ("ml", rowCrossLinkArr);
+                }
+            }
+            
+            if (singleCrossLink) {    // single identifiable crosslink
+                rowCrossLinkArr = [singleCrossLink];
             }
 
-            if (crossLink) {
-                matchedCrossLinks.push(crossLink);
+            if (rowCrossLinkArr && rowCrossLinkArr.length > 0) {
+                matchedCrossLinks.push.apply (matchedCrossLinks, rowCrossLinkArr);
                 var keys = d3.keys(d);
 
                 if (first) {
@@ -618,7 +634,9 @@ CLMSUI.modelUtils = {
                         } else {
                             columnTypes[key] = "alpha"; // at least one entry in the column is non-numeric
                         }
-                        crossLink.setMeta(key, val);
+                        rowCrossLinkArr.forEach (function (cl) {
+                            cl.setMeta (key, val);    
+                        });
                     }
                 });
             }
@@ -639,7 +657,8 @@ CLMSUI.modelUtils = {
                         matchedCrossLink.setMeta(entry.key, val.toString());
                     }
                 });
-            });
+            })
+        ;
 
         var registry = clmsModel.get("crossLinkMetaRegistry") || d3.set();
         columns.forEach (registry.add, registry);
