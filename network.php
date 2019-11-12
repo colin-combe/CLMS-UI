@@ -258,6 +258,10 @@
                 //console.log (JSON.stringify(json));
                 //console.log (json);
 
+                if (json.warn) {
+                    CLMSUI.utils.displayError (function() { return true; }, "Warning <p class='errorReason'>"+json.warn+"</p>");
+                }
+
 				CLMSUI.init.models (json);
 				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
 				document.title = CLMS.arrayFromMapKeys(searches).join();

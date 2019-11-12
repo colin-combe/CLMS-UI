@@ -27,21 +27,21 @@ function downloadMatches() {
 
 function downloadSSL() {
 
-$("#sslOption").dialog({
-  modal: true,
-  buttons: {
-    'OK': function () {
-      var sslOption = $('input[name="sslOption"]').val();
-      alert(name);
+// $("#sslOption").dialog({
+//   modal: true,
+//   buttons: {
+//     'OK': function () {
+//       var sslOption = $('input[name="sslOption"]').val();
+//       alert(name);
       download(getSSL(sslOption), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
-      // storeData(name);
-      $(this).dialog('close');
-    },
-    'Cancel': function () {
-      $(this).dialog('close');
-    }
-  }
-});
+//       // storeData(name);
+//       $(this).dialog('close');
+//     },
+//     'Cancel': function () {
+//       $(this).dialog('close');
+//     }
+//   }
+// });
 
 }
 
@@ -191,6 +191,15 @@ function mostReadableId(protein) {
 }
 
 
+function mostReadableMultipleId (match, matchedPeptideIndex, clmsModel) {
+    var mpeptides = match.matchedPeptides[matchedPeptideIndex];
+    var proteins = mpeptides ? mpeptides.prt.map(function(pid) {
+        return clmsModel.get("participants").get(pid);
+    }) : [];
+    return proteins.map (function (prot) { return mostReadableId (prot); }, this).join(";");
+}
+
+
 function getMatchesCSV() {
     var csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","PeakListFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","Decoy1","Decoy2","3D Distance","From Chain","To Chain","PDB SeqPos 1","PDB SeqPos 2","LinkType","DecoyType","Retention Time"\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
@@ -252,7 +261,7 @@ function getMatchesCSV() {
         var retentionTime = match.retentionTime !== undefined ? match.retentionTime : (match.elution_time_end === -1 ? match.elution_time_start : "");
 
         var data = [
-            match.id, CLMSUI.utils.proteinConcat(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? CLMSUI.utils.proteinConcat(match, 1, clmsModel) : ""), lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.precursorCharge, match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(), match.autovalidated, match.validated, match.searchId, match.runName(), match.peakListFileName(), match.scanNumber, match.scanIndex, match.crossLinkerModMass(), match.fragmentToleranceString(), match.ionTypesString(), decoy1, decoy2, distancesJoined.join('","'), linkType, decoyType, retentionTime
+            match.id, mostReadableMultipleId(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? mostReadableMultipleId(match, 1, clmsModel) : ""), lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.precursorCharge, match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(), match.autovalidated, match.validated, match.searchId, match.runName(), match.peakListFileName(), match.scanNumber, match.scanIndex, match.crossLinkerModMass(), match.fragmentToleranceString(), match.ionTypesString(), decoy1, decoy2, distancesJoined.join('","'), linkType, decoyType, retentionTime
         ];
         csv += '"' + data.join('","') + '"\r\n';
         /*

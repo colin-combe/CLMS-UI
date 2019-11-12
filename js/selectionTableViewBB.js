@@ -572,7 +572,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 self.select(d);
             })
         ;
-        tjoin.order();
+        //tjoin.order();
+        tjoin.sort (function (a,b) { return b.score() - a.score(); });
         tjoin
             .classed("spectrumShown2", function(d) {
                 var lsm = self.model.get("lastSelectedMatch");

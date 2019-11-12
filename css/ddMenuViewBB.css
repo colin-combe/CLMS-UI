@@ -73,11 +73,12 @@
 }
 
 .dropdown .ddSectionHeader {
-	opacity: 0.5;
+	opacity: 0.8;
 	text-transform: lowercase;
 	font-variant: small-caps;
 	display: block;
 	line-height: 1.2em;
+    color: yellow;
 }
 
 .dropdown .sectionEnd {

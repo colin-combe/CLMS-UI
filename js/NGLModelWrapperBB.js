@@ -29,6 +29,25 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             compModel.getCrossLinkDistances (compModel.getAllCrossLinks());  // regenerate distances for all crosslinks
             CLMSUI.vent.trigger ("changeAllowInterModelDistances", val);
         });
+        
+        this.listenTo (this, "change:chainMap", function (model, val) {
+            model.makeReverseChainMap (val);
+        });
+        
+        this.makeReverseChainMap (this.get("chainMap"));
+    },
+    
+    // make a map of chain indices to protein ids
+    makeReverseChainMap: function (chainMap) {
+        var reverseChainMap = d3.map();
+        var entries = d3.entries(chainMap);
+        entries.forEach (function (entry) {
+            entry.value.forEach (function (valueItem) {
+                reverseChainMap.set (valueItem.index, entry.key);
+            });
+        });
+        this.set ("reverseChainMap", reverseChainMap);
+        return this;
     },
 
     getModel: function() {
@@ -486,7 +505,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         //console.log ("strcutcomp", this.get("structureComp").structure);
         this.get("structureComp").structure.eachChain(function(cp) {
             // Don't include chains which are tiny or ones we can't match to a protein
-            if (CLMSUI.NGLUtils.isViableChain(cp) && CLMSUI.NGLUtils.getProteinFromChainIndex(self.get("chainMap"), cp.index)) {
+            if (CLMSUI.NGLUtils.isViableChain(cp) && self.get("reverseChainMap").get(cp.index)) {
                 resCount += cp.residueCount;
                 viableChainIndices.push(cp.index);
             }
