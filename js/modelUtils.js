@@ -599,8 +599,9 @@ CLMSUI.modelUtils = {
                 pkey2 = parseProteinID2(2, d);
                 var spos1 = getValueN("SeqPos", 1, d);
                 var spos2 = getValueN("SeqPos", 2, d);
-                linkID = pkey1 + "_" + spos1 + "-" + pkey2 + "_" + spos2;
-                singleCrossLink = crossLinks.get(linkID);
+                var linkIDA = pkey1 + "_" + spos1 + "-" + pkey2 + "_" + spos2;
+                var linkIDB = pkey2 + "_" + spos2 + "-" + pkey1 + "_" + spos1;
+                singleCrossLink = crossLinks.get(linkIDA) || crossLinks.get(linkIDB);
                 
                 if (singleCrossLink == null && spos1 == null && spos2 == null) {   // PPI
                     rowCrossLinkArr = crossLinksArr.filter (function (crossLink) {
