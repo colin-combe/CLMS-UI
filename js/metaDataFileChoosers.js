@@ -148,7 +148,7 @@ CLMSUI.LinkMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
                 rows: "SwissProtID{sp|Accession|Name},{SeqPos1},SwissProtID2{sp|Accession|Name},{SeqPos2}, then {number or #color} etc",
                 example: [{"csv file": ["Protein 1", "SeqPos 1", "Protein 2", "SeqPos 2", "Quantitation", "Fixed Colour"]},
                     {csv: ["sp|P02768-A|ALBU_HUMAN", "107", "sp|P02768-A|ALBU_HUMAN", "466", "57.07", "#FF8800"]},
-                    { csv: ["sp|P02768-A|ALBU_HUMAN", "126", "sp|P02768-A|ALBU_HUMAN", "426", "52.04", "#FFaa00"]}
+                    {csv: ["sp|P02768-A|ALBU_HUMAN", "126", "sp|P02768-A|ALBU_HUMAN", "426", "52.04", "#FFaa00"]}
                 ],
                 notes: "Protein 1 and Protein 2 fields will be split by | and the individual parts parsed to find a name or accession number"
             }
