@@ -179,14 +179,13 @@ function download(content, contentType, fileName) {
 
 
 function mostReadableId(protein) {
-    // if (protein.accession && protein.name) {
-    //     return "sp|" + protein.accession + "|" + protein.name;
-    // }else
-    if (protein.accession) {
-        return protein.accession;
+    if (protein.accession && protein.name) {
+        return "sp|" + protein.accession + "|" + protein.name;
     } else if (protein.name) {
         return protein.name;
-    }  else {
+    } else if (protein.accession) {
+        return protein.accession;
+    } else {
         return protein.id;
     }
 }
