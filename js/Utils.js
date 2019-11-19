@@ -1020,15 +1020,17 @@ CLMSUI.utils = {
     
     // add to local storage, partObj is object such as {distanceColours: {"BS3": {domain:[15,25], range:["red", "blue", "green"]} }} that gets merged
     // into existing stored object
-    setLocalStorage: function (partObj) {
-        var storageStr = localStorage.getItem("xiView") || "{}";
+    setLocalStorage: function (partObj, objName) {
+        objName = objName || "xiView";
+        var storageStr = localStorage.getItem(objName) || "{}";
         var storage = JSON.parse (storageStr);
         storage = $.extend (true, storage, partObj);
-        localStorage.setItem ("xiView", JSON.stringify(storage));
+        localStorage.setItem (objName, JSON.stringify(storage));
 	},
     
-    getLocalStorage: function () {
-        var storageStr = localStorage.getItem("xiView") || "{}";
+    getLocalStorage: function (objName) {
+        objName = objName || "xiView";
+        var storageStr = localStorage.getItem(objName) || "{}";
         return JSON.parse (storageStr);
     },
 	

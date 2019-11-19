@@ -564,19 +564,19 @@ CLMSUI.init.views = function() {
         //     tooltip: "Load Cross-Links from a local CSV File"
         // },
         {
-            name: "Cross-Link Metadata",
+            name: "Cross-Link or PPI Metadata",
             eventName: "linkMetaShow",
-            tooltip: "Load Cross-Link Meta-Data from a local CSV file. See 'Expected CSV Format' within for syntax"
+            tooltip: "Load Cross-Link or PPI Meta-Data from a local CSV file"
         },
         {
             name: "Protein Metadata",
             eventName: "proteinMetaShow",
-            tooltip: "Load Protein Meta-Data from a local CSV file. See 'Expected CSV Format' within for syntax"
+            tooltip: "Load Protein Meta-Data from a local CSV file"
         },
         {
             name: "User Annotations",
             eventName: "userAnnotationsMetaShow",
-            tooltip: "Load User Annotations from a local CSV file. See 'Expected CSV Format' within for syntax"
+            tooltip: "Load User Annotations from a local CSV file"
         },
     ];
     loadButtonData.forEach(function(bdata) {
