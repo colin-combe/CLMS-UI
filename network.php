@@ -285,7 +285,7 @@
             var newQueryString = d3.entries(phpProps).map(function (entry) { return entry.key+"="+entry.value; }).join("&");
             console.log ("ucm", urlChunkMap, newQueryString);
             var url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;
-            
+
             d3.json (url, function (error, json) {
                 spinner.stop(); // stop spinner on request returning
 
@@ -295,7 +295,7 @@
                     CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
                     console.error ("Error", error);
                 }
-            });
+            });  
             
         } else {
             spinner.stop(); // stop spinner
@@ -313,7 +313,7 @@
                 allDataLoaded ();
             }
         });
-
+        
         // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation
         CLMSUI.init.blosumLoading ();
 
