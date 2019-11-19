@@ -89,31 +89,61 @@ CLMSUI.modelUtils = {
             return info;
         },
 
-        interactor: function(interactor) {
+                interactor: function(interactor) {
+                    var contents = [
+                        ["ID", interactor.id],
+                        ["Accession", interactor.accession],
+                        ["Size", interactor.size],
+                        ["Desc.", interactor.description]
+                    ];
+
+                    d3.entries(interactor.getMeta()).forEach(function(entry) {
+                        var val = entry.value;
+                        var key = entry.key.toLocaleLowerCase();
+                        if (val !== undefined && !_.isObject(val)) {
+                            contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
+                        }
+                    });
+
+                    if (interactor.go) {
+                        var goTermsMap = CLMSUI.compositeModelInst.get("go");
+                        var goTermsText = "";
+                        for (var goId of interactor.go) {
+                            var goTerm = goTermsMap.get(goId);
+                            goTermsText += goTerm.name + "<br>";
+                        }
+                        contents.push(["GO", goTermsText]);
+                    }
+                    return contents;
+                },
+
+
+        complex: function(interactor) {
             var contents = [
-                ["ID", interactor.id],
-                ["Accession", interactor.accession],
-                ["Size", interactor.size],
-                ["Desc.", interactor.description]
+                ["Complex", interactor.id],
+              //  ["Members", Array.from(goTerm.relationship.values()).join(", ")]
+                // ["Accession", interactor.accession],
+                // ["Size", interactor.size],
+                // ["Desc.", interactor.description]
             ];
 
-            d3.entries(interactor.getMeta()).forEach(function(entry) {
-                var val = entry.value;
-                var key = entry.key.toLocaleLowerCase();
-                if (val !== undefined && !_.isObject(val)) {
-                    contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
-                }
-            });
-
-            if (interactor.go) {
-                var goTermsMap = CLMSUI.compositeModelInst.get("go");
-                var goTermsText = "";
-                for (var goId of interactor.go) {
-                    var goTerm = goTermsMap.get(goId);
-                    goTermsText += goTerm.name + "<br>";
-                }
-                contents.push(["GO", goTermsText]);
-            }
+            // d3.entries(interactor.getMeta()).forEach(function(entry) {
+            //     var val = entry.value;
+            //     var key = entry.key.toLocaleLowerCase();
+            //     if (val !== undefined && !_.isObject(val)) {
+            //         contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
+            //     }
+            // });
+            //
+            // if (interactor.go) {
+            //     var goTermsMap = CLMSUI.compositeModelInst.get("go");
+            //     var goTermsText = "";
+            //     for (var goId of interactor.go) {
+            //         var goTerm = goTermsMap.get(goId);
+            //         goTermsText += goTerm.name + "<br>";
+            //     }
+            //     contents.push(["GO", goTermsText]);
+            // }
             return contents;
         },
 
@@ -250,6 +280,9 @@ CLMSUI.modelUtils = {
         },
         interactor: function(interactor) {
             return interactor.name.replace("_", " ");
+        },
+        complex: function(interactor) {
+            return name.replace("_", " ");
         },
         residue: function(interactor, residueIndex, residueExtraInfo) {
             return interactor.name + ":" + residueIndex + "" + (residueExtraInfo ? residueExtraInfo : "") + " " +
@@ -603,7 +636,7 @@ CLMSUI.modelUtils = {
                 var linkIDA = pkey1 + "_" + spos1 + "-" + pkey2 + "_" + spos2;
                 var linkIDB = pkey2 + "_" + spos2 + "-" + pkey1 + "_" + spos1;
                 singleCrossLink = crossLinks.get(linkIDA) || crossLinks.get(linkIDB);
-                
+
                 if (singleCrossLink == null && spos1 == null && spos2 == null) {   // PPI
                     rowCrossLinkArr = crossLinksArr.filter (function (crossLink) {
                         return (crossLink.toProtein.id === pkey1 && crossLink.fromProtein.id === pkey2) || (crossLink.toProtein.id === pkey2 && crossLink.fromProtein.id === pkey1);
@@ -637,7 +670,7 @@ CLMSUI.modelUtils = {
                             columnTypes[key] = "alpha"; // at least one entry in the column is non-numeric
                         }
                         rowCrossLinkArr.forEach (function (cl) {
-                            cl.setMeta (key, val);    
+                            cl.setMeta (key, val);
                         });
                     }
                 });
