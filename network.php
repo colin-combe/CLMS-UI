@@ -285,8 +285,13 @@
         console.log ("TIME t1", performance.now());
 
         if (window.location.search) {
-            // 1. Load spectrum matches
-            var url = "../CLMS-model/php/spectrumMatches.php" + window.location.search;
+            // 1. Load spectrum matches, dont send all query string to php (ostensibly to help with caching)
+            var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
+            var phpProps = _.pick (urlChunkMap, "upload", "sid", "unval", "linears", "lowestScore", "highestScore");
+            var newQueryString = d3.entries(phpProps).map(function (entry) { return entry.key+"="+entry.value; }).join("&");
+            console.log ("ucm", urlChunkMap, newQueryString);
+            var url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;
+            
             d3.json (url, function (error, json) {
                 spinner.stop(); // stop spinner on request returning
 
@@ -297,6 +302,7 @@
                     console.error ("Error", error);
                 }
             });
+            
         } else {
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches

@@ -52,27 +52,13 @@ CLMSUI.AbstractMetaDataFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         wrapperPanel.append("div").attr("class", "messagebar").style("display", "none");
 
         var formatPanel = wrapperPanel.append("div").attr("class", "expectedFormatPanel");
-
-        var sectionData = [this.options.expectedFormat];
-        sectionData[0].id = "ExpectedFormat";
-        sectionData[0].sectionName = "Expected CSV Format";
-
-        var headerFunc = function(d) {
-            return d.sectionName;
-        };
-        var rowFilterFunc = function(d) {
-            var rows = d3.entries(d);
-            var badKeys = self.options.removeTheseKeys;
-            return rows.filter(function(row) {
-                return !badKeys || !badKeys.has(row.key);
-            });
-        };
-        var cellFunc = function(d) {
-            d3.select(this).html(d.value);
-        };
-
-        CLMSUI.utils.sectionTable.call(this, formatPanel, sectionData, mainDivSel.attr("id"), ["Row Type", "Format"], headerFunc, rowFilterFunc, cellFunc, []);
-
+        
+        formatPanel.append("a")
+            .text ("Click to open XiDocs for CSV format details")
+            .attr ("href", self.options.docUrl)
+            .attr ("target", "_blank")
+        ;
+        
         this.listenTo(CLMSUI.vent, self.options.loadedEventName, function(metaMetaData, sourceData) {
             if (sourceData && sourceData.source === "file") {
                 var columns = metaMetaData.columns;
@@ -114,15 +100,7 @@ CLMSUI.ProteinMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.exten
             buttonText: "Select Protein MetaData CSV File",
             loadedEventName: "proteinMetadataUpdated",
             parseMsgTemplate: "Parsed <%= attrCount %> MetaData Attributes across <%= itemCount %> Identified Proteins",
-            expectedFormat: {
-                header: "Accession or ProteinID,{MetaData1 Name}*,{MetaData2 Name} etc",
-                data: "SwissProtID1{sp|Accession|Name},{number or string},{number or string}",
-                example: [{"csv file": ["Accession", "Name", "Value"]},
-                    {csv: ["sp|P02768-A|ALBU_HUMAN,Human Protein,0.79"]},
-                    {csv: ["sp|G3RE98|ALBU_GORILLA,Gorilla Protein,0.58"]},
-                ],
-                notes: "*If a MetaData column name is 'Name' it will change displayed protein names"
-            }
+            docUrl: "../xidocs/html/import/proteinmeta.html",
         };
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
         CLMSUI.ProteinMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);
@@ -140,18 +118,10 @@ CLMSUI.LinkMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
 
     initialize: function(viewOptions) {
         var myDefaults = {
-            buttonText: "Select Cross-Link MetaData CSV File",
+            buttonText: "Select Cross-Link or PPI MetaData CSV File",
             loadedEventName: "linkMetadataUpdated",
             parseMsgTemplate: "Parsed <%= attrCount %> MetaData Attributes across <%= itemCount %> Identified Cross-Links",
-            expectedFormat: {
-                header: "Protein 1,SeqPos 1,Protein 2,SeqPos 2, then {MetaData1 Name},{MetaData2 Name} etc",
-                rows: "SwissProtID{sp|Accession|Name},{SeqPos1},SwissProtID2{sp|Accession|Name},{SeqPos2}, then {number or #color} etc",
-                example: [{"csv file": ["Protein 1", "SeqPos 1", "Protein 2", "SeqPos 2", "Quantitation", "Fixed Colour"]},
-                    {csv: ["sp|P02768-A|ALBU_HUMAN", "107", "sp|P02768-A|ALBU_HUMAN", "466", "57.07", "#FF8800"]},
-                    {csv: ["sp|P02768-A|ALBU_HUMAN", "126", "sp|P02768-A|ALBU_HUMAN", "426", "52.04", "#FFaa00"]}
-                ],
-                notes: "Protein 1 and Protein 2 fields will be split by | and the individual parts parsed to find a name or accession number"
-            }
+            docUrl: "../xidocs/html/import/crossmeta.html"
         };
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
         CLMSUI.LinkMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);
@@ -172,16 +142,7 @@ CLMSUI.UserAnnotationsMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooser
             buttonText: "Select User-Defined Annotations CSV File",
             loadedEventName: "userAnnotationsUpdated",
             parseMsgTemplate: "Parsed <%= attrCount %> Annotation Types across <%= itemCount %> Annotations",
-            expectedFormat: {
-                header: "ProteinId, AnnotName, StartRes, EndRes, Color",
-                rows: "SwissProtID{sp|Accession|Name}, {string}, {number}, {number}, then {#colour or colourName}",
-                example: [
-                    {"csv file": ["ProteinId", "AnnotName", "StartRes", "EndRes", "Color"]},
-                    {csv: ["sp|P02768-A|ALBU_HUMAN", "Dimerization domain", "55", "144", "#e78ac3"]},
-                    {csv: ["sp|P02768-A|ALBU_HUMAN", "Charged Region", "401", "510", "#1f78b4"]}
-                ],
-                notes: "ProteinId fields will be split by | and the individual parts parsed to find a name or accession number"
-            }
+            docUrl: "../xidocs/html/import/userannotations.html"
         };
         viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
         CLMSUI.UserAnnotationsMetaDataFileChooserBB.__super__.initialize.apply(this, arguments);
