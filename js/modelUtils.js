@@ -89,34 +89,33 @@ CLMSUI.modelUtils = {
             return info;
         },
 
-                interactor: function(interactor) {
-                    var contents = [
-                        ["ID", interactor.id],
-                        ["Accession", interactor.accession],
-                        ["Size", interactor.size],
-                        ["Desc.", interactor.description]
-                    ];
+        interactor: function(interactor) {
+            var contents = [
+                ["ID", interactor.id],
+                ["Accession", interactor.accession],
+                ["Size", interactor.size],
+                ["Desc.", interactor.description]
+            ];
 
-                    d3.entries(interactor.getMeta()).forEach(function(entry) {
-                        var val = entry.value;
-                        var key = entry.key.toLocaleLowerCase();
-                        if (val !== undefined && !_.isObject(val)) {
-                            contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
-                        }
-                    });
+            d3.entries(interactor.getMeta()).forEach(function(entry) {
+                var val = entry.value;
+                var key = entry.key.toLocaleLowerCase();
+                if (val !== undefined && !_.isObject(val)) {
+                    contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
+                }
+            });
 
-                    if (interactor.go) {
-                        var goTermsMap = CLMSUI.compositeModelInst.get("go");
-                        var goTermsText = "";
-                        for (var goId of interactor.go) {
-                            var goTerm = goTermsMap.get(goId);
-                            goTermsText += goTerm.name + "<br>";
-                        }
-                        contents.push(["GO", goTermsText]);
-                    }
-                    return contents;
-                },
-
+            if (interactor.go) {
+                var goTermsMap = CLMSUI.compositeModelInst.get("go");
+                var goTermsText = "";
+                for (var goId of interactor.go) {
+                    var goTerm = goTermsMap.get(goId);
+                    goTermsText += goTerm.name + "<br>";
+                }
+                contents.push(["GO", goTermsText]);
+            }
+            return contents;
+        },
 
         complex: function(interactor) {
             var contents = [
@@ -282,7 +281,7 @@ CLMSUI.modelUtils = {
             return interactor.name.replace("_", " ");
         },
         complex: function(interactor) {
-            return name.replace("_", " ");
+            return interactor.name.replace("_", " ");
         },
         residue: function(interactor, residueIndex, residueExtraInfo) {
             return interactor.name + ":" + residueIndex + "" + (residueExtraInfo ? residueExtraInfo : "") + " " +
