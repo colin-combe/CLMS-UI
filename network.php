@@ -19,7 +19,7 @@
 -->
 <?php
     session_start();
-    $cacheBuster = '';//?v='.microtime(true);
+    $cacheBuster = '?v='.microtime(true);
 ?>
 
 <!DOCTYPE html>
@@ -267,7 +267,7 @@
                 console.log ("TIME t2", performance.now(), json.times);
                 //console.log (JSON.stringify(json));
                 //console.log (json);
-                
+
                 if (json.warn) {
                     CLMSUI.utils.displayError (function() { return true; }, "Warning <p class='errorReason'>"+json.warn+"</p>");
                 }
@@ -301,7 +301,7 @@
             var newQueryString = d3.entries(phpProps).map(function (entry) { return entry.key+"="+entry.value; }).join("&");
             console.log ("ucm", urlChunkMap, newQueryString);
             var url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;
-            
+
         d3.json (url, function (error, json) {
             spinner.stop(); // stop spinner on request returning
 
@@ -312,7 +312,7 @@
 				console.error ("Error", error);
 			}
 		});
-            
+
         } else {
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches
