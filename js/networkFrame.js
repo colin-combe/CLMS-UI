@@ -192,21 +192,21 @@ CLMSUI.init.models = function(options) {
             CLMSUI.utils.setLocalStorage (obj);
         });
     }
-                                               
+
     // A colour model's attributes have changed - is it the currently used model? If so, fire the currentColourModelChanged event
     CLMSUI.compositeModelInst.listenTo(CLMSUI.linkColour.Collection, "colourModelChanged", function (colourModel, changedAttrs) {
         if (this.get("linkColourAssignment").id === colourModel.id) {
             this.trigger ("currentColourModelChanged", colourModel, changedAttrs);
         }
     });
-    
+
     // same for protein colour models
     CLMSUI.compositeModelInst.listenTo(CLMSUI.linkColour.ProteinCollection, "colourModelChanged", function (colourModel, changedAttrs) {
         if (this.get("proteinColourAssignment").id === colourModel.id) {
             this.trigger ("currentProteinColourModelChanged", colourModel, changedAttrs);
         }
     });
-    
+
     // Set initial colour scheme choices
     // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
     CLMSUI.compositeModelInst
@@ -892,14 +892,7 @@ CLMSUI.init.viewsEssential = function(options) {
                 },
                 tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"
             }, {
-                name: "Report Issue via Form",
-                func: function() {
-                    window.open("githubForm.html", "_blank");
-                },
-                tooltip: "Opens a form to report an issue which will be forwarded to GitHub. Plain text only.",
-                sectionEnd: true,
-            }, {
-            name: "XiView Survey",
+                name: "XiView Survey",
                 func: function() {
                     window.open("https://edinburgh.onlinesurveys.ac.uk/xiview-usability", "_blank");
                 },
