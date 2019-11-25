@@ -78,9 +78,9 @@
         <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
-    		<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
-    		<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
-    		<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
+            <link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
+            <link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
+            <link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
@@ -94,11 +94,11 @@
         <script type="text/javascript" src="../vendor/js/jquery-3.2.1.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-		    <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
+            <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
-    		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
-    		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
-    		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
+            <script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
+            <script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
+            <script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3-octree.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
@@ -218,7 +218,7 @@
                 </div>
             </div>
 
-			<div id="subPanelLimiter"></div>
+            <div id="subPanelLimiter"></div>
         </div><!-- MAIN -->
 
 
@@ -236,11 +236,11 @@
             }
         ?>
 
-		var spinner = new Spinner({scale: 5}).spin (d3.select("#main").node());
+        var spinner = new Spinner({scale: 5}).spin (d3.select("#main").node());
         var z;
 
-		var success = function (json) {
-			try {
+        var success = function (json) {
+            try {
                 if (json.error) {
                     throw "Error from server";
                 }
@@ -251,28 +251,33 @@
                 console.log ("TIME t2", performance.now(), json.times);
                 //console.log (JSON.stringify(json));
                 //console.log (json);
-                
+
                 if (json.warn) {
                     CLMSUI.utils.displayError (function() { return true; }, "Warning <p class='errorReason'>"+json.warn+"</p>");
                 }
 
-				CLMSUI.init.models (json);
-				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-				document.title = CLMS.arrayFromMapKeys(searches).join();
+                CLMSUI.init.models (json);
+                var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+                document.title = CLMS.arrayFromMapKeys(searches).join();
 
-				Split (["#topDiv", "#bottomDiv"],
-					{ direction: "vertical", sizes: [80,20], minSize: [200,10],
-						onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
-					}
-				);
+                Split (["#topDiv", "#bottomDiv"],
+                    { direction: "vertical", sizes: [80,20], minSize: [200,10],
+                        onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
+                    }
+                );
                 d3.select(".gutter").attr("title", "Drag to change space available to selection table");
-				CLMSUI.init.views();
-				allDataLoaded ();
-			} catch (err) {
-				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
-				console.error ("Error", err);
-			}
-		};
+
+                var returnedTimeStamp = new Date (json.timeStamp * 1000);
+                if (Math.abs (new Date() - returnedTimeStamp) > 60 * 5 * 1000) { // if out by 5 minutes...
+                    CLMSUI.utils.displayError (function() { return true; }, "Returned search results were generated at "+returnedTimeStamp+" and are likely from cache.<p class='errorReason'>If you have revalidated results since, press CTRL + F5 to refresh.</p>");
+                }
+
+                CLMSUI.init.views();
+                allDataLoaded ();
+            } catch (err) {
+                CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
+            }
+        };
 
 
         z = performance.now();
@@ -295,8 +300,8 @@
                     CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
                     console.error ("Error", error);
                 }
-            });  
-            
+            });
+
         } else {
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches
@@ -313,7 +318,7 @@
                 allDataLoaded ();
             }
         });
-        
+
         // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation
         CLMSUI.init.blosumLoading ();
 
