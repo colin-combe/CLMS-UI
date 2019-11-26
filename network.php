@@ -124,6 +124,7 @@
         <script type="text/javascript" src="./js/compositeModelType.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/modelUtils.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLUtils.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/stringUtils.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/fdr.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/distancesObj.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js<?php echo $cacheBuster ?>"></script>
@@ -268,6 +269,7 @@
                 d3.select(".gutter").attr("title", "Drag to change space available to selection table");
 
                 var returnedTimeStamp = new Date (json.timeStamp * 1000);
+                console.log (new Date(), returnedTimeStamp, new Date() - returnedTimeStamp);
                 if (Math.abs (new Date() - returnedTimeStamp) > 60 * 5 * 1000) { // if out by 5 minutes...
                     CLMSUI.utils.displayError (function() { return true; }, "Returned search results were generated at "+returnedTimeStamp+" and are likely from cache.<p class='errorReason'>If you have revalidated results since, press CTRL + F5 to refresh.</p>");
                 }

@@ -192,21 +192,21 @@ CLMSUI.init.models = function(options) {
             CLMSUI.utils.setLocalStorage (obj);
         });
     }
-    
+
     // A colour model's attributes have changed - is it the currently used model? If so, fire the currentColourModelChanged event
     CLMSUI.compositeModelInst.listenTo(CLMSUI.linkColour.Collection, "colourModelChanged", function (colourModel, changedAttrs) {
         if (this.get("linkColourAssignment").id === colourModel.id) {
             this.trigger ("currentColourModelChanged", colourModel, changedAttrs);
         }
     });
-    
+
     // same for protein colour models
     CLMSUI.compositeModelInst.listenTo(CLMSUI.linkColour.ProteinCollection, "colourModelChanged", function (colourModel, changedAttrs) {
         if (this.get("proteinColourAssignment").id === colourModel.id) {
             this.trigger ("currentProteinColourModelChanged", colourModel, changedAttrs);
         }
     });
-    
+
     // Set initial colour scheme choices
     // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
     CLMSUI.compositeModelInst
@@ -288,7 +288,7 @@ CLMSUI.init.modelsEssential = function(options) {
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel();
 
-    
+
     // Make score and distance minigram models, and add listeners to make sure they synchronise to attributes in filter model
     var minigramModels = ["matchScoreCutoff", "distanceCutoff"].map (function (filterAttrName) {
         var filterAttr = filterModelInst.get (filterAttrName);
@@ -304,12 +304,12 @@ CLMSUI.init.modelsEssential = function(options) {
                 });
             })
         ;
-        
+
         // When the range changes on these models pass the values onto the appropriate value in the filter model
         filterModelInst.listenTo (miniModel, "change", function(model) {
             this.set (filterAttrName, [model.get("domainStart"), model.get("domainEnd")]);
         }, this);
-        
+
         return miniModel;
     });
 
@@ -325,10 +325,10 @@ CLMSUI.init.modelsEssential = function(options) {
         ;
         return [distances];
     };
-    
+
     // change in distanceObj changes the distanceExtent in filter model and should trigger a re-filter for distance minigram model as dists may have changed
     minigramModels[1]
-        .listenTo (clmsModelInst, "change:distancesObj", function (clmsModel, distObj) { 
+        .listenTo (clmsModelInst, "change:distancesObj", function (clmsModel, distObj) {
             //console.log ("minigram arguments", arguments, this);
             var max = Math.ceil(distObj.maxDistance);
             this.set ("extent", [0, max + 1]);
@@ -987,7 +987,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
             attr: "linkColourAssignment"
         },
     });
-    
+
     new CLMSUI.utils.ColourCollectionOptionViewBB({
         el: "#proteinColourDropdownPlaceholder",
         model: CLMSUI.linkColour.ProteinCollection,
