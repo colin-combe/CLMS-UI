@@ -16,19 +16,19 @@ CLMSUI.STRINGUtils = {
     },
 
     // Take a map of protein IDs (uniprot) --> taxon specific string IDs + a tsv format string network
-    // and turn it into a csv string usable by the cross-link metadata parser
-    translateToCSV: function (uniprotToStringIDMap, networkTsv) {
+    // and turn it into a csv string usable by the cross-link metadata parser.
+    // Filter to appropriate protein IDs for brevity
+    translateToCSV: function (uniprotToStringIDMap, network) {
         var stringToUniprotIDMap = _.invert (uniprotToStringIDMap);
-        var rows = d3.tsv.parse (networkTsv, function (d) {
+        var rows = d3.tsv.parse (network, function (d) {
             d.seqPos1 = null;
             d.seqPos2 = null;
-            d.proteinID1 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_A];    // taxonId + stringId = taxon specific string ID
-            d.proteinID2 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_A];
-            var newd = _.omit (d, ["ncbiTaxonId", "stringId_A", "stringId_B", "preferredName_A", "preferredName_B"]);   // don't need these fields
-            return newd;
+            d.proteinID1 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_A];
+            d.proteinID2 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_B];
+            // return empty string if protein ids not in current id map
+            return (d.proteinID1 && d.proteinID2 ? _.omit (d, ["ncbiTaxonId", "stringId_A", "stringId_B", "preferredName_A", "preferredName_B"]) : null);
         });
-
-        console.log ("ROWS", rows, d3.csv.format(rows));
+        rows = rows.filter (function (row) { return row != null; });
         return d3.csv.format (rows);
     },
 
@@ -44,21 +44,26 @@ CLMSUI.STRINGUtils = {
             var promiseObj = new Promise(function(resolve, reject ) {
                 $.ajax ({
                     type: "post",
-                    url: "https://string-db.org/api/json/get_string_ids?identifiers="+pidString+"&species="+taxonID+"&limit=1&caller_identity=martin&format=only-ids"+(echo ? "&echo_query=1" : ""),
+                    url: "https://string-db.org/api/json/get_string_ids",
+                    data: {
+                        identifiers: pidString,
+                        species: taxonID,
+                        limit: 1,
+                        caller_identity: "xiview",
+                        format: "only-ids",
+                        echo_query: echo ? 1 : 0
+                    },
                     success: function (data, textStatus, xhr) {
-                        var str = JSON.stringify (data);
-
-                        var stringCache = CLMSUI.utils.getLocalStorage("StringIds")
-                        var identifiersBySpecies = stringCache[taxonID] || {};
-                        data.forEach (function (record) {
+                        var stringCache = CLMSUI.utils.getLocalStorage ("StringIds");   // get stored data
+                        var identifiersBySpecies = stringCache[taxonID] || {};  // get or make object for species
+                        data.forEach (function (record) {   // add new data to this species object
                             identifiersBySpecies[record.queryItem] = record.stringId;
                         });
-                        stringCache[taxonID] = identifiersBySpecies;
-                        CLMSUI.utils.setLocalStorage (stringCache, "StringIds");
+                        stringCache[taxonID] = identifiersBySpecies;    // (re)attach species object to stored data
+                        CLMSUI.utils.setLocalStorage (stringCache, "StringIds");    // re-store the data
 
-                        $("#result").text (JSON.stringify (identifiersBySpecies));
-
-                        resolve (identifiersBySpecies);
+                        var idMap = _.pick (identifiersBySpecies, proteinIDs);
+                        resolve (idMap);
                     },
                     error: function (xhr) {
                         reject (xhr.status);
@@ -70,34 +75,46 @@ CLMSUI.STRINGUtils = {
             });
             return promiseObj;
         } else {
-            $("#result").text ("FROM CACHE: "+JSON.stringify (identifiersBySpecies));
-            return Promise.resolve (identifiersBySpecies)
+            var idMap = _.pick (identifiersBySpecies, alreadyKnown);
+            return Promise.resolve (idMap);
         }
     },
 
     queryStringInteractions: function (idMap) {
         var crosslinked = d3.values(idMap);
         if (crosslinked.length > 1) {
-            var sidString = crosslinked.join("%0d");
+            crosslinked.sort();
+            var sidString = crosslinked.join("%0d");     // id/key made of string IDs joined together
             console.log ("stringIds", crosslinked, sidString);
 
             var stringNetworkScoreCache = CLMSUI.utils.getLocalStorage("StringNetworkScores");
             var idBySpecies = stringNetworkScoreCache[species] || {};
-            var networkTsv = idBySpecies[sidString];
+            var cachedNetwork = idBySpecies[sidString];    // exact key match in cache?
 
-            if (!networkTsv) {
-                var promiseObj = new Promise(function(resolve, reject ) {
+            if (!cachedNetwork) {  // match in cache where network is subnetwork of larger network?
+                var allSpeciesNetworkKeys = d3.keys (idBySpecies);
+                var idKeyRegex = new RegExp (".*" + crosslinked.join(".*") + ".*");
+                var matchingKeyIndex = _.findIndex (allSpeciesNetworkKeys, function (key) {
+                    return idKeyRegex.test (key);
+                });
+                cachedNetwork = matchingKeyIndex >= 0 ? idBySpecies[allSpeciesNetworkKeys[matchingKeyIndex]] : null;
+            }
+
+            if (!cachedNetwork) {
+                var promiseObj = new Promise (function (resolve, reject) {
                     $.ajax ({
                         type: "post",
-                        url: "https://string-db.org/api/tsv/network?identifiers="+sidString+"&species="+species+"&caller_identity=martin",
-                        success: function (dataTsv, textStatus, xhr) {
+                        url: "https://string-db.org/api/tsv/network",   //?identifiers="+sidString+"&species="+species+"&caller_identity=martin",
+                        data: {
+                            identifiers: sidString,
+                            species: species,
+                            caller_identity: "xiview"
+                        },
+                        success: function (retrievedNetwork, textStatus, xhr) {
                             stringNetworkScoreCache[species] = idBySpecies;
-                            idBySpecies[sidString] = dataTsv;
+                            idBySpecies[sidString] = retrievedNetwork;
                             CLMSUI.utils.setLocalStorage (stringNetworkScoreCache, "StringNetworkScores");
-
-                            $("#result2").text (dataTsv);
-                            resolve ({idMap: idMap, networkTsv: dataTsv});
-                            //onCompletionFunc (idMap, dataTsv);
+                            resolve ({idMap: idMap, networkTsv: retrievedNetwork});
                         },
                         error: function (xhr) {
                             reject (xhr.status);
@@ -109,11 +126,10 @@ CLMSUI.STRINGUtils = {
                  });
                 return promiseObj;
             } else {
-                $("#result2").text ("FROM CACHE: "+networkTsv);
-                return Promise.resolve ({idMap: idMap, networkTsv: networkTsv});
-                //onCompletionFunc (idMap, networkTsv)
+                return Promise.resolve ({idMap: idMap, networkTsv: cachedNetwork});
             }
         }
+        return Promise.resolve ({idMap: idMap, networkTsv: ""});    // empty network for 1 protein
     },
 
     loadStringData: function (pids, species) {
@@ -122,8 +138,7 @@ CLMSUI.STRINGUtils = {
                 return CLMSUI.STRINGUtils.queryStringInteractions (identifiersBySpecies);
             })
             .then (function (networkAndIDObj) {
-                if (networkAndIDObj.networkTsv == null) {
-                    $("#result2").text ("NO DATA RETURNED");
+                if (networkAndIDObj == null || networkAndIDObj.networkTsv == null) {
                     return "";
                 }
                 var csv = CLMSUI.STRINGUtils.translateToCSV (networkAndIDObj.idMap, networkAndIDObj.networkTsv);
