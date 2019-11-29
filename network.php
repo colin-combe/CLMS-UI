@@ -138,6 +138,7 @@
         <script type="text/javascript" src="./js/ddMenuViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/STRINGFileChooser.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/CSVFileChooserViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/metaDataFileChoosers.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js<?php echo $cacheBuster ?>"></script>

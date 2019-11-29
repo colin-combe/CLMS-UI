@@ -17,7 +17,8 @@ CLMSUI.utils = {
         multiPdbSplitter: /(\b[A-Za-z0-9]{4}\b)+/g, // matches parts of the string that conform to 4 char and some separator pattern
         hexColour: new RegExp("#[0-9A-F]{3}([0-9A-F]{3})?", "i"), // matches #3-char or #6-char hex colour strings
         validDomID: /^[^a-z]+|[^\w:.-]+/gi,
-        invalidFilenameChars: /[^a-zA-Z0-9-=&()¦_\\.]/g
+        invalidFilenameChars: /[^a-zA-Z0-9-=&()¦_\\.]/g,
+        digitsOnly: "\\d{3,}",
     },
 
     // return comma-separated list of protein names from array of protein ids
@@ -85,7 +86,7 @@ CLMSUI.utils = {
             .attr("class", "fa fa-times-circle closeButton panelMenuButton")
             .attr ("title", "Hide View")
         ;
-        
+
         return parentBar;
     },
 
@@ -280,13 +281,13 @@ CLMSUI.utils = {
         val = Math.floor(val);
         return val / pow;
     },
-    
+
     toNearest: function (val, interval) {
         // adapted from https://stackoverflow.com/a/27861660/368214 - inverting small intervals avoids .00000001 stuff
-        return interval ? 
+        return interval ?
             (Math.abs(interval) > 1 ? Math.round (val * interval) / interval : Math.round (val / interval) * interval)
              : val
-        ;    
+        ;
     },
 
     displayError: function(condition, message, borderColour, scale) {
@@ -319,7 +320,7 @@ CLMSUI.utils = {
             ;
         }
     },
-    
+
     makeCanvas: function (width, height, existingD3CanvasSel) {
         var canvas = (existingD3CanvasSel ? existingD3CanvasSel.node() : null) || document.createElement("canvas");
         var d3canvas = d3.select(canvas);
@@ -329,12 +330,12 @@ CLMSUI.utils = {
         ;
         var ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         var canvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         var cd = canvasData.data;
         return {canvas: canvas, context: ctx, dataStructure: canvasData, d3canvas: d3canvas};
     },
-    
+
     nullCanvasObj: function (canvasObj) {
         canvasObj.canvas = null;
         canvasObj.context = null;
@@ -344,10 +345,10 @@ CLMSUI.utils = {
     drawCanvasToSVGImage: function(d3canvas, svgImage, callback) { // d3canvas is a canvas wrapped in a d3 selection
         var destinationCanvasObj;
         var url;
-        
+
         var width = d3canvas.attr("width");
         var height = d3canvas.attr("height");
-        
+
         svgImage.on ("load", function () {
                 // tidy up canvas and url
                 CLMSUI.utils.nullCanvasObj (destinationCanvasObj);
@@ -399,7 +400,7 @@ CLMSUI.utils = {
             bottom: -100
         };
         d3AxisElem.selectAll(".tick text").style("visibility", "visible");
-        
+
         d3AxisElem.selectAll(".tick text")
             .each(function(d) {
                 var text = d3.select(this);
@@ -416,12 +417,12 @@ CLMSUI.utils = {
                 }
             });
     },
-    
+
     // Remove non-round d3 axis labels and associated ticks
     niceValueAxis: function(d3AxisElem, maxVal) {
         var u = Math.round (Math.log10 (maxVal + 3)) - 1;
         var m = Math.pow (10, u);
-        
+
         d3AxisElem.selectAll(".tick")
             .each (function (d) {
                 var nice = d % m === 0;
@@ -772,7 +773,7 @@ CLMSUI.utils = {
                     .attr("fill", "url(#" + gradID + ")")
                 ;
             }
-            
+
             // add undefined category
         }
     },
@@ -919,7 +920,7 @@ CLMSUI.utils = {
             height: cfckDistances.size * 5,
             width: 100,
         };
-        
+
         options = $.extend({}, defaultOptions, options);
 
         function recurse(tree, parent) {
@@ -1000,14 +1001,14 @@ CLMSUI.utils = {
         var node = g.selectAll(".dnode").data(nodes);
         node.exit().remove();
         node.enter().append("g")
-        	.attr("class", "dnode")
-        	.append("circle")
-        	.attr("r", 2.5)
+            .attr("class", "dnode")
+            .append("circle")
+            .attr("r", 2.5)
         ;
         node.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
         */
     },
-    
+
     isModernWeb: function () {
         var modernWeb;
         try {
@@ -1017,7 +1018,7 @@ CLMSUI.utils = {
         }
         return modernWeb;
     },
-    
+
     // add to local storage, partObj is object such as {distanceColours: {"BS3": {domain:[15,25], range:["red", "blue", "green"]} }} that gets merged
     // into existing stored object
     setLocalStorage: function (partObj, objName) {
@@ -1026,25 +1027,25 @@ CLMSUI.utils = {
         var storage = JSON.parse (storageStr);
         storage = $.extend (true, storage, partObj);
         localStorage.setItem (objName, JSON.stringify(storage));
-	},
-    
+    },
+
     getLocalStorage: function (objName) {
         objName = objName || "xiView";
         var storageStr = localStorage.getItem(objName) || "{}";
         return JSON.parse (storageStr);
     },
-	
-	// is local storage viable?
-	canLocalStorage: function () {
-		try {
-			localStorage.setItem ('mod_xi', 'mod');
-			localStorage.removeItem ('mod_xi');
-			return true;
-		} catch(e) {
-			return false;
-		}
-	},
-    
+
+    // is local storage viable?
+    canLocalStorage: function () {
+        try {
+            localStorage.setItem ('mod_xi', 'mod');
+            localStorage.removeItem ('mod_xi');
+            return true;
+        } catch(e) {
+            return false;
+        }
+    },
+
     BaseFrameView: Backbone.View.extend({
 
         events: {
@@ -1124,12 +1125,12 @@ CLMSUI.utils = {
         relayout: function() {
             return this;
         },
-        
+
         // called when reshown (visible set to true) - use for updating calcs before rendering
         reshow: function () {
             return this;
         },
-        
+
         _makeDetachedSVG : function (thisSVG) {
             var keyHeight = 0;
             if (this.options.exportKey) {
@@ -1137,14 +1138,14 @@ CLMSUI.utils = {
                 keyHeight = svgKey.node().getBoundingClientRect().height + 10;
             }
             var gap = keyHeight;
-            
+
             var svgSel = thisSVG || d3.select(this.el).selectAll("svg");
             var svgArr = [svgSel.node()];
             var svgStrings = CLMSUI.svgUtils.capture(svgArr);
             var detachedSVG = svgStrings[0];
             var detachedSVGD3 = d3.select(detachedSVG);
             var height = parseFloat(detachedSVGD3.attr("height"));
-            
+
             if (keyHeight) {
                 // make a gap to reposition the key into
                 detachedSVGD3.attr("height", (height + gap) + "px");
@@ -1153,10 +1154,10 @@ CLMSUI.utils = {
                 this.removeKey (detachedSVGD3); // remove key that's currently on top of svg
                 var svgKey = this.addKey ({addToSelection: detachedSVGD3, addOrigin: this.options.exportTitle});    // and make a new one in the gap we just made
             }
-            
+
             return {detachedSVGD3: detachedSVGD3, allSVGs: svgStrings};
         },
-        
+
         takeImage: function(event, thisSVG) {
             return this.downloadSVG (event, thisSVG);
         },
@@ -1166,14 +1167,14 @@ CLMSUI.utils = {
             var detachedSVG = this._makeDetachedSVG (thisSVG);
             var detachedSVGD3 = detachedSVG.detachedSVGD3;
             var svgStrings = detachedSVG.allSVGs;
-            
+
             var svgXML = CLMSUI.svgUtils.makeXMLStr(new XMLSerializer(), svgStrings[0]);
             //console.log ("xml", svgXML);
 
             var fileName = this.filenameStateString().substring(0, 240);
             download(svgXML, 'application/svg', fileName + ".svg");
             this.removeKey();
-            
+
             return this;
         },
 
@@ -1198,7 +1199,7 @@ CLMSUI.utils = {
                 download(svgXML, "application/svg", fileName + ".svg");
                 self.removeKey();
             });
-            
+
             d3canvases.each (function (d) {
                 var d3canvas = d3.select(this);
                 // Add image to existing clip in svg, (as first-child so sibling group holding links appears on top of it)
@@ -1216,17 +1217,17 @@ CLMSUI.utils = {
                 // Now convert the canvas and its data to the image element we just added and download the whole svg when done
                 CLMSUI.utils.drawCanvasToSVGImage (d3canvas, img, finalDownload);
             });
-            
+
             return this;
         },
-        
+
         addKey: function (options) {
             options = options || {};
             var tempSVG = (options.addToSelection || d3.select(this.el).select("svg")).append("svg").attr("class", "tempKey");
             CLMSUI.utils.updateColourKey(CLMSUI.compositeModelInst.get("linkColourAssignment"), tempSVG);
             if (options.addOrigin) {
                 tempSVG.select("g.key").attr("transform", "translate(0,20)");
-                var link = this.model.get("filterModel") ? 
+                var link = this.model.get("filterModel") ?
                     tempSVG.append("a")
                         .attr ("class", "imageOrigin")
                         .attr ("xlink:href", this.model.generateUrlString())
@@ -1237,7 +1238,7 @@ CLMSUI.utils = {
             }
             return tempSVG;
         },
-        
+
         removeKey: function (d3Sel) {
             (d3Sel || d3.select(this.el)).selectAll(".tempKey").remove();
         },
@@ -1323,7 +1324,7 @@ CLMSUI.utils = {
             CLMSUI.vent.trigger(this.displayEventName, false);
             return this;
         },
-        
+
         hideToolbarArea: function () {
             var toolbarArea = d3.select(this.el).select(".toolbarArea");
             if (!toolbarArea.empty()) {
@@ -1333,7 +1334,7 @@ CLMSUI.utils = {
             }
             return this;
         },
-        
+
         minMaxPanel: function () {
             var panel = d3.select(this.el);
             var maxed = panel.classed("maxSize");
@@ -1341,7 +1342,7 @@ CLMSUI.utils = {
             if (maxed) {
                 panel.style("bottom", null).style("right", null);
                 d3.entries(this.prevBounds).forEach (function (propEntry) {
-                    panel.style (propEntry.key, propEntry.value);    
+                    panel.style (propEntry.key, propEntry.value);
                 });
             } else {
                 var collectThese = ["top", "left", "width", "height"];
@@ -1349,10 +1350,10 @@ CLMSUI.utils = {
                 collectThese.forEach (function (prop) { this.prevBounds[prop] = panel.style(prop); }, this);
                 panel.style("bottom", "65px").style("top", "75px").style("left",0).style("right", 0).style("width", "auto").style("height", "auto");
             }
-            
+
             panel.selectAll(".maximiseButton").classed("fa-expand", maxed).classed("fa-compress", !maxed);
             this.relayout({dragEnd: true});
-            
+
             return this;
         },
 
@@ -1443,10 +1444,10 @@ CLMSUI.utils = {
             var linkCountStr = counts.map(function(count, i) {
                 return commaed(count) + " " + (matchLevel ? "in " : "") + (labels[i] || colourScheme.get("undefinedLabel"));
             }, this);
-            
+
             var titleText = this.identifier + ": " + totalStr + itemStr + " - " + linkCountStr.join(", ");
             titleElem.text(titleText);
-            
+
             var self = this;
             titleElem.on("mouseenter", function(d) {
                 self.model.get("tooltipModel")
@@ -1474,7 +1475,7 @@ CLMSUI.utils = {
         filenameStateString: function() {
             return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + this.identifier + "-" + this.optionsToString() + "--" + CLMSUI.utils.filterStateToString());
         },
-        
+
         // Returns a useful image title string - omit type of view as user will see it
         imageOriginString: function() {
             return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + CLMSUI.utils.filterStateToString());
