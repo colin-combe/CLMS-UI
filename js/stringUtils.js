@@ -9,7 +9,7 @@ CLMSUI.STRINGUtils = {
         var ppiProteins = realProteins.filter (function (prot) {
             return prot.crossLinks.some (function (clink) {
                 // is there a real crosslink going to another protein?
-                return (clink.fromProtein && clink.fromProtein.id !== clink.toProtein.id && !clink.fromProtein.is_decoy && !clink.toProtein.is_decoy)
+                return !clink.isDecoyLink() && !clink.isSelfLink();
             });
         });
         return ppiProteins;
@@ -35,7 +35,10 @@ CLMSUI.STRINGUtils = {
     getStringIdentifiers: function (proteinIDs, taxonID) {
         var stringIDCache = CLMSUI.utils.getLocalStorage("StringIds")
         var identifiersBySpecies = stringIDCache[taxonID] || {};
-        var todo = proteinIDs.filter (function (pid) { return !identifiersBySpecies[pid]; });
+        var split = _.partition (proteinIDs, function (pid) { return identifiersBySpecies[pid]; }); // which IDs are cached?
+        var alreadyKnown = split[0];
+        var todo = split[1];
+        var echo = 1;
         console.log (stringIDCache, identifiersBySpecies, todo);
 
         if (todo.length) {
@@ -80,7 +83,7 @@ CLMSUI.STRINGUtils = {
         }
     },
 
-    queryStringInteractions: function (idMap) {
+    queryStringInteractions: function (idMap, taxonID) {
         var crosslinked = d3.values(idMap);
         if (crosslinked.length > 1) {
             crosslinked.sort();
@@ -88,7 +91,7 @@ CLMSUI.STRINGUtils = {
             console.log ("stringIds", crosslinked, sidString);
 
             var stringNetworkScoreCache = CLMSUI.utils.getLocalStorage("StringNetworkScores");
-            var idBySpecies = stringNetworkScoreCache[species] || {};
+            var idBySpecies = stringNetworkScoreCache[taxonID] || {};
             var cachedNetwork = idBySpecies[sidString];    // exact key match in cache?
 
             if (!cachedNetwork) {  // match in cache where network is subnetwork of larger network?
@@ -104,15 +107,15 @@ CLMSUI.STRINGUtils = {
                 var promiseObj = new Promise (function (resolve, reject) {
                     $.ajax ({
                         type: "post",
-                        url: "https://string-db.org/api/tsv/network",   //?identifiers="+sidString+"&species="+species+"&caller_identity=martin",
+                        url: "https://string-db.org/api/tsv/network",
                         data: {
                             identifiers: sidString,
-                            species: species,
+                            species: taxonID,
                             caller_identity: "xiview"
                         },
                         success: function (retrievedNetwork, textStatus, xhr) {
-                            stringNetworkScoreCache[species] = idBySpecies;
-                            idBySpecies[sidString] = retrievedNetwork;
+                            stringNetworkScoreCache[taxonID] = idBySpecies;
+                            idBySpecies[sidString] = CLMSUI.STRINGUtils.lzw_encode (retrievedNetwork);
                             CLMSUI.utils.setLocalStorage (stringNetworkScoreCache, "StringNetworkScores");
                             resolve ({idMap: idMap, networkTsv: retrievedNetwork});
                         },
@@ -126,14 +129,71 @@ CLMSUI.STRINGUtils = {
                  });
                 return promiseObj;
             } else {
-                return Promise.resolve ({idMap: idMap, networkTsv: cachedNetwork});
+                return Promise.resolve ({idMap: idMap, networkTsv: CLMSUI.STRINGUtils.lzw_decode(cachedNetwork)});
             }
         }
         return Promise.resolve ({idMap: idMap, networkTsv: ""});    // empty network for 1 protein
     },
 
-    loadStringData: function (pids, species) {
-        CLMSUI.STRINGUtils.getStringIdentifiers (pids, species)
+    // from https://gist.github.com/revolunet/843889
+    lzw_encode: function (s) {
+        if (!s) return s;
+        var dict = new Map(); // Use a Map!
+        var data = (s + "").split("");
+        var out = [];
+        var currChar;
+        var phrase = data[0];
+        var code = 256;
+        for (var i = 1; i < data.length; i++) {
+            currChar = data[i];
+            if (dict.has(phrase + currChar)) {
+                phrase += currChar;
+            } else {
+                out.push(phrase.length > 1 ? dict.get(phrase) : phrase.charCodeAt(0));
+                dict.set(phrase + currChar, code);
+                code++;
+                phrase = currChar;
+            }
+        }
+        out.push(phrase.length > 1 ? dict.get(phrase) : phrase.charCodeAt(0));
+        for (var i = 0; i < out.length; i++) {
+            out[i] = String.fromCharCode(out[i]);
+        }
+        return out.join("");
+    },
+
+    lzw_decode: function (s) {
+        var dict = new Map(); // Use a Map!
+        var data = (s + "").split("");
+        var currChar = data[0];
+        var oldPhrase = currChar;
+        var out = [currChar];
+        var code = 256;
+        var phrase;
+        for (var i = 1; i < data.length; i++) {
+            var currCode = data[i].charCodeAt(0);
+            if (currCode < 256) {
+                phrase = data[i];
+            } else {
+                phrase = dict.has(currCode) ? dict.get(currCode) : (oldPhrase + currChar);
+            }
+            out.push(phrase);
+            currChar = phrase.charAt(0);
+            dict.set(code, oldPhrase + currChar);
+            code++;
+            oldPhrase = phrase;
+        }
+        return out.join("");
+    },
+
+    loadStringDataFromModel: function (clmsModel, taxonID, callback) {
+        console.log ("MODEL", clmsModel);
+        var viableProteinIDs = _.pluck (CLMSUI.STRINGUtils.filterProteinsToPPISet(clmsModel), "id");
+        CLMSUI.STRINGUtils.loadStringData (viableProteinIDs, taxonID, callback);
+    },
+
+    loadStringData: function (pids, taxonID, callback) {
+        CLMSUI.STRINGUtils.getStringIdentifiers (pids, taxonID)
             .then (function (identifiersBySpecies) {
                 return CLMSUI.STRINGUtils.queryStringInteractions (identifiersBySpecies);
             })
@@ -143,6 +203,7 @@ CLMSUI.STRINGUtils = {
                 }
                 var csv = CLMSUI.STRINGUtils.translateToCSV (networkAndIDObj.idMap, networkAndIDObj.networkTsv);
                 console.log ("CSV", csv);
+                callback (csv);
             })
         ;
     }
