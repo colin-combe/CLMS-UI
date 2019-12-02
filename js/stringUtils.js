@@ -21,12 +21,12 @@ CLMSUI.STRINGUtils = {
     translateToCSV: function (uniprotToStringIDMap, network) {
         var stringToUniprotIDMap = _.invert (uniprotToStringIDMap);
         var rows = d3.tsv.parse (network, function (d) {
-            d.seqPos1 = null;
-            d.seqPos2 = null;
-            d.proteinID1 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_A];
-            d.proteinID2 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_B];
+            d.SeqPos1 = null;
+            d.SeqPos2 = null;
+            d.Protein1 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_A];
+            d.Protein2 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_B];
             // return empty string if protein ids not in current id map
-            return (d.proteinID1 && d.proteinID2 ? _.omit (d, ["ncbiTaxonId", "stringId_A", "stringId_B", "preferredName_A", "preferredName_B"]) : null);
+            return (d.Protein1 && d.Protein2 ? _.omit (d, ["ncbiTaxonId", "stringId_A", "stringId_B", "preferredName_A", "preferredName_B"]) : null);
         });
         rows = rows.filter (function (row) { return row != null; });
         return d3.csv.format (rows);
@@ -187,7 +187,6 @@ CLMSUI.STRINGUtils = {
     },
 
     loadStringDataFromModel: function (clmsModel, taxonID, callback) {
-        console.log ("MODEL", clmsModel);
         var viableProteinIDs = _.pluck (CLMSUI.STRINGUtils.filterProteinsToPPISet(clmsModel), "id");
         CLMSUI.STRINGUtils.loadStringData (viableProteinIDs, taxonID, callback);
     },
@@ -202,7 +201,7 @@ CLMSUI.STRINGUtils = {
                     return "";
                 }
                 var csv = CLMSUI.STRINGUtils.translateToCSV (networkAndIDObj.idMap, networkAndIDObj.networkTsv);
-                console.log ("CSV", csv);
+                console.log ("CSV", csv, callback);
                 callback (csv);
             })
         ;

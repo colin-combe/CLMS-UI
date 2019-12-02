@@ -82,33 +82,6 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         d3.select(this.el).selectAll(".smallHeading").classed("smallHeadingBar", true);
 
-
-        function sanitise(str) {
-            return str.replace(/[^a-z0-9 ,.?!]/ig, '');
-        }
-
-
-        this.listenTo (this.model, "3dsync", function(newSequences) {
-            var count = _.isEmpty(newSequences) ? 0 : newSequences.length;
-            var success = count > 0;
-            this.setCompletedEffect();
-            var nameArr = _.pluck(newSequences, "name");
-            // list pdb's these sequences derive from
-            //console.log ("seq", newSequences);
-            var pdbString = nameArr ?
-                d3.set (nameArr.map(function(name) { return name.substr(0, _./*last*/indexOf (name, ":")); })).values().join(", ") : "?"
-            ;
-
-            var msg = newSequences.failureReason ? "" : "Completed Loading " + sanitise(pdbString) + ".<br>";
-            msg += success ? "✓ Success! " + count + " sequence" + (count > 1 ? "s" : "") + " mapped between this search and the PDB file." :
-                sanitise((newSequences.failureReason || "No sequence matches found between this search and the PDB file") +
-                    ". Please check the PDB file or code is correct.");
-            if (success) {
-                this.model.set("pdbCode", this.loadRoute === "pdb" ? sanitise(pdbString) : undefined);
-            }
-            this.setStatusText(msg, success);
-        });
-
         // Pre-load pdb if requested
         if (viewOptions.initPDBs) {
             this.setVisible (true);
@@ -153,6 +126,8 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
         var callback = function (csv) {
             self.setCompletedEffect ();
+            CLMSUI.modelUtils.updateLinkMetadata (csv, self.model.get("clmsModel"));
+            self.setStatusText ("STRING data available as colour schemes", true);
         };
         CLMSUI.STRINGUtils.loadStringDataFromModel (this.model.get("clmsModel"), taxonID, callback);
     },
