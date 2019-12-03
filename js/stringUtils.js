@@ -63,9 +63,14 @@ CLMSUI.STRINGUtils = {
                         identifiersBySpecies[record.queryItem] = record.stringId;
                     });
                     stringCache[taxonID] = identifiersBySpecies;    // (re)attach species object to stored data
-                    CLMSUI.utils.setLocalStorage (stringCache, "StringIds");    // re-store the data
+                    try {
+                        CLMSUI.utils.setLocalStorage (stringCache, "StringIds");    // re-store the data
+                    } catch (err) {
+                        alert ("Local Storage Full");
+                    }
 
                     var idMap = _.pick (identifiersBySpecies, proteinIDs);
+                    console.log ("IDMAP FROM STRING", idMap, identifiersBySpecies, proteinIDs);
                     resolve (idMap);
                 })
                 .fail (function (xhr) {
@@ -76,6 +81,7 @@ CLMSUI.STRINGUtils = {
             return promiseObj;
         } else {
             var idMap = _.pick (identifiersBySpecies, alreadyKnown);
+            console.log ("IDMAP CACHED", idMap);
             return Promise.resolve (idMap);
         }
     },
@@ -105,6 +111,10 @@ CLMSUI.STRINGUtils = {
                     $.ajax ({
                         type: "post",
                         url: "https://string-db.org/api/tsv/network",
+                        beforeSend: function () {
+                            console.log ("BS", arguments);
+                            console.log ("ti", taxonID);
+                        },
                         data: {
                             identifiers: sidString,
                             species: taxonID,
@@ -112,9 +122,14 @@ CLMSUI.STRINGUtils = {
                         },
                     })
                     .done (function (retrievedNetwork, textStatus, xhr) {
+                        console.log ("Args", arguments);
                         stringNetworkScoreCache[taxonID] = idBySpecies;
                         idBySpecies[sidString] = CLMSUI.STRINGUtils.lzw_encode (retrievedNetwork);
-                        CLMSUI.utils.setLocalStorage (stringNetworkScoreCache, "StringNetworkScores");
+                        try {
+                            CLMSUI.utils.setLocalStorage (stringNetworkScoreCache, "StringNetworkScores");
+                        } catch (err) {
+                            alert ("Local Storage Full");
+                        }
                         resolve ({idMap: idMap, networkTsv: retrievedNetwork});
                     })
                     .fail (function (xhr) {
@@ -123,9 +138,11 @@ CLMSUI.STRINGUtils = {
                  });
                 return promiseObj;
             } else {
+                console.log ("Cached network");
                 return Promise.resolve ({idMap: idMap, networkTsv: CLMSUI.STRINGUtils.lzw_decode(cachedNetwork)});
             }
         }
+        console.log ("1 protein only");
         return Promise.resolve ({idMap: idMap, networkTsv: ""});    // empty network for 1 protein
     },
 
@@ -190,11 +207,12 @@ CLMSUI.STRINGUtils = {
 
         CLMSUI.STRINGUtils.getStringIdentifiers (pids, taxonID)
             .then (function (identifiersBySpecies) {
-                return CLMSUI.STRINGUtils.queryStringInteractions (identifiersBySpecies);
+                return CLMSUI.STRINGUtils.queryStringInteractions (identifiersBySpecies, taxonID);
             }, chainError)
             .then (function (networkAndIDObj) {
-                if (networkAndIDObj == null || networkAndIDObj.networkTsv == null) {
-                    return "";
+                console.log ("NII", networkAndIDObj);
+                if (networkAndIDObj == null || networkAndIDObj.networkTsv == null || networkAndIDObj.networkTsv == "") {
+                    return Promise.reject ("No meaningful STRING interactions");
                 }
                 var csv = CLMSUI.STRINGUtils.translateToCSV (networkAndIDObj.idMap, networkAndIDObj.networkTsv);
                 console.log ("CSV", csv, callback);
