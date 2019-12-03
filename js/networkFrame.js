@@ -192,21 +192,21 @@ CLMSUI.init.models = function(options) {
             CLMSUI.utils.setLocalStorage (obj);
         });
     }
-    
+
     // A colour model's attributes have changed - is it the currently used model? If so, fire the currentColourModelChanged event
     CLMSUI.compositeModelInst.listenTo(CLMSUI.linkColour.Collection, "colourModelChanged", function (colourModel, changedAttrs) {
         if (this.get("linkColourAssignment").id === colourModel.id) {
             this.trigger ("currentColourModelChanged", colourModel, changedAttrs);
         }
     });
-    
+
     // same for protein colour models
     CLMSUI.compositeModelInst.listenTo(CLMSUI.linkColour.ProteinCollection, "colourModelChanged", function (colourModel, changedAttrs) {
         if (this.get("proteinColourAssignment").id === colourModel.id) {
             this.trigger ("currentProteinColourModelChanged", colourModel, changedAttrs);
         }
     });
-    
+
     // Set initial colour scheme choices
     // If more than one search, set group colour scheme to be default. https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues/72
     CLMSUI.compositeModelInst
@@ -288,7 +288,7 @@ CLMSUI.init.modelsEssential = function(options) {
 
     var tooltipModelInst = new CLMSUI.BackboneModelTypes.TooltipModel();
 
-    
+
     // Make score and distance minigram models, and add listeners to make sure they synchronise to attributes in filter model
     var minigramModels = ["matchScoreCutoff", "distanceCutoff"].map (function (filterAttrName) {
         var filterAttr = filterModelInst.get (filterAttrName);
@@ -304,12 +304,12 @@ CLMSUI.init.modelsEssential = function(options) {
                 });
             })
         ;
-        
+
         // When the range changes on these models pass the values onto the appropriate value in the filter model
         filterModelInst.listenTo (miniModel, "change", function(model) {
             this.set (filterAttrName, [model.get("domainStart"), model.get("domainEnd")]);
         }, this);
-        
+
         return miniModel;
     });
 
@@ -325,10 +325,10 @@ CLMSUI.init.modelsEssential = function(options) {
         ;
         return [distances];
     };
-    
+
     // change in distanceObj changes the distanceExtent in filter model and should trigger a re-filter for distance minigram model as dists may have changed
     minigramModels[1]
-        .listenTo (clmsModelInst, "change:distancesObj", function (clmsModel, distObj) { 
+        .listenTo (clmsModelInst, "change:distancesObj", function (clmsModel, distObj) {
             //console.log ("minigram arguments", arguments, this);
             var max = Math.ceil(distObj.maxDistance);
             this.set ("extent", [0, max + 1]);
@@ -372,7 +372,7 @@ CLMSUI.init.views = function() {
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel", "goTermsPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "stringPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel", "goTermsPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -557,6 +557,13 @@ CLMSUI.init.views = function() {
             eventName: "pdbShow",
             tooltip: "Load a PDB File from local disk or by PDB ID code from RCSB.org. Allows viewing of 3D Structure and of distance background in Matrix View"
         },
+                          /*
+        {
+            name: "STRING Data",
+            eventName: "stringShow",
+            tooltip: "Load STRING data from the STRING server. Note: limited to <2,000 proteins, for more generate a CSV file for import as PPI Metadata"
+        },
+        */
         {
             name: "Cross-Links (CSV)",
             eventName: "csvShow",
@@ -897,13 +904,6 @@ CLMSUI.init.viewsEssential = function(options) {
                 tooltip: "Opens a form to report an issue which will be forwarded to GitHub. Plain text only.",
                 sectionEnd: true,
             }, {
-            name: "XiView Survey",
-                func: function() {
-                    window.open("https://edinburgh.onlinesurveys.ac.uk/xiview-usability", "_blank");
-                },
-                tooltip: "We want your feedback",
-                sectionEnd: true,
-            }, {
                 name: "About Xi View",
                 func: function() {
                     window.open("https://rappsilberlab.org/software/xiview/", "_blank");
@@ -987,7 +987,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
             attr: "linkColourAssignment"
         },
     });
-    
+
     new CLMSUI.utils.ColourCollectionOptionViewBB({
         el: "#proteinColourDropdownPlaceholder",
         model: CLMSUI.linkColour.ProteinCollection,
@@ -1058,6 +1058,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         model: compModel,
         displayEventName: "pdbShow",
         initPDBs: urlChunkMap.pdb,
+    });
+
+    new CLMSUI.STRINGFileChooserBB({
+        el: "#stringPanel",
+        model: compModel,
+        displayEventName: "stringShow",
+        //initPDBs: urlChunkMap.pdb,
     });
 
     new CLMSUI.ScatterplotViewBB({
