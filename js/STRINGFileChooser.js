@@ -124,10 +124,12 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.setWaitingEffect();
         var self = this;
-        var callback = function (csv) {
+        var callback = function (csv, errorReason) {
             self.setCompletedEffect ();
-            CLMSUI.modelUtils.updateLinkMetadata (csv, self.model.get("clmsModel"));
-            self.setStatusText ("STRING data available as colour schemes", true);
+            if (!errorReason) {
+                CLMSUI.modelUtils.updateLinkMetadata (csv, self.model.get("clmsModel"));
+            }
+            self.setStatusText (errorReason || "STRING data now available as Legend colour schemes", !errorReason);
         };
         CLMSUI.STRINGUtils.loadStringDataFromModel (this.model.get("clmsModel"), taxonID, callback);
     },
