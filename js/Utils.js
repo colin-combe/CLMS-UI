@@ -1480,6 +1480,44 @@ CLMSUI.utils = {
         imageOriginString: function() {
             return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + CLMSUI.utils.filterStateToString());
         },
+
+        /* Following used in PDBFileChooser and StringFileChooser, though any of the views could take advantage of them */
+        setSpinner: function (state) {
+            var target = d3.select(this.el).node();
+            if (state) {
+                this.spinner = new Spinner().spin(target)
+            }
+            else if (!state && this.spinner) {
+                this.spinner.stop();
+            }
+            return this;
+        },
+
+        setWaitingEffect: function() {
+            this.setStatusText("Please Wait...").setSpinner(true);
+            d3.select(this.el).selectAll(".columnbar, .fakeButton").property("disabled", true).attr("disabled", true);
+            d3.select(this.el).selectAll(".btn").property("disabled", true);
+            return this;
+        },
+
+        setCompletedEffect: function() {
+            d3.select(this.el).selectAll(".columnbar, .fakeButton").property("disabled", false).attr("disabled", null);
+            d3.select(this.el).selectAll(".btn").property("disabled", false);
+            this.setSpinner(false);
+            return this;
+        },
+
+        setStatusText: function(msg, success) {
+            var mbar = d3.select(this.el).select(".messagebar"); //.style("display", null);
+            var t = mbar.html(msg);
+            if (success !== undefined) {
+                t = t.transition().delay(0).duration(1000).style("color", (success === false ? "red" : (success ? "blue" : null)));
+                t.transition().duration(5000).style("color", "#091d42");
+            } else {
+                t.style("color", "#091d42");
+            }
+            return this;
+        },
     }, {
         staticLastTopID: 1, // stores id of last view which was 'brought to top' as class property. So I don't need to do expensive DOM operations sometimes.
     }),
