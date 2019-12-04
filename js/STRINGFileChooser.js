@@ -30,17 +30,18 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         var box = wrapperPanel.append("div").attr("class", "columnbar");
 
-        box.append("p").attr("class", "smallHeading").text("NCBI Taxon ID");
+        box.append("p").attr("class", "smallHeading").text("Set NCBI Taxon ID");
 
         var common = [
             {name: "No Selection", value: "-"},
             {name: "Human", value: 9606},
-            {name: "E. Coli", value: 511145},
+            {name: "E. Coli str. K-12 / MG1655", value: 511145},
         ];
 
         box.append("label")
-            .text ("Choose")
-            .attr ("class", "btn")
+            .text ("Either Choose ")
+            .attr ("class", "btn nopadLeft")
+            .attr ("title", "Select an organism to search STRING scores on")
             .append("select").attr("class", "selectTaxonID")
                 .on ("change", function () {
                     var optionSelected = $("option:selected", this);
@@ -57,8 +58,8 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         ;
 
 
-        var taxonSpan = box.append("span")
-            .attr("class", "btn sectionDivider2 nopadLeft")
+        var taxonSpan = box.append("div")
+            .attr("class", "btn nopadLeft")
             .text("or Enter NCBI Taxon ID")
         ;
 
@@ -69,13 +70,27 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
                 maxlength: 16,
                 pattern: CLMSUI.utils.commonRegexes.digitsOnly,
                 size: 16,
-                title: "Enter NCBI Taxon ID here",
+                title: "Enter NCBI Taxon ID here for use in STRING search",
                 //placeholder: "eg 1AO6"
             })
             .property("required", true)
         ;
 
         taxonSpan.append("span").attr("class", "promptEnter").text("& Press Enter");
+
+
+        box.append("p").attr("class", "smallHeading").text("Other Actions");
+
+        box.append("button")
+            .attr ("class", "btn btn-1 btn-1a irreversible")
+            .text ("Purge cache")
+            .attr ("title", "If local storage reports as full, you can purge cached networks by pressing this button.")
+            .on ("click", function () {
+                if (localStorage) {
+                    CLMSUI.STRINGUtils.purgeCache();
+                }
+            })
+        ;
 
         wrapperPanel.append("p").attr("class", "smallHeading").text("Load Results");
         wrapperPanel.append("div").attr("class", "messagebar").html("&nbsp;"); //.style("display", "none");
@@ -87,28 +102,6 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             this.setVisible (true);
             d3.select(this.el).select(".inputPDBCode").property("value", viewOptions.initPDBs);
             this.loadPDBCode();
-        }
-    },
-
-    setWaitingEffect: function() {
-        this.setStatusText("Please Wait...");
-        d3.select(this.el).selectAll(".columnbar, .fakeButton").property("disabled", true).attr("disabled", true);
-        d3.select(this.el).selectAll(".btn").property("disabled", true);
-    },
-
-    setCompletedEffect: function() {
-        d3.select(this.el).selectAll(".columnbar, .fakeButton").property("disabled", false).attr("disabled", null);
-        d3.select(this.el).selectAll(".btn").property("disabled", false);
-    },
-
-    setStatusText: function(msg, success) {
-        var mbar = d3.select(this.el).select(".messagebar"); //.style("display", null);
-        var t = mbar.html(msg);
-        if (success !== undefined) {
-            t = t.transition().delay(0).duration(1000).style("color", (success === false ? "red" : (success ? "blue" : null)));
-            t.transition().duration(5000).style("color", "#091d42");
-        } else {
-            t.style("color", "#091d42");
         }
     },
 

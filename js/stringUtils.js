@@ -66,7 +66,7 @@ CLMSUI.STRINGUtils = {
                     try {
                         CLMSUI.utils.setLocalStorage (stringCache, "StringIds");    // re-store the data
                     } catch (err) {
-                        alert ("Local Storage Full");
+                        alert ("Local Storage Full. Cannot Cache STRING IDs.");
                     }
 
                     var idMap = _.pick (identifiersBySpecies, proteinIDs);
@@ -87,48 +87,44 @@ CLMSUI.STRINGUtils = {
     },
 
     queryStringInteractions: function (idMap, taxonID) {
-        var crosslinked = d3.values(idMap);
-        if (crosslinked.length > 1) {
-            crosslinked.sort();
-            var sidString = crosslinked.join("%0d");     // id/key made of string IDs joined together
-            console.log ("stringIds", crosslinked, sidString);
+        var stringIDs = d3.values(idMap);
+        if (stringIDs.length > 1) {
+            stringIDs.sort(); // sort string ids
+            var networkKey = stringIDs.join("%0d");     // id/key made of string IDs joined together
 
             var stringNetworkScoreCache = CLMSUI.utils.getLocalStorage("StringNetworkScores");
             var idBySpecies = stringNetworkScoreCache[taxonID] || {};
-            var cachedNetwork = idBySpecies[sidString];    // exact key match in cache?
+            var cachedNetwork = idBySpecies[networkKey];    // exact key match in cache?
 
             if (!cachedNetwork) {  // match in cache where network is subnetwork of larger network?
                 var allSpeciesNetworkKeys = d3.keys (idBySpecies);
-                var idKeyRegex = new RegExp (".*" + crosslinked.join(".*") + ".*");
+                // since stringIds were sorted, and stored network keys generated from them, this regex will find the first stored network key that contains all current stringIDs
+                var idKeyRegex = new RegExp (".*" + stringIDs.join(".*") + ".*");
                 var matchingKeyIndex = _.findIndex (allSpeciesNetworkKeys, function (key) {
                     return idKeyRegex.test (key);
                 });
                 cachedNetwork = matchingKeyIndex >= 0 ? idBySpecies[allSpeciesNetworkKeys[matchingKeyIndex]] : null;
             }
 
+            // If no cached network, go to STRING
             if (!cachedNetwork) {
                 var promiseObj = new Promise (function (resolve, reject) {
                     $.ajax ({
                         type: "post",
                         url: "https://string-db.org/api/tsv/network",
-                        beforeSend: function () {
-                            console.log ("BS", arguments);
-                            console.log ("ti", taxonID);
-                        },
                         data: {
-                            identifiers: sidString,
+                            identifiers: networkKey,
                             species: taxonID,
                             caller_identity: "xiview"
                         },
                     })
                     .done (function (retrievedNetwork, textStatus, xhr) {
-                        console.log ("Args", arguments);
                         stringNetworkScoreCache[taxonID] = idBySpecies;
-                        idBySpecies[sidString] = CLMSUI.STRINGUtils.lzw_encode (retrievedNetwork);
+                        idBySpecies[networkKey] = CLMSUI.STRINGUtils.lzw_encode (retrievedNetwork);
                         try {
                             CLMSUI.utils.setLocalStorage (stringNetworkScoreCache, "StringNetworkScores");
                         } catch (err) {
-                            alert ("Local Storage Full");
+                            alert ("Local Storage Full. Cannot cache returned STRING network.");
                         }
                         resolve ({idMap: idMap, networkTsv: retrievedNetwork});
                     })
@@ -138,11 +134,10 @@ CLMSUI.STRINGUtils = {
                  });
                 return promiseObj;
             } else {
-                console.log ("Cached network");
+                console.log ("Using cached network");
                 return Promise.resolve ({idMap: idMap, networkTsv: CLMSUI.STRINGUtils.lzw_decode(cachedNetwork)});
             }
         }
-        console.log ("1 protein only");
         return Promise.resolve ({idMap: idMap, networkTsv: ""});    // empty network for 1 protein
     },
 
@@ -210,17 +205,29 @@ CLMSUI.STRINGUtils = {
                 return CLMSUI.STRINGUtils.queryStringInteractions (identifiersBySpecies, taxonID);
             }, chainError)
             .then (function (networkAndIDObj) {
-                console.log ("NII", networkAndIDObj);
                 if (networkAndIDObj == null || networkAndIDObj.networkTsv == null || networkAndIDObj.networkTsv == "") {
-                    return Promise.reject ("No meaningful STRING interactions");
+                    return Promise.reject ("No meaningful STRING interactions found.");
                 }
                 var csv = CLMSUI.STRINGUtils.translateToCSV (networkAndIDObj.idMap, networkAndIDObj.networkTsv);
-                console.log ("CSV", csv, callback);
                 callback (csv);
             }, chainError)
             .catch (function (errorReason) {
                 callback (null, errorReason);
             })
         ;
+    },
+
+    getCacheSize: function () {
+        if (localStorage) {
+            return ["StringIds", "StringNetworkScores"].reduce (function (a,b) { return a + (localStorage[b] ? localStorage[b].length : 0);}, 0)
+        }
+        return 0;
+    },
+
+    purgeCache: function () {
+        if (localStorage) {
+            delete localStorage.StringIds;
+            delete localStorage.StringNetworkScores;
+        }
     }
 };

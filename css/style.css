@@ -455,11 +455,6 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
     padding: 0 0.5em;
 }
 
-#pdbPanel .promptEnter {
-    vertical-align: middle;
-    padding: 0 0.5em;
-}
-
 #pdbPanel .toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -472,6 +467,11 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
 #pdbPanel button i.fa {
     padding-left: 0.4em;
     vertical-align: sub;
+}
+
+.promptEnter {
+    vertical-align: middle;
+    padding: 0 0.5em;
 }
 
 A.btn {
@@ -643,7 +643,7 @@ div.columnbar[disabled], div.columnbar[disabled], label.fakeButton[disabled] {
     border-right-style: dashed;
 }
 
-.toolbar > .sectionDividerLeft {
+.sectionDividerLeft {
     border-left: 1px solid rgba(0,0,0,0.5);
     margin-left: 0.5em;
     padding-left: 0.5em;
@@ -913,4 +913,9 @@ div.validationControls{
     animation-iteration-count: infinite;
     animation-duration: 0.3s;
     transform: scale(2);
+}
+
+.btn-1a.irreversible:hover {
+    color: red;
+    border-color: red;
 }
