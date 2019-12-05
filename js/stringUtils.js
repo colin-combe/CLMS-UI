@@ -21,12 +21,12 @@ CLMSUI.STRINGUtils = {
     translateToCSV: function (uniprotToStringIDMap, network) {
         var stringToUniprotIDMap = _.invert (uniprotToStringIDMap);
         var rows = d3.tsv.parse (network, function (d) {
-            d.seqPos1 = null;
-            d.seqPos2 = null;
-            d.proteinID1 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_A];
-            d.proteinID2 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_B];
+            d.SeqPos1 = null;
+            d.SeqPos2 = null;
+            d.Protein1 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_A];
+            d.Protein2 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_B];
             // return empty string if protein ids not in current id map
-            return (d.proteinID1 && d.proteinID2 ? _.omit (d, ["ncbiTaxonId", "stringId_A", "stringId_B", "preferredName_A", "preferredName_B"]) : null);
+            return (d.Protein1 && d.Protein2 ? _.omit (d, ["ncbiTaxonId", "stringId_A", "stringId_B", "preferredName_A", "preferredName_B"]) : null);
         });
         rows = rows.filter (function (row) { return row != null; });
         return d3.csv.format (rows);
@@ -43,8 +43,7 @@ CLMSUI.STRINGUtils = {
 
         if (todo.length) {
             var pidString = todo.join("%0d");
-            console.log ("ttt", todo, pidString);
-            var promiseObj = new Promise(function(resolve, reject ) {
+            var promiseObj = new Promise (function (resolve, reject) {
                 $.ajax ({
                     type: "post",
                     url: "https://string-db.org/api/json/get_string_ids",
@@ -55,80 +54,87 @@ CLMSUI.STRINGUtils = {
                         caller_identity: "xiview",
                         format: "only-ids",
                         echo_query: echo ? 1 : 0
-                    },
-                    success: function (data, textStatus, xhr) {
-                        var stringCache = CLMSUI.utils.getLocalStorage ("StringIds");   // get stored data
-                        var identifiersBySpecies = stringCache[taxonID] || {};  // get or make object for species
-                        data.forEach (function (record) {   // add new data to this species object
-                            identifiersBySpecies[record.queryItem] = record.stringId;
-                        });
-                        stringCache[taxonID] = identifiersBySpecies;    // (re)attach species object to stored data
-                        CLMSUI.utils.setLocalStorage (stringCache, "StringIds");    // re-store the data
-
-                        var idMap = _.pick (identifiersBySpecies, proteinIDs);
-                        resolve (idMap);
-                    },
-                    error: function (xhr) {
-                        reject (xhr.status);
-                    },
-                    complete: function (xhr, textStatus) {
-                        console.log (textStatus);
                     }
-                });
+                })
+                .done (function (data, textStatus, xhr) {
+                    var stringCache = CLMSUI.utils.getLocalStorage ("StringIds");   // get stored data
+                    var identifiersBySpecies = stringCache[taxonID] || {};  // get or make object for species
+                    data.forEach (function (record) {   // add new data to this species object
+                        identifiersBySpecies[record.queryItem] = record.stringId;
+                    });
+                    stringCache[taxonID] = identifiersBySpecies;    // (re)attach species object to stored data
+                    try {
+                        CLMSUI.utils.setLocalStorage (stringCache, "StringIds");    // re-store the data
+                    } catch (err) {
+                        alert ("Local Storage Full. Cannot Cache STRING IDs.");
+                    }
+
+                    var idMap = _.pick (identifiersBySpecies, proteinIDs);
+                    console.log ("IDMAP FROM STRING", idMap, identifiersBySpecies, proteinIDs);
+                    resolve (idMap);
+                })
+                .fail (function (xhr) {
+                    reject ("Error returned from STRING id resolution service");
+                })
+            ;
             });
             return promiseObj;
         } else {
             var idMap = _.pick (identifiersBySpecies, alreadyKnown);
+            console.log ("IDMAP CACHED", idMap);
             return Promise.resolve (idMap);
         }
     },
 
     queryStringInteractions: function (idMap, taxonID) {
-        var crosslinked = d3.values(idMap);
-        if (crosslinked.length > 1) {
-            crosslinked.sort();
-            var sidString = crosslinked.join("%0d");     // id/key made of string IDs joined together
-            console.log ("stringIds", crosslinked, sidString);
+        var stringIDs = d3.values(idMap);
+        if (stringIDs.length > 1) {
+            stringIDs.sort(); // sort string ids
+            var networkKey = stringIDs.join("%0d");     // id/key made of string IDs joined together
 
             var stringNetworkScoreCache = CLMSUI.utils.getLocalStorage("StringNetworkScores");
             var idBySpecies = stringNetworkScoreCache[taxonID] || {};
-            var cachedNetwork = idBySpecies[sidString];    // exact key match in cache?
+            var cachedNetwork = idBySpecies[networkKey];    // exact key match in cache?
 
             if (!cachedNetwork) {  // match in cache where network is subnetwork of larger network?
                 var allSpeciesNetworkKeys = d3.keys (idBySpecies);
-                var idKeyRegex = new RegExp (".*" + crosslinked.join(".*") + ".*");
+                // since stringIds were sorted, and stored network keys generated from them, this regex will find the first stored network key that contains all current stringIDs
+                var idKeyRegex = new RegExp (".*" + stringIDs.join(".*") + ".*");
                 var matchingKeyIndex = _.findIndex (allSpeciesNetworkKeys, function (key) {
                     return idKeyRegex.test (key);
                 });
                 cachedNetwork = matchingKeyIndex >= 0 ? idBySpecies[allSpeciesNetworkKeys[matchingKeyIndex]] : null;
             }
 
+            // If no cached network, go to STRING
             if (!cachedNetwork) {
                 var promiseObj = new Promise (function (resolve, reject) {
                     $.ajax ({
                         type: "post",
                         url: "https://string-db.org/api/tsv/network",
                         data: {
-                            identifiers: sidString,
+                            identifiers: networkKey,
                             species: taxonID,
                             caller_identity: "xiview"
                         },
-                        success: function (retrievedNetwork, textStatus, xhr) {
-                            stringNetworkScoreCache[taxonID] = idBySpecies;
-                            idBySpecies[sidString] = CLMSUI.STRINGUtils.lzw_encode (retrievedNetwork);
+                    })
+                    .done (function (retrievedNetwork, textStatus, xhr) {
+                        stringNetworkScoreCache[taxonID] = idBySpecies;
+                        idBySpecies[networkKey] = CLMSUI.STRINGUtils.lzw_encode (retrievedNetwork);
+                        try {
                             CLMSUI.utils.setLocalStorage (stringNetworkScoreCache, "StringNetworkScores");
-                            resolve ({idMap: idMap, networkTsv: retrievedNetwork});
-                        },
-                        error: function (xhr) {
-                            reject (xhr.status);
-                        },
-                        complete: function (xhr, textStatus) {
-                            console.log (textStatus);
+                        } catch (err) {
+                            alert ("Local Storage Full. Cannot cache returned STRING network.");
                         }
+                        resolve ({idMap: idMap, networkTsv: retrievedNetwork});
+                    })
+                    .fail (function (xhr) {
+                        reject ("Error returned from STRING network interaction service.");
                     });
                  });
                 return promiseObj;
             } else {
+                console.log ("Using cached network");
                 return Promise.resolve ({idMap: idMap, networkTsv: CLMSUI.STRINGUtils.lzw_decode(cachedNetwork)});
             }
         }
@@ -187,24 +193,41 @@ CLMSUI.STRINGUtils = {
     },
 
     loadStringDataFromModel: function (clmsModel, taxonID, callback) {
-        console.log ("MODEL", clmsModel);
         var viableProteinIDs = _.pluck (CLMSUI.STRINGUtils.filterProteinsToPPISet(clmsModel), "id");
         CLMSUI.STRINGUtils.loadStringData (viableProteinIDs, taxonID, callback);
     },
 
     loadStringData: function (pids, taxonID, callback) {
+        function chainError (err) { return Promise.reject (err); }
+
         CLMSUI.STRINGUtils.getStringIdentifiers (pids, taxonID)
             .then (function (identifiersBySpecies) {
-                return CLMSUI.STRINGUtils.queryStringInteractions (identifiersBySpecies);
-            })
+                return CLMSUI.STRINGUtils.queryStringInteractions (identifiersBySpecies, taxonID);
+            }, chainError)
             .then (function (networkAndIDObj) {
-                if (networkAndIDObj == null || networkAndIDObj.networkTsv == null) {
-                    return "";
+                if (networkAndIDObj == null || networkAndIDObj.networkTsv == null || networkAndIDObj.networkTsv == "") {
+                    return Promise.reject ("No meaningful STRING interactions found.");
                 }
                 var csv = CLMSUI.STRINGUtils.translateToCSV (networkAndIDObj.idMap, networkAndIDObj.networkTsv);
-                console.log ("CSV", csv);
                 callback (csv);
+            }, chainError)
+            .catch (function (errorReason) {
+                callback (null, errorReason);
             })
         ;
+    },
+
+    getCacheSize: function () {
+        if (localStorage) {
+            return ["StringIds", "StringNetworkScores"].reduce (function (a,b) { return a + (localStorage[b] ? localStorage[b].length : 0);}, 0)
+        }
+        return 0;
+    },
+
+    purgeCache: function () {
+        if (localStorage) {
+            delete localStorage.StringIds;
+            delete localStorage.StringNetworkScores;
+        }
     }
 };

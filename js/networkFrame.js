@@ -902,13 +902,6 @@ CLMSUI.init.viewsEssential = function(options) {
                 tooltip: "Opens a form to report an issue which will be forwarded to GitHub. Plain text only.",
                 sectionEnd: true,
             }, {
-            name: "XiView Survey",
-                func: function() {
-                    window.open("https://edinburgh.onlinesurveys.ac.uk/xiview-usability", "_blank");
-                },
-                tooltip: "We want your feedback",
-                sectionEnd: true,
-            }, {
                 name: "About Xi View",
                 func: function() {
                     window.open("https://rappsilberlab.org/software/xiview/", "_blank");

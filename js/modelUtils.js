@@ -95,7 +95,7 @@ CLMSUI.modelUtils = {
                 ["Size", interactor.size],
                 ["Desc.", interactor.description]
             ];
-            
+
             d3.entries(interactor.getMeta()).forEach(function(entry) {
                 var val = entry.value;
                 var key = entry.key.toLocaleLowerCase();
@@ -103,7 +103,7 @@ CLMSUI.modelUtils = {
                     contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
                 }
             });
-            
+
             if (interactor.go) {
                 var goTermsMap = CLMSUI.compositeModelInst.get("go");
                 var goTermsText = "";
@@ -602,15 +602,15 @@ CLMSUI.modelUtils = {
                 var linkIDA = pkey1 + "_" + spos1 + "-" + pkey2 + "_" + spos2;
                 var linkIDB = pkey2 + "_" + spos2 + "-" + pkey1 + "_" + spos1;
                 singleCrossLink = crossLinks.get(linkIDA) || crossLinks.get(linkIDB);
-                
-                if (singleCrossLink == null && spos1 == null && spos2 == null) {   // PPI
+
+                //console.log ("spos", spos1, spos2, pkey1, pkey2, spos1 == null, spos2 == null);  //  "" != null?
+                if (singleCrossLink == null && ((spos1 == null && spos2 == null) || (spos1 == "" && spos2 == ""))) {   // PPI
                     rowCrossLinkArr = crossLinksArr.filter (function (crossLink) {
                         return (crossLink.toProtein.id === pkey1 && crossLink.fromProtein.id === pkey2) || (crossLink.toProtein.id === pkey2 && crossLink.fromProtein.id === pkey1);
                     });
-                    //console.log ("ml", rowCrossLinkArr);
                 }
             }
-            
+
             if (singleCrossLink) {    // single identifiable crosslink
                 rowCrossLinkArr = [singleCrossLink];
             }
@@ -636,7 +636,7 @@ CLMSUI.modelUtils = {
                             columnTypes[key] = "alpha"; // at least one entry in the column is non-numeric
                         }
                         rowCrossLinkArr.forEach (function (cl) {
-                            cl.setMeta (key, val);    
+                            cl.setMeta (key, val);
                         });
                     }
                 });
@@ -734,7 +734,7 @@ CLMSUI.modelUtils = {
             });
         }
     },
-    
+
     // objectArr can be crossLinks or protein interactors (or a mix of)
     clearObjectMetaData: function (objectArr, metaFields) {
         objectArr.forEach (function (obj) {
