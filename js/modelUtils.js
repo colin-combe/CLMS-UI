@@ -604,11 +604,11 @@ CLMSUI.modelUtils = {
                 var linkIDB = pkey2 + "_" + spos2 + "-" + pkey1 + "_" + spos1;
                 singleCrossLink = crossLinks.get(linkIDA) || crossLinks.get(linkIDB);
                 
-                if (singleCrossLink == null && spos1 == null && spos2 == null) {   // PPI
+                //console.log ("spos", spos1, spos2, pkey1, pkey2, spos1 == null, spos2 == null);  //  "" != null?
+                if (singleCrossLink == null && ((spos1 == null && spos2 == null) || (spos1 == "" && spos2 == ""))) {   // PPI
                     rowCrossLinkArr = crossLinksArr.filter (function (crossLink) {
                         return (crossLink.toProtein.id === pkey1 && crossLink.fromProtein.id === pkey2) || (crossLink.toProtein.id === pkey2 && crossLink.fromProtein.id === pkey1);
                     });
-                    //console.log ("ml", rowCrossLinkArr);
                 }
             }
 
