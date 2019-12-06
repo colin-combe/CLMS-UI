@@ -567,7 +567,7 @@ CLMSUI.modelUtils = {
         return pkey;
     },
 
-    updateLinkMetadata: function(metaDataFileContents, clmsModel) {
+    updateLinkMetadata: function (metaDataFileContents, clmsModel) {
         var crossLinks = clmsModel.get("crossLinks");
         var crossLinksArr = CLMS.arrayFromMapValues (crossLinks);
         var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
@@ -587,6 +587,8 @@ CLMSUI.modelUtils = {
         }
 
         var matchedCrossLinks = [];
+        var ppiCount = 0;
+
         d3.csv.parse(metaDataFileContents, function(d) {
             var linkID = d.linkID || d.LinkID;
             var singleCrossLink = crossLinks.get(linkID);
@@ -616,6 +618,7 @@ CLMSUI.modelUtils = {
             }
 
             if (rowCrossLinkArr && rowCrossLinkArr.length > 0) {
+                ppiCount++;
                 matchedCrossLinks.push.apply (matchedCrossLinks, rowCrossLinkArr);
                 var keys = d3.keys(d);
 
@@ -665,16 +668,19 @@ CLMSUI.modelUtils = {
         columns.forEach (registry.add, registry);
         clmsModel.set("crossLinkMetaRegistry", registry);
 
+        var result = {
+            columns: columns,
+            columnTypes: columnTypes,
+            items: crossLinks,
+            matchedItemCount: matchedCrossLinkCount,
+            ppiCount: ppiCount
+        };
+
         if (columns) {
-            CLMSUI.vent.trigger("linkMetadataUpdated", {
-                columns: columns,
-                columnTypes: columnTypes,
-                items: crossLinks,
-                matchedItemCount: matchedCrossLinkCount
-            }, {
-                source: "file"
-            });
+            CLMSUI.vent.trigger("linkMetadataUpdated", result, {source: "file"});
         }
+
+        return result;
     },
 
     updateProteinMetadata: function(metaDataFileContents, clmsModel) {

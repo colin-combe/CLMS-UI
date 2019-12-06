@@ -231,7 +231,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         if (!self.options.mainModel) {
 
             pager.append("input")
-                .attr("class", "selectionTablePageInput")
+                .attr("class", "selectionTablePageInput withSideMargins")
                  .attr("type", "number")
                  .attr("min", "1")
                  .attr("max", "999")
@@ -243,7 +243,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                      }
                  })
             ;
-            
+
             var timer, interval;
             pager.append("span").selectAll(".btn")
                 .data([{text: "<", incr: -1, tooltip: "Higher scoring crosslinks"}, {text: ">", incr: 1, tooltip: "Lower scoring crosslinks"}])
@@ -403,7 +403,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
             this.setPage(this.page);
         }
-        
+
         d3.select(this.el).select("table").style("display", this.matchCountIndices.length ? null : "none");
     },
 
@@ -495,7 +495,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var totalSelectedFilteredMatches = mci.length ? _.last(mci).runningTotalEnd : 0;
         return Math.floor(totalSelectedFilteredMatches / this.pageSize) + 1;
     },
-    
+
     makeColourSwatch: function (elem, colourScheme) {
         elem.attr("class", "colourSwatchSquare")
             .style("background", function(d) {
@@ -546,7 +546,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         allLinks.select(".niceCrossLinkName").text(niceCrossLinkName);
         var colourScheme = this.model.get("linkColourAssignment");
         allLinks.each (function (d) {
-            self.makeColourSwatch (d3.select(this).select(".colourSwatchSquare"), colourScheme);    
+            self.makeColourSwatch (d3.select(this).select(".colourSwatchSquare"), colourScheme);
         });
 
 
@@ -662,13 +662,13 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 }
             });
     },
-    
+
     updateSwatchesOnly: function () {
         var colourScheme = this.model.get("linkColourAssignment");
         var self = this;
         d3.select(this.el).selectAll(".colourSwatchSquare")
             .each (function () {
-                self.makeColourSwatch (d3.select(this), colourScheme);    
+                self.makeColourSwatch (d3.select(this), colourScheme);
             })
         ;
     },
