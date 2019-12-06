@@ -2,6 +2,9 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.STRINGUtils = {
 
+    // Maximum number of proteins we can POST to STRING's network interaction API (found by trial and error)
+    stringAPIMaxProteins: 2000,
+
     // Filter the CLMS model's participants down to just those that have non-decoy inter-protein links
     filterProteinsToPPISet: function (clmsModel) {
         var proteinMap = clmsModel.get("participants");
@@ -108,6 +111,9 @@ CLMSUI.STRINGUtils = {
 
             // If no cached network, go to STRING
             if (!cachedNetwork) {
+                if (stringIDs.length >= CLMSUI.STRINGUtils.stringAPIMaxProteins) {
+                    return Promise.reject ("Too Large. More than "+d3.format(",")(CLMSUI.STRINGUtils.stringAPIMaxProteins)+" proteins in requested network. Consider filtering first.")
+                }
                 var promiseObj = new Promise (function (resolve, reject) {
                     $.ajax ({
                         type: "post",
@@ -194,6 +200,16 @@ CLMSUI.STRINGUtils = {
 
     loadStringDataFromModel: function (clmsModel, taxonID, callback) {
         var viableProteinIDs = _.pluck (CLMSUI.STRINGUtils.filterProteinsToPPISet(clmsModel), "id");
+        console.log ("vids", viableProteinIDs.length);
+
+        if (viableProteinIDs.length >= CLMSUI.STRINGUtils.stringAPIMaxProteins) {
+            var proteins = clmsModel.get("participants");
+            viableProteinIDs = viableProteinIDs.filter (function (pid) {
+                return !proteins.get(pid).hidden;
+            });
+            console.log ("vids2", viableProteinIDs.length);
+        }
+
         CLMSUI.STRINGUtils.loadStringData (viableProteinIDs, taxonID, callback);
     },
 
@@ -205,10 +221,10 @@ CLMSUI.STRINGUtils = {
                 return CLMSUI.STRINGUtils.queryStringInteractions (identifiersBySpecies, taxonID);
             }, chainError)
             .then (function (networkAndIDObj) {
-                if (networkAndIDObj == null || networkAndIDObj.networkTsv == null || networkAndIDObj.networkTsv == "") {
-                    return Promise.reject ("No meaningful STRING interactions found.");
+                var csv = networkAndIDObj && networkAndIDObj.networkTsv ? CLMSUI.STRINGUtils.translateToCSV (networkAndIDObj.idMap, networkAndIDObj.networkTsv) : null;
+                if (!csv || csv.length === 0) {
+                    return chainError ("No meaningful STRING interactions found for protein set.");
                 }
-                var csv = CLMSUI.STRINGUtils.translateToCSV (networkAndIDObj.idMap, networkAndIDObj.networkTsv);
                 callback (csv);
             }, chainError)
             .catch (function (errorReason) {
