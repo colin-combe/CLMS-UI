@@ -161,38 +161,43 @@ CLMSUI.STRINGUtils = {
             if (dict.has(phrase + currChar)) {
                 phrase += currChar;
             } else {
-                out.push(phrase.length > 1 ? dict.get(phrase) : phrase.charCodeAt(0));
+                out.push (phrase.length > 1 ? dict.get(phrase) : phrase.codePointAt(0));
                 dict.set(phrase + currChar, code);
                 code++;
+                if (code === 0xd800) { code = 0xe000; }
                 phrase = currChar;
             }
         }
-        out.push(phrase.length > 1 ? dict.get(phrase) : phrase.charCodeAt(0));
+        out.push (phrase.length > 1 ? dict.get(phrase) : phrase.codePointAt(0));
         for (var i = 0; i < out.length; i++) {
-            out[i] = String.fromCharCode(out[i]);
+            out[i] = String.fromCodePoint(out[i]);
         }
+        //console.log ("LZW MAP SIZE", dict.size, out.slice (-50), out.length, out.join("").length);
         return out.join("");
     },
 
     lzw_decode: function (s) {
         var dict = new Map(); // Use a Map!
-        var data = (s + "").split("");
+        var data = Array.from(s + "");
+        //var data = (s + "").split("");
         var currChar = data[0];
         var oldPhrase = currChar;
         var out = [currChar];
         var code = 256;
         var phrase;
         for (var i = 1; i < data.length; i++) {
-            var currCode = data[i].charCodeAt(0);
+            var currCode = data[i].codePointAt(0);
             if (currCode < 256) {
                 phrase = data[i];
             } else {
                 phrase = dict.has(currCode) ? dict.get(currCode) : (oldPhrase + currChar);
             }
             out.push(phrase);
-            currChar = phrase.charAt(0);
+            var cp = phrase.codePointAt(0);
+            currChar = String.fromCodePoint(cp); //phrase.charAt(0);
             dict.set(code, oldPhrase + currChar);
             code++;
+            if (code === 0xd800) { code = 0xe000; }
             oldPhrase = phrase;
         }
         return out.join("");
@@ -225,6 +230,7 @@ CLMSUI.STRINGUtils = {
                 if (!csv || csv.length === 0) {
                     return chainError ("No meaningful STRING interactions found for protein set.");
                 }
+                console.log ("CSV", csv);
                 callback (csv);
             }, chainError)
             .catch (function (errorReason) {

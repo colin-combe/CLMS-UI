@@ -589,7 +589,7 @@ CLMSUI.modelUtils = {
         var matchedCrossLinks = [];
         var ppiCount = 0;
 
-        d3.csv.parse(metaDataFileContents, function(d) {
+        d3.csv.parse (metaDataFileContents, function(d) {
             var linkID = d.linkID || d.LinkID;
             var singleCrossLink = crossLinks.get(linkID);
             var rowCrossLinkArr;
