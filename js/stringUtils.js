@@ -178,7 +178,7 @@ CLMSUI.STRINGUtils = {
 
     lzw_decode: function (s) {
         var dict = new Map(); // Use a Map!
-        var data = Array.from(s + "");
+        var data = Array.from(s + "");  // conveniently splits by codepoint rather than 16-bit chars
         //var data = (s + "").split("");
         var currChar = data[0];
         var oldPhrase = currChar;
