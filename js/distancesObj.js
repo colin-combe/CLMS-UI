@@ -42,6 +42,8 @@ CLMSUI.DistancesObj.prototype = {
             linkWrapper.distance = CLMSUI.utils.toNearest (distance, angstromAccuracy);
         }, this);
 
+        nglLinkWrappers = nglLinkWrappers.filter (function (wrappedLink) { return !isNaN (wrappedLink.distance); });
+
         var nestedLinks = d3.nest()
             .key (function (linkWrapper) {
                 return linkWrapper.origId;
@@ -94,6 +96,10 @@ CLMSUI.DistancesObj.prototype = {
         // but this way dodges a lot of zero length distances when alignments have big gaps in them i.e. ABCDEFGHIJKLMNOP srch -> A------------P pdb
         // what positions would E and J be, what is the length between E and J?
         if (chains1 && chains2) {
+            // No use looking at chain options currently barred by assembly type choice
+            chains1 = chains1.filter (function (cid) { return this.permittedChainIndicesSet.has(cid.index); }, this);
+            chains2 = chains2.filter (function (cid) { return this.permittedChainIndicesSet.has(cid.index); }, this);
+
             for (var n = 0; n < chains1.length; n++) {
                 var chainIndex1 = chains1[n].index;
                 var chainName1 = chains1[n].name;
@@ -145,7 +151,7 @@ CLMSUI.DistancesObj.prototype = {
 
         // allocate distance variable to average or smallest distance depending on 'average' flag
         var distance = average ? (distCount ? totalDist / distCount : undefined) : minDist;
-        
+
         // if chaininfo asked for then return an object else just return the distance
         return returnChainInfo ? {
             distance: distance,
@@ -153,6 +159,7 @@ CLMSUI.DistancesObj.prototype = {
         } : distance;
     },
 
+    // Get cross-link distance between two particular chains
     // seqIndex1 and 2 are 0-based
     getXLinkDistanceFromChainCoords: function(matrices, seqIndex1, seqIndex2, chainIndex1, chainIndex2) {
         var dist;
@@ -242,7 +249,7 @@ CLMSUI.DistancesObj.prototype = {
         return sampleDists;
     },
 
-    // Collect together sequence data that is available to do sample 3d distances on, by 
+    // Collect together sequence data that is available to do sample 3d distances on, by
     // 1. Filtering out chains which aren't admissible to calculate distances on
     // 2. Mapping the remaining 3d chain sequences to the search sequences
     // 3. Then extracting those sub-portions of the search sequence that the 3d sequences cover
@@ -351,7 +358,7 @@ CLMSUI.DistancesObj.prototype = {
             }
             return rmap;
         }, this);
-        
+
         if (rmaps.length === 1) { rmaps.push ([]); }    // add empty second array for non-heterobi crosslinkers
 
         CLMSUI.utils.xilog ("rmaps", rmaps, linkableResidueSets);
