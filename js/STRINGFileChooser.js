@@ -119,7 +119,10 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             self.setCompletedEffect ();
             var statusText = "";
             if (!errorReason) {
+                //var t = performance.now();
                 var result = CLMSUI.modelUtils.updateLinkMetadata (csv, self.model.get("clmsModel"));
+                //t = performance.now() - t;
+                //console.log ("assignt to links took", t/1000, "s");
                 statusText = result.ppiCount + " STRING Interactions matched to protein set.<br>"
             }
             self.setStatusText (errorReason || statusText + "STRING data now available as Legend colour schemes", !errorReason);

@@ -571,6 +571,8 @@ CLMSUI.modelUtils = {
         var crossLinks = clmsModel.get("crossLinks");
         var crossLinksArr = CLMS.arrayFromMapValues (crossLinks);
         var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
+        var crossLinksByProteinPairing = CLMSUI.modelUtils.crosslinkCountPerProteinPairing (crossLinksArr);
+
         var first = true;
         var columns = [];
         var columnTypes = {};
@@ -607,9 +609,12 @@ CLMSUI.modelUtils = {
 
                 //console.log ("spos", spos1, spos2, pkey1, pkey2, spos1 == null, spos2 == null);  //  "" != null?
                 if (singleCrossLink == null && ((spos1 == null && spos2 == null) || (spos1 == "" && spos2 == ""))) {   // PPI
-                    rowCrossLinkArr = crossLinksArr.filter (function (crossLink) {
-                        return (crossLink.toProtein.id === pkey1 && crossLink.fromProtein.id === pkey2) || (crossLink.toProtein.id === pkey2 && crossLink.fromProtein.id === pkey1);
-                    });
+                    // get crosslinks for this protein pairing (if any)
+                    var proteinPair = [pkey1, pkey2].sort();
+                    var proteinPairing = crossLinksByProteinPairing[proteinPair.join("-")];
+                    if (proteinPairing) {
+                        rowCrossLinkArr = proteinPairing.crossLinks;
+                    }
                 }
             }
 
@@ -1205,23 +1210,28 @@ CLMSUI.modelUtils = {
         return arr || orig2DArr;
     },
 
-    crosslinkCountPerProteinPairing: function(crossLinkArr) {
+    crosslinkCountPerProteinPairing: function (crossLinkArr, includeLinears) {
         var obj = {};
+        var linearShim = {id: "*linear", name: "linear"};
         crossLinkArr.forEach(function(crossLink) {
-            var fromProtein = crossLink.fromProtein;
-            var toProtein = crossLink.toProtein;
-            var key = fromProtein.id + "-" + toProtein.id;
-            var pairing = obj[key];
-            if (!pairing) {
-                pairing = {
-                    crossLinks: [],
-                    fromProtein: fromProtein,
-                    toProtein: toProtein,
-                    label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
-                };
-                obj[key] = pairing;
+            if (crossLink.toProtein || includeLinears) {
+                var fromProtein = crossLink.fromProtein;
+                var toProtein = crossLink.toProtein || linearShim;
+                var proteinA = fromProtein.id > toProtein.id ? toProtein : fromProtein;
+                var proteinB = toProtein.id >= fromProtein.id ? toProtein : fromProtein;
+                var key = proteinA.id + "-" + proteinB.id;
+                var pairing = obj[key];
+                if (!pairing) {
+                    pairing = {
+                        crossLinks: [],
+                        fromProtein: proteinA,
+                        toProtein: proteinB,
+                        label: proteinA.name.replace("_", " ") + " - " + proteinB.name.replace("_", " ")
+                    };
+                    obj[key] = pairing;
+                }
+                pairing.crossLinks.push(crossLink);
             }
-            pairing.crossLinks.push(crossLink);
         });
         return obj;
     },
