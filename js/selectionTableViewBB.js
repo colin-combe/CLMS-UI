@@ -278,7 +278,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
         d3el.select("table").attr("tabindex", 0); // so table can capture key events
 
-        this.viewStateModel = new(Backbone.Model.extend({
+        // Internal view state. Can use backbone events to listen to and trigger changes within view.
+        this.viewStateModel = new (Backbone.Model.extend ({
             initialize: function() {
                 this.listenTo(this, "change:topOnly", function() {
                     self.render.call(self);
@@ -404,7 +405,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             this.setPage(this.page);
         }
 
-        d3.select(this.el).select("table").style("display", this.matchCountIndices.length ? null : "none");
+        d3.select(this.el).select("table").style("display", this.matchCountIndices.length && !this.viewStateModel.get("hidden") ? null : "none");
     },
 
     pageIncrement: function (incr) {
