@@ -12,6 +12,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         showShortestLinksOnly: true,
     },
 
+    // Most of the stuff in this file is dealing with the complications of a single protein possibly mapping to many different chains
+    // in a PDB structure.
+
     initialize: function() {
         // When masterModel is declared, hang a listener on it that listens to change in alignment model as this
         // possibly changes links and distances in 3d model
@@ -23,20 +26,20 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 this.setupLinks();
             });
         });
-        
+
         this.listenTo (this, "change:allowInterModelDistances", function (model, val) {
             var compModel = this.get("masterModel");
             compModel.getCrossLinkDistances (compModel.getAllCrossLinks());  // regenerate distances for all crosslinks
             CLMSUI.vent.trigger ("changeAllowInterModelDistances", val);
         });
-        
+
         this.listenTo (this, "change:chainMap", function (model, val) {
             model.makeReverseChainMap (val);
         });
-        
+
         this.makeReverseChainMap (this.get("chainMap"));
     },
-    
+
     // make a map of chain indices to protein ids
     makeReverseChainMap: function (chainMap) {
         var reverseChainMap = d3.map();
@@ -53,9 +56,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     getModel: function() {
         return this.get("masterModel");
     },
-    
+
     getStructureName: function () {
-        return this.get("structureComp").structure.name;    
+        return this.get("structureComp").structure.name;
     },
 
     setupLinks: function() {
@@ -76,12 +79,12 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         clmsModel.trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"));
         return this;
     },
-    
+
     setFilteredLinkList: function () {
         this.setLinkList (this.getModel().getFilteredCrossLinks());
         return this;
     },
-    
+
     setLinkList: function (crossLinks) {
         var linkDataObj = this.makeLinkList (crossLinks);
         var distanceObj = this.getModel().get("clmsModel").get("distancesObj");
@@ -91,7 +94,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         this.setLinkListWrapped (linkDataObj);
         return this;
     },
-   
+
     makeLinkList: function(linkModel) {
         var structure = this.get("structureComp").structure;
         var nextResidueId = 0;
@@ -114,7 +117,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             }
             return residueDict[globalNGLResIndex];
         }
-        
+
         function addAtomPoints (pdbIndexedResidues) {
             pdbIndexedResidues.forEach (function (fat) {
                 var atomIndex = this.getAtomIndex (fat.seqIndex, fat.chainIndex);
@@ -124,15 +127,15 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 fat.coords = coords;
             }, this);
         }
-        
+
         function makePDBIndexedResidues (perModelChainEntry, searchIndexResidue, protID) {
             if (perModelChainEntry) {
                 return perModelChainEntry.values.map (function (chainValue) {
                     var chainIndex = chainValue.index;  // global NGL chain index
                     var alignID = CLMSUI.NGLUtils.make3DAlignID (structureName, chainValue.name, chainIndex);
                     return {
-                        chainIndex: chainIndex, 
-                        modelIndex: chainValue.modelIndex, 
+                        chainIndex: chainIndex,
+                        modelIndex: chainValue.modelIndex,
                         seqIndex: alignColl.getAlignedIndex (searchIndexResidue, protID, false, alignID, true) - 1,  // residues are 0-indexed in NGL so -1
                     };
                 }).filter (function (datum) {   // remove residues with no aligned residue in ngl sequence
@@ -141,7 +144,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             }
             return [];
         }
-        
+
         // add extra info to a residue object that's handy later on
         function addResidueExtraInfo (pdbIndexedResidue, residueProxy) {
             var ri = residueProxy.index;
@@ -151,7 +154,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             pdbIndexedResidue.resno = residueProxy.resno;   // Why? A: ngl residue index to resno conversion, as NGL.Selection() works with resno values
             pdbIndexedResidue.structureId = null;
         }
-        
+
         // call the previous function with the contents of an array of arrays
         // usually the to and from residues object lists
         function addResidueListsExtraInfo (residueObjLists) {
@@ -163,7 +166,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 }, this);
             });
         }
-        
+
         function addToHalfLinkList (crossLink, residueObjList) {
             residueObjList.forEach (function (residueObj) {
                 halfLinkList.push ({
@@ -175,17 +178,31 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         }
 
         var t = performance.now();
-        var chainMap = this.get("chainMap");
-        // divide protein --> chain map into protein --> model --> chain map, we don't want to make links between different models
+
+        // Make a copy of chainMap, and if distancesObj is initialised run through the proteins in chainMap
+        // and remove the chains which are not permitted because of current assembly type choice.
+        // Can save many calculations if assembly type is a smaller unit than the default pdb assembly type.
+        // e.g. for assembly type BU1 or BU2 in 1AO6 only check chain combination A-A or B-B rather than all of A-A, A-B, B-A and B-B
+        var chainMap = $.extend ({}, this.get("chainMap"));
+        var distObj = this.getModel().get("clmsModel").get("distancesObj");
+        if (distObj) {
+            var chainSet = distObj.permittedChainIndicesSet;
+            d3.entries(chainMap).forEach (function (proteinEntry) {
+                chainMap[proteinEntry.key] = proteinEntry.value.filter (function (chainEntry) { return chainSet.has (chainEntry.index); });
+            });
+            //console.log ("chainMap", chainMap, chainSet);
+        }
+
+        // divide protein --> chain map into protein --> model --> chain map, in case we don't want to make links between different models
         var modelIndexedChainMap = CLMSUI.modelUtils.makeSubIndexedMap(chainMap, "modelIndex");
-        
+
         // d3.mapped and wrapped versions of chainMap and modelIndexedChainMap. Easier to use for some operations.
-        var chainValueMap = d3.map(); 
+        var chainValueMap = d3.map();
         var chainModelMapMap = d3.map();
-        d3.entries(chainMap).forEach (function (protEntry) { 
-            chainValueMap.set (protEntry.key, {values: protEntry.value}); 
+        d3.entries(chainMap).forEach (function (protEntry) {
+            chainValueMap.set (protEntry.key, {values: protEntry.value});
         });
-        d3.entries(modelIndexedChainMap).forEach (function (protEntry) { 
+        d3.entries(modelIndexedChainMap).forEach (function (protEntry) {
             chainModelMapMap.set (protEntry.key, d3.map (protEntry.value, function(d) { return d.key; }));
         });
 
@@ -212,27 +229,27 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             var toEmpty = _.isEmpty(toPerModelChains);
             // Don't continue if neither end of crosslink within pdb
             if (!fromEmpty && !toEmpty) {
-                
-                // get a map (key -> value) of the toPerModelChains entries 
+
+                // get a map (key -> value) of the toPerModelChains entries
                 var toPerModelChainMap = chainModelMapMap.get (toProtID);
-                var toChainMap = chainValueMap.get (toProtID); 
-                
+                var toChainMap = chainValueMap.get (toProtID);
+
                 var octreeIgnoreFunc = function (point1, point2) {
                     return CLMSUI.NGLUtils.not3DHomomultimeric (xlink, point1.chainIndex, point2.chainIndex);
                 };
-                    
+
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
                     var toChains = allowInterModelDistances ? toChainMap : toPerModelChainMap.get (fromPerModelChainEntry.key);  // bar possible crosslinks between models
-                    
+
                     //console.log ("XLINK CHAINS", fromPerModelChains, toPerModelChains);
-                    
+
                     if (toChains) { // don't proceed if inter model distances barred and no 'to' chains within current model
-                        
+
                         var fromPDBResidues = makePDBIndexedResidues (fromPerModelChainEntry, xlink.fromResidue, fromProtID);
                         var toPDBResidues = makePDBIndexedResidues (toChains, xlink.toResidue, toProtID);
                         var alternativeCount = fromPDBResidues.length * toPDBResidues.length;
                         //console.log ("FTpdbr", fromPDBResidues, toPDBResidues, alternativeCount);
-                        
+
                         if (alternativeCount > 4) { // if more than a certain number of possible pairings whittle it down to the closest one
                             addAtomPoints.call (this, fromPDBResidues);
                             addAtomPoints.call (this, toPDBResidues);
@@ -262,9 +279,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                                 alternativeCount = 0;   // no valid distances found
                             }
                         }
-                        
+
                         addResidueListsExtraInfo ([fromPDBResidues, toPDBResidues]);
-                        
+
                         if (alternativeCount > 0) {
                             fromPDBResidues.forEach (function (fromPDB) {
                                 toPDBResidues.forEach (function (toPDB) {
@@ -286,9 +303,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                     }
                 }, this);
             } else if (!toEmpty || !fromEmpty) {    // only one end of link in a pdb-indexed protein
-                var toChains = chainValueMap.get (toProtID); 
-                var fromChains = chainValueMap.get (fromProtID); 
-                
+                var toChains = chainValueMap.get (toProtID);
+                var fromChains = chainValueMap.get (fromProtID);
+
                 // One of these residue lists will be empty
                 var fromPDBResidues = makePDBIndexedResidues (fromChains, xlink.fromResidue, fromProtID);
                 var toPDBResidues = makePDBIndexedResidues (toChains, xlink.toResidue, toProtID);
@@ -312,7 +329,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var linkIdMap = {};
         var halfLinkIdMap = {};
         var residueIdMap = {};
-        
+
         function insertResidue (residue, link, map) {
             var resID = residue.residueId;
             var list = map[resID];
@@ -329,7 +346,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             insertResidue(link.residueA, link, residueIdToFullLinkIds);
             insertResidue(link.residueB, link, residueIdToFullLinkIds);
         });
-        
+
         // remove half links that also have full link instances
         if (this.get("showShortestLinksOnly")) {
             var origFullLinkIDs = d3.set (_.pluck (linkList, "origId"));
@@ -337,8 +354,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 return !origFullLinkIDs.has (halfLink.origId);
             });
         }
-        
-        
+
+
         halfLinkList.forEach (function (halfLink) {
             halfLinkIdMap[halfLink.linkId] = halfLink;
             insertResidue(halfLink.residue, halfLink, residueIdToHalfLinkIds);
@@ -358,52 +375,52 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         }, this);
         this._origFullLinkCount = this.getOriginalCrossLinkCount (linkList);
         this._origHalfLinkCount = this.getOriginalCrossLinkCount (halfLinkList);
-        
+
         //console.log ("setLinkList", residueIdMap, this._residueList, residueIdToFullLinkIds, linkIdMap);
         this.set("linkList", linkList);
         this.set("halfLinkList", halfLinkList);
     },
 
     getFullLinkCount: function () {
-        return this._origFullLinkCount;    
+        return this._origFullLinkCount;
     },
-    
+
     getFullLinks: function (residue) {
         return residue === undefined ? this.get("linkList") : this.getFullLinksByResidueID (residue.residueId);
     },
-    
+
     getFullLinkCountByResidue: function (residue) {
         var linkIds = this._residueIdToFullLinkIds[residue.residueId];
         return linkIds ? linkIds.length : 0;
     },
-    
+
     getFullLinksByResidueID: function (residueId) {
         var linkIds = this._residueIdToFullLinkIds[residueId];
         return linkIds ? linkIds.map(function(l) {
             return this._linkIdMap[l];
         }, this) : [];
     },
-    
+
     getHalfLinkCount: function () {
-        return this._origHalfLinkCount;    
+        return this._origHalfLinkCount;
     },
-    
+
     getHalfLinks: function (residue) {
         return residue === undefined ? this.get("halfLinkList") : this.getHalfLinksByResidueID (residue.residueId);
     },
-    
+
     getHalfLinkCountByResidue: function (residue) {
         var linkIds = this._residueIdToHalfLinkIds[residue.residueId];
         return linkIds ? linkIds.length : 0;
     },
-    
+
     getHalfLinksByResidueID: function (residueId) {
         var linkIds = this._residueIdToHalfLinkIds[residueId];
         return linkIds ? linkIds.map(function(l) {
             return this._halfLinkIdMap[l];
         }, this) : [];
     },
-    
+
     getFullLinkByNGLResIndices: function (NGLGlobalResIndex1, NGLGlobalResIndex2) {
         return this._fullLinkNGLIndexMap[NGLGlobalResIndex1 + "-" + NGLGlobalResIndex2];
     },
@@ -442,7 +459,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     hasLink: function (link) {
         return this._linkIdMap[link.linkId] !== undefined;
     },
-    
+
     // Filter down a list of residue objects to those that are currently in the residueIdMap object
     getAvailableResidues: function (residues) {
         return residues.filter(function(r) {
@@ -456,7 +473,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             return this.hasLink(linkObj);
         }, this);
     },
-    
+
     // Return original crosslinks from this model's link objects using origId property value
     getOriginalCrossLinks: function(linkObjs) {
         var xlinks = this.getModel().get("clmsModel").get("crossLinks");
@@ -464,11 +481,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             return xlinks.get(linkObj.origId);
         });
     },
-    
+
     getOriginalCrossLinkCount: function (linkObjs) {
         return d3.set(_.pluck (linkObjs, "origId")).size();
     },
-    
+
     // Return an array of atom pair indices (along with original link id) for a given array of crosslink objects
     getAtomPairsFromLinks: function (fullLinkList) {
         var atomPairs = [];
@@ -562,11 +579,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         entries.forEach (function (chain1Entry) {
             var chain1 = chain1Entry.key;
             var cindices1 = chain1Entry.value;
-            
+
             entries.forEach (function (chain2Entry) {
                 var chain2 = chain2Entry.key;
                 var cindices2 = chain2Entry.value;
-                
+
                 matrixMap[chain1 + "-" + chain2] = {
                     chain1: chain1,
                     chain2: chain2,
@@ -590,12 +607,12 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
 
     getLinkDistancesBetween2Chains: function(chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2, links) {
-        
+
         var notHomomultimeric = function (xlinkID, c1, c2) {
             var xlink = this.getModel().get("clmsModel").get("crossLinks").get(xlinkID);
             return CLMSUI.NGLUtils.not3DHomomultimeric(xlink, c1, c2);
         };
-        
+
         links = links.filter(function(link) {
             return (link.residueA.chainIndex === chainIndex1 && link.residueB.chainIndex === chainIndex2 && notHomomultimeric.call (this, link.origId, chainIndex1, chainIndex2))
             /*||
@@ -650,7 +667,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
         return matrix;
     },
-    
+
     getAtomCoordinates: function (atomProxy) {
         return [atomProxy.x, atomProxy.y, atomProxy.z];
     },
@@ -666,7 +683,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var ai = ci[seqIndex];
         return ai;
     },
-    
+
     // seqIndex1 and 2 are 0-indexed, with zero being first residue in pdb chain
     getSingleDistanceBetween2Residues: function(seqIndex1, seqIndex2, chainIndex1, chainIndex2) {
         var struc = this.get("structureComp").structure;
@@ -693,16 +710,16 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 pair.push (this.getAtomProxyDistance (ap1, ap2));
             }
         }, this);
-        
+
         return atomPairs;
     },
-    
+
     getPDBLinkString: function (links) {
         var pdbLinks = [];
         var struc = this.get("structureComp").structure;
         var ap = struc.getAtomProxy();
         var linkFormat = 'LINK        %-4s %-3s %1s%4d                %-4s %-3s %1s%4d   %6s %6s %5.2f';
-        
+
         links.forEach (function (link) {
             var res1 = link.residueA;
             var res2 = link.residueB;
@@ -718,34 +735,34 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             var resName2 = ap.resname;
             var resSeq2 = ap.resno;
             var chainID2 = ap.chainname;
-            
+
             var sym1 = "      ";
             var sym2 = "      ";
             var distance = Math.min (99.99, this.getSingleDistanceBetween2Residues (res1.seqIndex, res2.seqIndex, res1.chainIndex, res2.chainIndex));
-            
+
             pdbLinks.push (sprintf (linkFormat, atomName1, resName1, chainID1, resSeq1, atomName2, resName2, chainID2, resSeq2, sym1, sym2, distance));
         }, this);
-        
+
         return pdbLinks.join("\n");
     },
-    
-    
+
+
     getPDBConectString: function (links) {  // Conect is spelt right
         var pdbConects = [];
         var atomPairs = this.getAtomPairsFromLinks (links);
         var conectFormat = 'CONECT%5d%5d                                                                ';
         atomPairs.sort (function (a, b) { return a[0] - b[0]; });   // order by ascending first atompair index
-        
-        atomPairs.forEach (function (atomPair) {   
+
+        atomPairs.forEach (function (atomPair) {
             pdbConects.push (sprintf (conectFormat, atomPair[0], atomPair[1]));
         }, this);
-        
+
         return pdbConects.join("\n");
     },
 
 
     getSelectionFromResidueList: function(resnoList, options) { // set allAtoms to true to not restrict selection to alpha carbon atoms
-        // options are 
+        // options are
         // allAtoms:true to not add on the AND .CA qualifier
         // chainsOnly:true when the resnoList only has chainIndices defined and no res
         options = options || {};
@@ -800,7 +817,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             });
 
             //sele = "( " + tmp.join(" OR ") + " ) AND .CA";    // old way, much slower parsing by ngl -4500ms for 3jco
-            //console.log ("sele", sele);  
+            //console.log ("sele", sele);
             //console.log ("MODELTREE", modelTree);
 
             // Build an efficient selection string out of this tree i.e. don't repeat model and chain values for
@@ -809,7 +826,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 var modelBranch = modelEntry.value;
                 var perChainResidues = modelBranch.entries().map(function(chainEntry) {
                     var chainBranch = chainEntry.value;
-                    // selection syntax picks up ":123" as residue 123 in chain "empty name", but ": AND 123" doesn't work. 
+                    // selection syntax picks up ":123" as residue 123 in chain "empty name", but ": AND 123" doesn't work.
                     // Similarly ":/0 " works but "/0 AND :" doesn't.
                     // Shouldn't have many pdbs with empty chain names though.
                     if (chainEntry.key) {
@@ -910,7 +927,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             chainIndices: chainIndices
         };
     },
-    
+
     getAllResidueCoordsForChain: function (chainIndex) {
         var structure = this.get("structureComp").structure;
         var atomProxy = structure.getAtomProxy();
