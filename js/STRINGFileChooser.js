@@ -123,9 +123,13 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
                 var result = CLMSUI.modelUtils.updateLinkMetadata (csv, self.model.get("clmsModel"));
                 //t = performance.now() - t;
                 //console.log ("assignt to links took", t/1000, "s");
-                statusText = result.ppiCount + " STRING Interactions matched to protein set.<br>"
+                statusText = result.ppiCount + " STRING interactions matched to protein set.<br>";
+                if (result.ppiCount > 0) {
+                    self.model.set ("linkColourAssignment", CLMSUI.linkColour.Collection.get("STRING Score"));  // Switch to STRING colouring if any STRING scores available
+                    statusText += "Colour Scheme switched to STRING Score - subscores via Legend View.";
+                }
             }
-            self.setStatusText (errorReason || statusText + "STRING data now available as Legend colour schemes", !errorReason);
+            self.setStatusText (errorReason || statusText, !errorReason);
         };
         CLMSUI.STRINGUtils.loadStringDataFromModel (this.model.get("clmsModel"), taxonID, callback);
     },

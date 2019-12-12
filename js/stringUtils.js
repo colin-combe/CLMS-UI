@@ -21,9 +21,10 @@ CLMSUI.STRINGUtils = {
     // Take a map of protein IDs (uniprot) --> taxon specific string IDs + a tsv format string network
     // and turn it into a csv string usable by the cross-link metadata parser.
     // Filter to appropriate protein IDs for brevity
-    translateToCSV: function (uniprotToStringIDMap, network) {
+    translateToCSV: function (uniprotToStringIDMap, networkTsvString) {
         var stringToUniprotIDMap = _.invert (uniprotToStringIDMap);
-        var rows = d3.tsv.parse (network, function (d) {
+        networkTsvString = networkTsvString.replace(/^.*/, function(m) { return m.replace (/\tscore/g, '\tSTRING Score'); });
+        var rows = d3.tsv.parse (networkTsvString, function (d) {
             d.SeqPos1 = null;
             d.SeqPos2 = null;
             d.Protein1 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_A];
