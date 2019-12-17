@@ -36,6 +36,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 pepSeq: "",
                 protNames: "",
                 protDesc: "",
+                protPDB: false,
                 runName: "",
                 scanNumber: "",
                 urpPpi: 1,
@@ -96,6 +97,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 pepSeq: "text",
                 protNames: "text",
                 protDesc: "text",
+                protPDB: "boolean",
                 runName: "text",
                 scanNumber: "number",
                 urpPpi: "number",
@@ -267,6 +269,25 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return false;
             },
 
+            // Test if there are proteins at both ends of a match that are in the current pdb file.
+            pdbProteinFilter: function (match) {
+                if (this.get("protPDB")) {
+                    var dObj = CLMSUI.compositeModelInst.get("clmsModel").get("distancesObj");
+                    if (dObj) {
+                        var chainMap = dObj.chainMap;
+                        if (chainMap) {
+                            var mpeps = match.matchedPeptides;
+                            var pass = mpeps.every (function (mpep) {
+                                var proteins = mpep.prt;
+                                return proteins.some (function (prot) { return chainMap[prot]; })   // ambig match can point to multiple proteins at one or both ends
+                            });
+                            return pass;
+                        }
+                    }
+                }
+                return true;
+            },
+
             proteinFilter: function (match, searchString, dataField, preProcessedField) {
                 if (searchString) {
                     //protein name check
@@ -344,6 +365,11 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
                 //protein description check
                 if (this.proteinFilter (match, this.get("protDesc"), "description", "protDesc") === false) {
+                    return false;
+                }
+
+                //protein in pdb check
+                if (this.pdbProteinFilter (match) === false) {
                     return false;
                 }
 
