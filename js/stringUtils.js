@@ -2,6 +2,9 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.STRINGUtils = {
 
+    // Maximum number of proteins we can POST to STRING's network interaction API (found by trial and error)
+    stringAPIMaxProteins: 2000,
+
     // Filter the CLMS model's participants down to just those that have non-decoy inter-protein links
     filterProteinsToPPISet: function (clmsModel) {
         var proteinMap = clmsModel.get("participants");
@@ -18,9 +21,10 @@ CLMSUI.STRINGUtils = {
     // Take a map of protein IDs (uniprot) --> taxon specific string IDs + a tsv format string network
     // and turn it into a csv string usable by the cross-link metadata parser.
     // Filter to appropriate protein IDs for brevity
-    translateToCSV: function (uniprotToStringIDMap, network) {
+    translateToCSV: function (uniprotToStringIDMap, networkTsvString) {
         var stringToUniprotIDMap = _.invert (uniprotToStringIDMap);
-        var rows = d3.tsv.parse (network, function (d) {
+        networkTsvString = networkTsvString.replace(/^.*/, function(m) { return m.replace (/\tscore/g, '\tSTRING Score'); });
+        var rows = d3.tsv.parse (networkTsvString, function (d) {
             d.SeqPos1 = null;
             d.SeqPos2 = null;
             d.Protein1 = stringToUniprotIDMap[d.ncbiTaxonId+"."+d.stringId_A];
@@ -108,6 +112,9 @@ CLMSUI.STRINGUtils = {
 
             // If no cached network, go to STRING
             if (!cachedNetwork) {
+                if (stringIDs.length >= CLMSUI.STRINGUtils.stringAPIMaxProteins) {
+                    return Promise.reject ("Too Large. More than "+d3.format(",")(CLMSUI.STRINGUtils.stringAPIMaxProteins)+" proteins in requested network. Consider filtering first.")
+                }
                 var promiseObj = new Promise (function (resolve, reject) {
                     $.ajax ({
                         type: "post",
@@ -155,38 +162,43 @@ CLMSUI.STRINGUtils = {
             if (dict.has(phrase + currChar)) {
                 phrase += currChar;
             } else {
-                out.push(phrase.length > 1 ? dict.get(phrase) : phrase.charCodeAt(0));
+                out.push (phrase.length > 1 ? dict.get(phrase) : phrase.codePointAt(0));
                 dict.set(phrase + currChar, code);
                 code++;
+                if (code === 0xd800) { code = 0xe000; }
                 phrase = currChar;
             }
         }
-        out.push(phrase.length > 1 ? dict.get(phrase) : phrase.charCodeAt(0));
+        out.push (phrase.length > 1 ? dict.get(phrase) : phrase.codePointAt(0));
         for (var i = 0; i < out.length; i++) {
-            out[i] = String.fromCharCode(out[i]);
+            out[i] = String.fromCodePoint(out[i]);
         }
+        //console.log ("LZW MAP SIZE", dict.size, out.slice (-50), out.length, out.join("").length);
         return out.join("");
     },
 
     lzw_decode: function (s) {
         var dict = new Map(); // Use a Map!
-        var data = (s + "").split("");
+        var data = Array.from(s + "");  // conveniently splits by codepoint rather than 16-bit chars
+        //var data = (s + "").split("");
         var currChar = data[0];
         var oldPhrase = currChar;
         var out = [currChar];
         var code = 256;
         var phrase;
         for (var i = 1; i < data.length; i++) {
-            var currCode = data[i].charCodeAt(0);
+            var currCode = data[i].codePointAt(0);
             if (currCode < 256) {
                 phrase = data[i];
             } else {
                 phrase = dict.has(currCode) ? dict.get(currCode) : (oldPhrase + currChar);
             }
             out.push(phrase);
-            currChar = phrase.charAt(0);
+            var cp = phrase.codePointAt(0);
+            currChar = String.fromCodePoint(cp); //phrase.charAt(0);
             dict.set(code, oldPhrase + currChar);
             code++;
+            if (code === 0xd800) { code = 0xe000; }
             oldPhrase = phrase;
         }
         return out.join("");
@@ -194,6 +206,16 @@ CLMSUI.STRINGUtils = {
 
     loadStringDataFromModel: function (clmsModel, taxonID, callback) {
         var viableProteinIDs = _.pluck (CLMSUI.STRINGUtils.filterProteinsToPPISet(clmsModel), "id");
+        console.log ("vids", viableProteinIDs.length);
+
+        if (viableProteinIDs.length >= CLMSUI.STRINGUtils.stringAPIMaxProteins) {
+            var proteins = clmsModel.get("participants");
+            viableProteinIDs = viableProteinIDs.filter (function (pid) {
+                return !proteins.get(pid).hidden;
+            });
+            console.log ("vids2", viableProteinIDs.length);
+        }
+
         CLMSUI.STRINGUtils.loadStringData (viableProteinIDs, taxonID, callback);
     },
 
@@ -205,10 +227,11 @@ CLMSUI.STRINGUtils = {
                 return CLMSUI.STRINGUtils.queryStringInteractions (identifiersBySpecies, taxonID);
             }, chainError)
             .then (function (networkAndIDObj) {
-                if (networkAndIDObj == null || networkAndIDObj.networkTsv == null || networkAndIDObj.networkTsv == "") {
-                    return Promise.reject ("No meaningful STRING interactions found.");
+                var csv = networkAndIDObj && networkAndIDObj.networkTsv ? CLMSUI.STRINGUtils.translateToCSV (networkAndIDObj.idMap, networkAndIDObj.networkTsv) : null;
+                if (!csv || csv.length === 0) {
+                    return chainError ("No meaningful STRING interactions found for protein set.");
                 }
-                var csv = CLMSUI.STRINGUtils.translateToCSV (networkAndIDObj.idMap, networkAndIDObj.networkTsv);
+                console.log ("CSV", csv);
                 callback (csv);
             }, chainError)
             .catch (function (errorReason) {

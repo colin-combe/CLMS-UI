@@ -7,7 +7,7 @@
     /* height: calc(100% - 45px); */
     flex-grow: 1;
     overflow: auto;
-	min-height: 1px;
+    min-height: 1px;
 }
 
 .selectView TABLE  {
@@ -90,8 +90,8 @@
 }
 
 .selectView TD.emphasise {
-	font-weight: bold;
-	transform: scaleX(1.1);
+    font-weight: bold;
+    transform: scaleX(1.1);
 }
 
 .selectView tbody TR.spectrumShown2 {
@@ -108,11 +108,6 @@
 
 .selectView .controlBar > span {
     padding-left: 1em;
-}
-
-.pager input {
-    margin-left: 0.5em;
-    margin-right: 0.4em;
 }
 
 .buttonPressed {
@@ -146,7 +141,7 @@
 }
 
 .selectView .rightSpan {
-	float: right;
+    float: right;
 }
 
 .dynDiv .rightSpan label:hover {
@@ -154,15 +149,15 @@
 }
 
 .selectionTableHideToggle {
-	display: none;
+    display: none;
 }
 
 #alternatives .selectionTableHideToggle {
-	display: inline-block;
+    display: inline-block;
 }
 
 .selectView .smallText {
-	font-size: 0.8em;
+    font-size: 0.8em;
     color: #a8a8a8;
 }
 
@@ -175,8 +170,8 @@
      -moz-appearance: textfield;
           appearance: textfield;
 }
-.selectView input[type=number]::-webkit-inner-spin-button, 
-.selectView input[type=number]::-webkit-outer-spin-button { 
+.selectView input[type=number]::-webkit-inner-spin-button,
+.selectView input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
 }
 
