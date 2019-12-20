@@ -85,12 +85,13 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             searchMissedCleavages: "Search Max. Missed Cleavages",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorIntensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd"]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "missingPeaks", "precursorIntensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd"]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
         this.minWidthColumns = d3.set(["massError", "searchMissedCleavages"]);
         this.emphasiseColumns = d3.set(["pos1", "pos2"]);
+        this.changeableColumns = d3.set(["ambiguity", "autovalidated", "validated", "homom"]);   // values that can change in situ i.e. aren't fixed
 
         // entries commented out until a replacement is found for xlv
         var headerFilterFuncs = {
@@ -507,6 +508,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
     // code that maintains the rows in the table
     addRows: function(selectedLinkArray, filteredProps, firstLastLinkMatchBounds) {
+
         filteredProps = filteredProps || this.filteredProps;
         var self = this;
         //var proteinMap = this.model.get("clmsModel").get("participants");
@@ -583,6 +585,37 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         ;
 
 
+        var getText = function(d) {
+            var link = d3.select(this.parentNode).datum();
+            var cellFunc = self.cellFuncs[d];
+            return cellFunc ? cellFunc(link) : (link[d] || "");
+        };
+
+        var deemphasiseFraction = function (text) {
+            var str = text ? text.toString() : "";
+            var dpoint = str.indexOf(".");
+            if (dpoint < 0) return text;
+            var sci = str.indexOf("+", dpoint + 1);
+            return text.slice(0, dpoint) + "<span class='smallText'>" + (sci >= 0 ? text.slice(dpoint, sci) + "</span>" + text.slice(sci) : text.slice(dpoint) + "</span>");
+        };
+
+        // function that sets contents of individual cell
+        var setCell = function (d) {
+            var d3this = d3.select(this);
+            if (self.numberColumns.has(d)) {
+                d3this.html (deemphasiseFraction (getText.call(this, d)));
+            } else if (self.monospacedColumns.has(d)) {
+                d3this.html (getText);
+            } else {
+                d3this.text (getText);
+            }
+
+            if (self.maxWidthColumns.has(d)) {
+                d3this.attr("title", getText.call(this, d));
+            }
+        }
+
+
         // Within each row, match cells up to individual pieces of match information
         var possClasses = ["number", "colSectionStart", "monospaced", "maxWidth", "minWidth", "emphasise"];
         var cellJoin = tjoin.selectAll("TD").data(filteredProps /*, function(d) { return d; }*/ );
@@ -606,40 +639,15 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 });
                 return classes.join(" ");
             })
-        // The above states shouldn't change over the cells lifetime, so do it once in enter rather than repeatedly in the () selection below
+            .each (function (d) {
+                if (!self.changeableColumns.has (d)) {
+                    setCell.call (this, d);
+                }
+            })
+        // The above states shouldn't change over the cells lifetime, so do it once in enter rather than repeatedly in the update() selection below
         ;
 
-        var getText = function(d) {
-            var link = d3.select(this.parentNode).datum();
-            var cellFunc = self.cellFuncs[d];
-            return cellFunc ? cellFunc(link) : (link[d] || "");
-        };
-
-        var deemphasiseFraction = function (text) {
-            var str = text ? text.toString() : "";
-            var dpoint = str.indexOf(".");
-            if (dpoint < 0) return text;
-            var sci = str.indexOf("+", dpoint + 1);
-            return text.slice(0, dpoint) + "<span class='smallText'>" + (sci >= 0 ? text.slice(dpoint, sci) + "</span>" + text.slice(sci) : text.slice(dpoint) + "</span>");
-        };
-
         cellJoin
-            /*
-            .classed ("number", function(d) {
-                return self.numberColumns.has(d);
-            })
-            .classed ("colSectionStart", function(d) {
-                return self.colSectionStarts.has(d);
-            })
-            .classed ("monospaced", function(d) {
-                return self.monospacedColumns.has(d),
-
-            })
-            .classed ("maxWidth", function (d) {
-                return self.maxWidthColumns.has (d);
-            })
-            */
-            //.text(getText)
             .each(function(d) {
                 /*
                 d3.select(this).classed ({
@@ -649,17 +657,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                     maxWidth: self.maxWidthColumns.has (d),
                 });
                 */
-                var d3this = d3.select(this);
-                if (self.numberColumns.has(d)) {
-                    d3this.html (deemphasiseFraction (getText.call(this, d)));
-                } else if (self.monospacedColumns.has(d)) {
-                    d3this.html (getText);
-                } else {
-                    d3this.text (getText);
-                }
-
-                if (self.maxWidthColumns.has(d)) {
-                    d3this.attr("title", getText.call(this, d));
+                if (self.changeableColumns.has (d)) {
+                    setCell.call (this, d);
                 }
             });
     },
@@ -772,7 +771,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
     },
 
     select: function(d) {
-        console.log("this", this);
         var mainModel = this.options.mainModel;
         if (mainModel) {
             //TODO: fix?
