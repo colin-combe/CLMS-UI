@@ -35,6 +35,7 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             {name: "No Selection", value: "-"},
             {name: "Human", value: 9606},
             {name: "E. Coli str. K-12 / MG1655", value: 511145},
+            {name: "B. Subtilis str. 168", value: 224308},
         ];
 
         box.append("label")
