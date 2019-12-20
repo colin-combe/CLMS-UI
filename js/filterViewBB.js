@@ -105,7 +105,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {
                     label: "Decoy",
                     id: "decoys",
-                    tooltip: "Show decoy cross-links"
+                    tooltip: "Show passing decoy cross-links"
                 },
                 {
                     label: "Pep Seq",
