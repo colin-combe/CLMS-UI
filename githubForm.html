@@ -21,7 +21,7 @@
         }
         .wideDivider {
             margin: 1em 0em;
-            border-top: 8px solid #aaa;     
+            border-top: 8px solid #aaa;
         }
         h2 {
             color: #44a;
@@ -39,26 +39,26 @@
 </head>
 <body>
     <div class="wideDivider"/>
-    <h1>Report a XiView Issue</h1>
+    <h1>Report a xiVIEW Issue</h1>
     <form action="" name="issueForm" id="issueForm" method="post">
-        
+
         <h2>Title</h2>
         <input type="text" id="issueName" name="issueName" form="issueForm" size="50" required>
-        
+
         <h2>Details</h2>
         <h4>Required (Plain text only, but please be as descriptive as possible, include search IDs etc)</h4>
         <textarea id="issueText" class="text" cols="86" rows ="16" name="issueText" form="issueForm" required></textarea>
-        
+
         <div id="recaptchaWidget" data-sitekey="getFromConfig.json"></div>
         <span class="error">&lt; Please check the captcha form</span>
         <br/>
-        
+
         <h2 id="submitLabel">Submit Issue</h2>
        <input type="submit" value="SUBMIT" id="submitButton">
     </form>
-    
+
     <div class="wideDivider"/>
-    
+
     <script>
         var onloadCallback = function () {
             $.when (
@@ -70,7 +70,7 @@
                     .attr("data-sitekey", config.googleRecaptchaPublicKey)
                 ;
                 grecaptcha.render('recaptchaWidget', {'sitekey': config.googleRecaptchaPublicKey});
-                
+
                 $("#issueForm").submit(function (event) {
                     event.preventDefault();
                     $.post (
@@ -81,7 +81,7 @@
                         try {
                             var json = JSON.parse (data);
                             if (json.success) {
-                                $("#submitLabel").html("Thankyou, issue has been submitted: "+json.msg);
+                                $("#submitLabel").html("Thank you, issue has been submitted: "+json.msg);
                                 $("#submitButton").prop ("disabled", true);
                             } else if (json.fail || json.status === "fail") {
                                 $("#submitLabel").text(json.msg || (json.error+": "+json.field));
@@ -94,7 +94,7 @@
             });
         }
     </script>
-    
+
     <script src="https://www.recaptcha.net/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
 </body>
 </html>
