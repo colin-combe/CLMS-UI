@@ -173,6 +173,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 });
                 this.preprocessedInputValues.set("pepSeq", splitPepSeq);
 
+                this.preprocessedInputValues.set("runName", this.get("runName").toLowerCase());
                 this.preprocessedInputValues.set("scanNumber", parseInt(this.get("scanNumber")));
 
                 // Search group pre calculations
@@ -343,9 +344,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 // Arranged so cheaper checks are done first
 
                 //run name check
-                var runNameFilter = this.get("runName");
+                var runNameFilter = this.preprocessedInputValues.get("runName");
                 if (runNameFilter &&
-                    match.runName().toLowerCase().indexOf(runNameFilter.toLowerCase()) == -1) {
+                    match.runName().toLowerCase().indexOf(runNameFilter) == -1) {
                     return false;
                 }
 
