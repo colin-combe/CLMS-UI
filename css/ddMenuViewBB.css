@@ -1,7 +1,7 @@
 .dropdown DIV {
     /* position: absolute; */
-	position: fixed;
-    z-index: 5000;
+    position: fixed;
+    z-index: 1000;
     background: #091D42;
     padding: 0.2em 1em 0.2em 1em;
     border: 1px solid #fff;
@@ -65,36 +65,36 @@
     width: 1em;
     display: inline-block;
     margin-left: 2px;
-	border: 1px solid black;
+    border: 1px solid black;
 }
 
 .dynDiv .dropdown DIV HR {
-	background: #091d42;
+    background: #091d42;
 }
 
 .dropdown .ddSectionHeader {
-	opacity: 0.8;
-	text-transform: lowercase;
-	font-variant: small-caps;
-	display: block;
-	line-height: 1.2em;
+    opacity: 0.8;
+    text-transform: lowercase;
+    font-variant: small-caps;
+    display: block;
+    line-height: 1.2em;
     color: yellow;
 }
 
 .dropdown .sectionEnd {
-	border-bottom: 1px dotted white;
+    border-bottom: 1px dotted white;
 }
 
 .aaButtonPlaceholder {
-	display: inline-block;
-	width: calc(100% - 24px);
+    display: inline-block;
+    width: calc(100% - 24px);
 }
 
 .hiddenColourInput {
-	margin: 0;
-	padding: 0;
-	visibility: hidden;
-	max-width: 0px;
+    margin: 0;
+    padding: 0;
+    visibility: hidden;
+    max-width: 0px;
 }
 
 .dropdown .disabledItem {
