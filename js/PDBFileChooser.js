@@ -82,7 +82,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         pdbCodeSpan.append("input")
             .attr({
                 type: "text",
-                class: "inputPDBCode",
+                class: "inputPDBCode withSideMargins",
                 //maxlength: 4,
                 //pattern: CLMSUI.utils.commonRegexes.pdbPattern,
                 maxlength: 100,
@@ -94,7 +94,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             .property("required", true)
         ;
 
-        pdbCodeSpan.append("span").attr("class", "promptEnter").text("& Press Enter");
+        pdbCodeSpan.append("span").text("& Press Enter");
 
         /*
         pdbCodeSpan.append("span").attr("class", "prompt").text("→");

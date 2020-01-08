@@ -473,11 +473,6 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
 	vertical-align: sub;
 }
 
-.promptEnter {
-    vertical-align: middle;
-    padding: 0 0.5em;
-}
-
 A.btn {
     text-decoration: none;
 }
@@ -802,6 +797,11 @@ input {
 input.xiNetLinkWidth {
     width: 5em;
     color: #cccccc;
+}
+
+input.withSideMargins, select.withSideMargins {
+    margin-left: 0.5em;
+    margin-right: 0.5em;
 }
 
 sup {font-size:xx-small; vertical-align:super;}

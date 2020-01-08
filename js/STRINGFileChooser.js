@@ -22,8 +22,7 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         CLMSUI.STRINGFileChooserBB.__super__.initialize.apply(this, arguments);
 
         // this.el is the dom element this should be getting added to, replaces targetDiv
-        var mainDivSel = d3.select(this.el);
-        mainDivSel.classed ("metaLoadPanel", true);
+        var mainDivSel = d3.select(this.el).classed ("metaLoadPanel", true);
         var self = this;
 
         var wrapperPanel = mainDivSel.append("div").attr("class", "panelInner");
@@ -36,13 +35,14 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             {name: "No Selection", value: "-"},
             {name: "Human", value: 9606},
             {name: "E. Coli str. K-12 / MG1655", value: 511145},
+            {name: "B. Subtilis str. 168", value: 224308},
         ];
 
         box.append("label")
-            .text ("Either Choose ")
+            .text ("Either Choose Organism")
             .attr ("class", "btn nopadLeft")
             .attr ("title", "Select an organism to search STRING scores on")
-            .append("select").attr("class", "selectTaxonID")
+            .append("select").attr("class", "selectTaxonID withSideMargins")
                 .on ("change", function () {
                     var optionSelected = $("option:selected", this);
                     var valueSelected = this.value;
@@ -60,13 +60,13 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         var taxonSpan = box.append("div")
             .attr("class", "btn nopadLeft")
-            .text("or Enter NCBI Taxon ID")
+            .html("or Enter <a href='https://www.ncbi.nlm.nih.gov/taxonomy' target='_blank'>NCBI Taxon ID</a>")
         ;
 
         taxonSpan.append("input")
             .attr({
                 type: "text",
-                class: "inputTaxonID",
+                class: "inputTaxonID withSideMargins",
                 maxlength: 16,
                 pattern: CLMSUI.utils.commonRegexes.digitsOnly,
                 size: 16,
@@ -76,7 +76,7 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             .property("required", true)
         ;
 
-        taxonSpan.append("span").attr("class", "promptEnter").text("& Press Enter");
+        taxonSpan.append("span").text("& Press Enter");
 
 
         box.append("p").attr("class", "smallHeading").text("Other Actions");
@@ -84,7 +84,7 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         box.append("button")
             .attr ("class", "btn btn-1 btn-1a irreversible")
             .text ("Purge cache")
-            .attr ("title", "If local storage reports as full, you can purge cached networks by pressing this button.")
+            .attr ("title", "If local storage reports as full, you can purge cached STRING interactions by pressing this button.")
             .on ("click", function () {
                 if (localStorage) {
                     CLMSUI.STRINGUtils.purgeCache();
@@ -92,7 +92,7 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             })
         ;
 
-        wrapperPanel.append("p").attr("class", "smallHeading").text("Load Results");
+        wrapperPanel.append("p").attr("class", "smallHeading").text("Results");
         wrapperPanel.append("div").attr("class", "messagebar").html("&nbsp;"); //.style("display", "none");
 
         d3.select(this.el).selectAll(".smallHeading").classed("smallHeadingBar", true);
@@ -106,8 +106,7 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     enteringTaxonID: function(evt) {
-        var valid = this.isTaxaIDValid();
-        if (valid && evt.keyCode === 13) { // if return key pressed do same as pressing 'Enter' button
+        if (this.isTaxaIDValid() && evt.keyCode === 13) { // if return key pressed do same as pressing 'Enter' button
             this.loadSTRINGData();
         }
     },
@@ -119,10 +118,19 @@ CLMSUI.STRINGFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         var self = this;
         var callback = function (csv, errorReason) {
             self.setCompletedEffect ();
+            var statusText = "";
             if (!errorReason) {
-                CLMSUI.modelUtils.updateLinkMetadata (csv, self.model.get("clmsModel"));
+                //var t = performance.now();
+                var result = CLMSUI.modelUtils.updateLinkMetadata (csv, self.model.get("clmsModel"));
+                //t = performance.now() - t;
+                //console.log ("assignt to links took", t/1000, "s");
+                statusText = result.ppiCount + " STRING interactions matched to protein set.<br>";
+                if (result.ppiCount > 0) {
+                    self.model.set ("linkColourAssignment", CLMSUI.linkColour.Collection.get("STRING Score"));  // Switch to STRING colouring if any STRING scores available
+                    statusText += "Colour Scheme switched to STRING Score - subscores via Legend View.";
+                }
             }
-            self.setStatusText (errorReason || "STRING data now available as Legend colour schemes", !errorReason);
+            self.setStatusText (errorReason || statusText, !errorReason);
         };
         CLMSUI.STRINGUtils.loadStringDataFromModel (this.model.get("clmsModel"), taxonID, callback);
     },

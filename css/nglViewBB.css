@@ -1,9 +1,9 @@
 .overlayInfo, .linkInfo {
     position: absolute;
     color: #666;
-	padding: 0 0.5em;
-	background: rgba(255, 255, 255, 0.7);
-	z-index: 1; /* to overlay ngl div which is now position:relative */
+    padding: 0 0.5em;
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 1; /* to overlay ngl div which is now position:relative */
 }
 
 .linkInfo {
@@ -35,11 +35,6 @@ label.btn input[type=file] {
     padding-top: 2px;
     padding-bottom: 2px;
 }
-
-.inputPDBCode {
-    margin-left: 0.5em;
-}
-
 
 #nglPanel .ddSectionHeader {
     color: #666;
