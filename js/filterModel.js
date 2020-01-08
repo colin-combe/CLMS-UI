@@ -33,6 +33,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 //navigation
                 pepSeq: "",
                 protNames: "",
+                protDesc: "",
+                protPDB: false,
                 runName: "",
                 scanNumber: "",
                 urpPpi: 1,
@@ -89,6 +91,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 //navigation
                 pepSeq: "text",
                 protNames: "text",
+                protDesc: "text",
+                protPDB: "boolean",
                 runName: "text",
                 scanNumber: "number",
                 urpPpi: "number",
@@ -147,6 +151,14 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 })); // split these in turn by hyphens
                 //console.log ("preprocessedValues", this.preprocessedValues.get("protNames"));
 
+                protSplit1 = this.get("protDesc").toLowerCase().split(","); // split by commas
+                this.preprocessedInputValues.set("protDesc", protSplit1.map(function(prot) {
+                    return prot.split("-").map(function(protSplit2) {
+                        return protSplit2.trim();
+                    });
+                })); // split these in turn by hyphens
+                //console.log ("preprocessedValues", this.preprocessedValues.get("protDesc"));
+
                 var pepSeq = this.get("pepSeq");
                 var splitPepSeq = pepSeq.split("-").map(function(part) {
                     return {
@@ -155,7 +167,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                     };
                 });
                 this.preprocessedInputValues.set("pepSeq", splitPepSeq);
-                
+
                 this.preprocessedInputValues.set("scanNumber", parseInt(this.get("scanNumber")));
 
                 // Search group pre calculations
@@ -253,10 +265,29 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 return false;
             },
 
-            proteinNameCheck: function(match, searchString) {
+            // Test if there are proteins at both ends of a match that are in the current pdb file.
+            pdbProteinFilter: function (match) {
+                if (this.get("protPDB")) {
+                    var dObj = CLMSUI.compositeModelInst.get("clmsModel").get("distancesObj");
+                    if (dObj) {
+                        var chainMap = dObj.chainMap;
+                        if (chainMap) {
+                            var mpeps = match.matchedPeptides;
+                            var pass = mpeps.every (function (mpep) {
+                                var proteins = mpep.prt;
+                                return proteins.some (function (prot) { return chainMap[prot]; })   // ambig match can point to multiple proteins at one or both ends
+                            });
+                            return pass;
+                        }
+                    }
+                }
+                return true;
+            },
+
+            proteinFilter: function (match, searchString, dataField, preProcessedField) {
                 if (searchString) {
                     //protein name check
-                    var stringPartArrays = this.preprocessedInputValues.get("protNames");
+                    var stringPartArrays = this.preprocessedInputValues.get(preProcessedField);
                     var participants = CLMSUI.compositeModelInst.get("clmsModel").get("participants");
                     var matchedPeptides = match.matchedPeptides;
                     var matchedPepCount = matchedPeptides.length;
@@ -267,7 +298,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                         var matchedProteins = 0;
 
                         for (var ns = 0; ns < stringPartArr.length; ns++) {
-                            var nameString = stringPartArr[ns];
+                            var partString = stringPartArr[ns];
                             var found = false;
 
                             for (var i = 0; i < matchedPepCount; i++) {
@@ -277,8 +308,8 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                                     var pidCount = pids.length;
                                     for (var p = 0; p < pidCount; p++) {
                                         var interactor = participants.get(pids[p]);
-                                        var toSearch = interactor.name + (interactor.accession? " " + interactor.accession : "");
-                                        if (toSearch.toLowerCase().indexOf(nameString) != -1) {
+                                        var toSearch = interactor[dataField];// + " " + interactor.description;
+                                        if (toSearch.toLowerCase().indexOf(partString) != -1) {
                                             found = true;
                                             used[i] = true; // so can't match two strings to same peptide e.g. "dog-cat" to protein associated with same peptide
                                             break;
@@ -308,9 +339,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 // Arranged so cheaper checks are done first
 
                 //run name check
-                var runNameFilter = this.get("runName");
+                var runNameFilter = this.preprocessedInputValues.get("runName");
                 if (runNameFilter &&
-                    match.runName().toLowerCase().indexOf(runNameFilter.toLowerCase()) == -1) {
+                    match.runName().toLowerCase().indexOf(runNameFilter) == -1) {
                     return false;
                 }
 
@@ -324,10 +355,19 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 }
 
                 //protein name check
-                if (this.proteinNameCheck(match, this.get("protNames")) === false) {
+                if (this.proteinFilter (match, this.get("protNames"), "name", "protNames") === false) {
                     return false;
                 }
 
+                //protein description check
+                if (this.proteinFilter (match, this.get("protDesc"), "description", "protDesc") === false) {
+                    return false;
+                }
+
+                //protein in pdb check
+                if (this.pdbProteinFilter (match) === false) {
+                    return false;
+                }
 
                 //peptide seq check
                 if (seqCheck(this.get("pepSeq"), this.preprocessedInputValues.get("pepSeq")) === false) {

@@ -95,6 +95,8 @@
 
         <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
+        <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script> <!-- IE11 Promise Polyfill -->
+
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
@@ -138,6 +140,7 @@
         <script type="text/javascript" src="./js/compositeModelType.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/modelUtils.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLUtils.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/stringUtils.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/fdr.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/distancesObj.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/distogramViewBB.js<?php echo $cacheBuster ?>"></script>
@@ -149,6 +152,8 @@
         <script type="text/javascript" src="./js/ddMenuViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/STRINGFileChooser.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/CSVFileChooserViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/metaDataFileChoosers.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/bioseq32.js<?php echo $cacheBuster ?>"></script>
@@ -196,6 +201,14 @@
         <!-- Main -->
         <div id="main">
 
+            <!-- Define main first so page-header overlays it -->
+            <div class="mainContent">
+                <div id="topDiv">
+                    <div id="networkDiv"></div>
+                </div>
+                <div id="bottomDiv"></div>
+            </div>
+
             <div class="page-header">
                     <i class="fa fa-home fa-xi"
                         onclick="window.location = '../history/history.html';"
@@ -206,14 +219,8 @@
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
                     <p id="helpDropdownPlaceholder"></p>
+                <p id="surveyPlaceholder"><a href="https://edinburgh.onlinesurveys.ac.uk/xiview-usability" target="_blank" class="btn btn-1 btn-1a btn-tight" title="Click to do the xiView Survey!!!">* Survey *</a></p>
                     <div id="xiNetButtonBar"></div>
-            </div>
-
-            <div class="mainContent">
-                <div id="topDiv">
-                    <div id="networkDiv"></div>
-                </div>
-                <div id="bottomDiv"></div>
             </div>
 
             <div id='hiddenProteinsMessage'>
@@ -282,11 +289,17 @@
 					}
 				);
                 d3.select(".gutter").attr("title", "Drag to change space available to selection table");
+
+                var returnedTimeStamp = new Date (json.timeStamp * 1000);
+                console.log (new Date(), returnedTimeStamp, new Date() - returnedTimeStamp);
+                if (Math.abs (new Date() - returnedTimeStamp) > 60 * 5 * 1000) { // if out by 5 minutes...
+                    CLMSUI.utils.displayError (function() { return true; }, "Returned search results were generated at "+returnedTimeStamp+" and are likely from cache.<p class='errorReason'>If you have revalidated results since, press CTRL + F5 to refresh.</p>");
+                }
+
 				CLMSUI.init.views();
 				allDataLoaded ();
 			} catch (err) {
 				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
-				console.error ("Error", err);
 			}
 		};
 
@@ -297,7 +310,7 @@
         if (window.location.search) {
             // 1. Load spectrum matches, dont send all query string to php (ostensibly to help with caching)
             var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
-            var phpProps = _.pick (urlChunkMap, "upload", "sid", "unval", "linears", "lowestScore", "highestScore");
+            var phpProps = _.pick (urlChunkMap, "upload", "sid", "unval", "linears", "lowestScore", "highestScore", "decoys");
             var newQueryString = d3.entries(phpProps).map(function (entry) { return entry.key+"="+entry.value; }).join("&");
             console.log ("ucm", urlChunkMap, newQueryString);
             var url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;

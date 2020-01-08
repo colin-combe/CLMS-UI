@@ -143,6 +143,12 @@ header('Content-type: text/html; charset=utf-8');
         <!-- Main -->
         <div id="main">
 
+            <div class="mainContent">
+                <div id="topDiv">
+                </div>
+                <div id="bottomDiv"></div>
+            </div>
+
             <div class="page-header">
                 <i class="fa fa-home fa-xi" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
                 <span class="headerLabel">
@@ -151,12 +157,6 @@ header('Content-type: text/html; charset=utf-8');
                 <p id="expDropdownPlaceholder"></p>
                 <button class='btn btn-1 btn-1a' onclick="window.location = './network.php'+window.location.search;" title="View results">Done</button>
             </div> <!-- page-header -->
-
-            <div class="mainContent">
-                <div id="topDiv">
-                </div>
-                <div id="bottomDiv"></div>
-            </div>
 
             <div class="controls">
                 <span id="filterPlaceholder"></span>

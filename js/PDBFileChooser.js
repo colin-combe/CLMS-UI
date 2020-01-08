@@ -35,7 +35,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             .attr("class", "panelInner");
 
         var box = wrapperPanel.append("div").attr("class", "columnbar");
-        
+
         /*
         box.append("p").attr("class", "smallHeading").text("Pre-Load Options");
         var buttonData = [{
@@ -50,13 +50,13 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         ];
         CLMSUI.utils.makeBackboneButtons (box.append("div"), this.el.id, buttonData);
         */
-        
-        
-        
+
+
+
         box.append("p").attr("class", "smallHeading").text("PDB Source");
-        
+
         box.append("div")
-            .attr("class", "btn nopadLeft nopadRight sectionDivider2 dashedBorder")
+            .attr("class", "btn nopadLeft nopadRight")
             .text("Either")
             .append("span")
             .append("label")
@@ -71,10 +71,10 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
                 class: "selectPdbButton"
             })
         ;
-        
+
 
         var pdbCodeSpan = box.append("span")
-            .attr("class", "btn sectionDivider2 nopadLeft")
+            .attr("class", "btn nopadLeft")
             .text("or Enter 4-character PDB IDs")
             //.append("div")
         ;
@@ -82,7 +82,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         pdbCodeSpan.append("input")
             .attr({
                 type: "text",
-                class: "inputPDBCode",
+                class: "inputPDBCode withSideMargins",
                 //maxlength: 4,
                 //pattern: CLMSUI.utils.commonRegexes.pdbPattern,
                 maxlength: 100,
@@ -93,8 +93,8 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             })
             .property("required", true)
         ;
-        
-        pdbCodeSpan.append("span").attr("class", "promptEnter").text("& Press Enter");
+
+        pdbCodeSpan.append("span").text("& Press Enter");
 
         /*
         pdbCodeSpan.append("span").attr("class", "prompt").text("→");
@@ -105,7 +105,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             .property("disabled", true)
         ;
         */
-        
+
 
         var queryBox = box.append("div").attr("class", "verticalFlexContainer queryBox");
 
@@ -128,12 +128,11 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         ;
 
         this.updateProteinDropdown(queryBox);
-        
+
+
         wrapperPanel.append("p").attr("class", "smallHeading").text("Load Results");
-
-
         wrapperPanel.append("div").attr("class", "messagebar").html("&nbsp;"); //.style("display", "none");
-        
+
         d3.select(this.el).selectAll(".smallHeading").classed("smallHeadingBar", true);
 
         this.stage = new NGL.Stage("ngl", { /*fogNear: 20, fogFar: 100,*/
@@ -163,10 +162,10 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             var nameArr = _.pluck(newSequences, "name");
             // list pdb's these sequences derive from
             //console.log ("seq", newSequences);
-            var pdbString = nameArr ? 
+            var pdbString = nameArr ?
                 d3.set (nameArr.map(function(name) { return name.substr(0, _./*last*/indexOf (name, ":")); })).values().join(", ") : "?"
             ;
-            
+
             var msg = newSequences.failureReason ? "" : "Completed Loading " + sanitise(pdbString) + ".<br>";
             msg += success ? "✓ Success! " + count + " sequence" + (count > 1 ? "s" : "") + " mapped between this search and the PDB file." :
                 sanitise((newSequences.failureReason || "No sequence matches found between this search and the PDB file") +
@@ -180,7 +179,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo (CLMSUI.vent, "alignmentProgress", function(msg) {
             this.setStatusText(msg);
         });
-        
+
         // Pre-load pdb if requested
         if (viewOptions.initPDBs) {
             this.setVisible (true);
@@ -188,7 +187,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             this.loadPDBCode();
         }
     },
-    
+
     // Return selected proteins, or all proteins if nothing selected
     getSelectedProteins: function () {
         var selectedProteins = this.model.get("selectedProteins");
@@ -197,7 +196,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
     updateProteinDropdown: function(parentElem) {
         var proteins = this.getSelectedProteins();
-        
+
         CLMSUI.utils.addMultipleSelectControls({
             addToElem: parentElem,
             selectList: ["Proteins"],
@@ -253,7 +252,8 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             })
             .each(function(d) {
                 funcMeta = d;
-            });
+            })
+        ;
 
         return funcMeta;
     },
@@ -265,34 +265,12 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         window.open("http://www.ebi.ac.uk/pdbe-srv/PDBeXplore/sequence/?seq=" + chosenSeq + "&tab=PDB%20entries", "_blank");
     },
 
-    setWaitingEffect: function() {
-        this.setStatusText("Please Wait...");
-        d3.select(this.el).selectAll(".columnbar, .fakeButton").property("disabled", true).attr("disabled", true);
-        d3.select(this.el).selectAll(".btn").property("disabled", true);
-    },
-
-    setCompletedEffect: function() {
-        d3.select(this.el).selectAll(".columnbar, .fakeButton").property("disabled", false).attr("disabled", null);
-        d3.select(this.el).selectAll(".btn").property("disabled", false);
-    },
-
-    setStatusText: function(msg, success) {
-        var mbar = d3.select(this.el).select(".messagebar"); //.style("display", null);
-        var t = mbar.html(msg);
-        if (success !== undefined) {
-            t = t.transition().delay(0).duration(1000).style("color", (success === false ? "red" : (success ? "blue" : null)));
-            t.transition().duration(5000).style("color", "#091d42");
-        } else {
-            t.style("color", "#091d42");
-        }
-    },
-
     selectPDBFile: function(evt) {
         this.setWaitingEffect();
         var self = this;
         var fileObj = evt.target.files[0];
         evt.target.value = null;    // reset value so same file can be chosen twice in succession
-        
+
         CLMSUI.modelUtils.loadUserFile(fileObj, function(pdbFileContents) {
             self.loadRoute = "file";
             var blob = new Blob([pdbFileContents], {
@@ -338,7 +316,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         var elem = d3.select(this.el).select(".inputPDBCode");
         return elem.node().checkValidity();
     },
-    
+
     toggleCAlphaSetting: function (evt) {
         var val = evt.target.checked;
         this.cAlphaOnly = val;

@@ -107,6 +107,17 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     tooltip: "Filter to cross-links involving a protein name/identifier including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
                 {
+                    label: "Description",
+                    id: "protDesc",
+                    chars: 7,
+                    tooltip: "Filter to cross-links involving a protein with a description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
+                },
+                {
+                    label: "PDB?",
+                    id: "protPDB",
+                    tooltip: "Filter to cross-links where the proteins at both ends are in the current PDB file (if one chosen)"
+                },
+                {
                     label: "Run",
                     id: "runName",
                     chars: 5,

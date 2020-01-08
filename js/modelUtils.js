@@ -604,6 +604,8 @@ CLMSUI.modelUtils = {
         var crossLinks = clmsModel.get("crossLinks");
         var crossLinksArr = CLMS.arrayFromMapValues (crossLinks);
         var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
+        var crossLinksByProteinPairing = CLMSUI.modelUtils.crosslinkCountPerProteinPairing (crossLinksArr);
+
         var first = true;
         var columns = [];
         var columnTypes = {};
@@ -620,6 +622,8 @@ CLMSUI.modelUtils = {
         }
 
         var matchedCrossLinks = [];
+        var ppiCount = 0;
+
         d3.csv.parse(metaDataFileContents, function(d) {
             var linkID = d.linkID || d.LinkID;
             var singleCrossLink = crossLinks.get(linkID);
@@ -636,11 +640,14 @@ CLMSUI.modelUtils = {
                 var linkIDB = pkey2 + "_" + spos2 + "-" + pkey1 + "_" + spos1;
                 singleCrossLink = crossLinks.get(linkIDA) || crossLinks.get(linkIDB);
 
-                if (singleCrossLink == null && spos1 == null && spos2 == null) {   // PPI
-                    rowCrossLinkArr = crossLinksArr.filter (function (crossLink) {
-                        return (crossLink.toProtein.id === pkey1 && crossLink.fromProtein.id === pkey2) || (crossLink.toProtein.id === pkey2 && crossLink.fromProtein.id === pkey1);
-                    });
-                    //console.log ("ml", rowCrossLinkArr);
+                //console.log ("spos", spos1, spos2, pkey1, pkey2, spos1 == null, spos2 == null);  //  "" != null?
+                if (singleCrossLink == null && ((spos1 == null && spos2 == null) || (spos1 == "" && spos2 == ""))) {   // PPI
+                    // get crosslinks for this protein pairing (if any)
+                    var proteinPair = [pkey1, pkey2].sort();
+                    var proteinPairing = crossLinksByProteinPairing[proteinPair.join("-")];
+                    if (proteinPairing) {
+                        rowCrossLinkArr = proteinPairing.crossLinks;
+                    }
                 }
             }
 
@@ -649,6 +656,7 @@ CLMSUI.modelUtils = {
             }
 
             if (rowCrossLinkArr && rowCrossLinkArr.length > 0) {
+                ppiCount++;
                 matchedCrossLinks.push.apply (matchedCrossLinks, rowCrossLinkArr);
                 var keys = d3.keys(d);
 
@@ -698,16 +706,19 @@ CLMSUI.modelUtils = {
         columns.forEach (registry.add, registry);
         clmsModel.set("crossLinkMetaRegistry", registry);
 
-        if (columns) {
-            CLMSUI.vent.trigger("linkMetadataUpdated", {
+        var result = {
                 columns: columns,
                 columnTypes: columnTypes,
                 items: crossLinks,
-                matchedItemCount: matchedCrossLinkCount
-            }, {
-                source: "file"
-            });
+            matchedItemCount: matchedCrossLinkCount,
+            ppiCount: ppiCount
+        };
+
+        if (columns) {
+            CLMSUI.vent.trigger("linkMetadataUpdated", result, {source: "file"});
         }
+
+        return result;
     },
 
     updateProteinMetadata: function(metaDataFileContents, clmsModel) {
@@ -1232,20 +1243,23 @@ CLMSUI.modelUtils = {
         return arr || orig2DArr;
     },
 
-    crosslinkCountPerProteinPairing: function(crossLinkArr) {
+    crosslinkCountPerProteinPairing: function (crossLinkArr, includeLinears) {
         var obj = {};
+        var linearShim = {id: "*linear", name: "linear"};
         crossLinkArr.forEach(function(crossLink) {
+            if (crossLink.toProtein || includeLinears) {
             var fromProtein = crossLink.fromProtein;
-            var toProtein = crossLink.toProtein;
-            if (toProtein) {
-                var key = fromProtein.id + "-" + toProtein.id;
+                var toProtein = crossLink.toProtein || linearShim;
+                var proteinA = fromProtein.id > toProtein.id ? toProtein : fromProtein;
+                var proteinB = toProtein.id >= fromProtein.id ? toProtein : fromProtein;
+                var key = proteinA.id + "-" + proteinB.id;
                 var pairing = obj[key];
                 if (!pairing) {
                     pairing = {
                         crossLinks: [],
-                        fromProtein: fromProtein,
-                        toProtein: toProtein,
-                        label: fromProtein.name.replace("_", " ") + " - " + toProtein.name.replace("_", " ")
+                        fromProtein: proteinA,
+                        toProtein: proteinB,
+                        label: proteinA.name.replace("_", " ") + " - " + proteinB.name.replace("_", " ")
                     };
                     obj[key] = pairing;
                 }

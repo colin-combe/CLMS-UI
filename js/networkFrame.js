@@ -373,7 +373,7 @@ CLMSUI.init.views = function() {
     //todo: only if there is validated {
     // compModel.get("filterModel").set("unval", false); // set to false in filter model defaults
 
-    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel", "goTermsPanel"];
+    var windowIds = ["spectrumPanelWrapper", "spectrumSettingsWrapper", "keyPanel", "nglPanel", "distoPanel", "matrixPanel", "alignPanel", "circularPanel", "proteinInfoPanel", "pdbPanel", "stringPanel", "csvPanel", "searchSummaryPanel", "linkMetaLoadPanel", "proteinMetaLoadPanel", "userAnnotationsMetaLoadPanel", "gafAnnotationsMetaLoadPanel", "scatterplotPanel", "urlSearchBox", "listPanel", "goTermsPanel"];
     // something funny happens if I do a data join and enter with d3 instead
     // ('distoPanel' datum trickles down into chart axes due to unintended d3 select.select inheritance)
     // http://stackoverflow.com/questions/18831949/d3js-make-new-parent-data-descend-into-child-nodes
@@ -1053,6 +1053,13 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         model: compModel,
         displayEventName: "pdbShow",
         initPDBs: urlChunkMap.pdb,
+    });
+
+    new CLMSUI.STRINGFileChooserBB({
+        el: "#stringPanel",
+        model: compModel,
+        displayEventName: "stringShow",
+        //initPDBs: urlChunkMap.pdb,
     });
 
     new CLMSUI.ScatterplotViewBB({

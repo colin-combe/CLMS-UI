@@ -52,14 +52,17 @@ CLMSUI.AbstractMetaDataFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         wrapperPanel.append("div").attr("class", "messagebar").style("display", "none");
 
         var formatPanel = wrapperPanel.append("div").attr("class", "expectedFormatPanel");
-        
+
         formatPanel.append("a")
             .text ("Click to open XiDocs for CSV format details")
             .attr ("href", self.options.docUrl)
             .attr ("target", "_blank")
         ;
-        
-        this.listenTo(CLMSUI.vent, self.options.loadedEventName, function(metaMetaData, sourceData) {
+    },
+
+    setUpCompletionListener: function () {
+        var self = this;
+        this.listenToOnce (CLMSUI.vent, self.options.loadedEventName, function(metaMetaData, sourceData) {
             if (sourceData && sourceData.source === "file") {
                 var columns = metaMetaData.columns;
                 var matchedItemCount = metaMetaData.matchedItemCount;
@@ -107,7 +110,8 @@ CLMSUI.ProteinMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.exten
     },
 
     onLoadFunction: function(fileContents) {
-        CLMSUI.modelUtils.updateProteinMetadata(fileContents, this.model.get("clmsModel"));
+        this.setUpCompletionListener ();
+        CLMSUI.modelUtils.updateProteinMetadata (fileContents, this.model.get("clmsModel"));
     },
 
     identifier: "Protein MetaData File Chooser",
@@ -128,7 +132,8 @@ CLMSUI.LinkMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooserBB.extend({
     },
 
     onLoadFunction: function(fileContents) {
-        CLMSUI.modelUtils.updateLinkMetadata(fileContents, this.model.get("clmsModel"));
+        this.setUpCompletionListener ();
+        CLMSUI.modelUtils.updateLinkMetadata (fileContents, this.model.get("clmsModel"));
     },
 
     identifier: "Cross-Link MetaData File Chooser",
@@ -149,10 +154,11 @@ CLMSUI.UserAnnotationsMetaDataFileChooserBB = CLMSUI.AbstractMetaDataFileChooser
     },
 
     onLoadFunction: function(fileContents) {
-        CLMSUI.modelUtils.updateUserAnnotationsMetadata(fileContents, this.model.get("clmsModel"));
+        this.setUpCompletionListener ();
+        CLMSUI.modelUtils.updateUserAnnotationsMetadata (fileContents, this.model.get("clmsModel"));
     },
 
     identifier: "User Annotations File Chooser",
 });
 
-CLMSUI.MetaLoaderViewRegistry = [CLMSUI.ProteinMetaDataFileChooserBB, CLMSUI.LinkMetaDataFileChooserBB, CLMSUI.UserAnnotationsMetaDataFileChooserBB, CLMSUI.GafMetaDataFileChooserBB];
+CLMSUI.MetaLoaderViewRegistry = [CLMSUI.ProteinMetaDataFileChooserBB, CLMSUI.LinkMetaDataFileChooserBB, CLMSUI.UserAnnotationsMetaDataFileChooserBB];
