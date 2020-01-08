@@ -558,11 +558,16 @@ CLMSUI.init.views = function() {
             eventName: "pdbShow",
             tooltip: "Load a PDB File from local disk or by PDB ID code from RCSB.org. Allows viewing of 3D Structure and of distance background in Matrix View"
         },
-        // {
-        //     name: "Cross-Links (CSV)",
-        //     eventName: "csvShow",
-        //     tooltip: "Load Cross-Links from a local CSV File"
-        // },
+        {
+            name: "STRING Data",
+            eventName: "stringShow",
+            tooltip: "Load STRING data from the STRING server. Note: limited to <2,000 proteins, for more generate a CSV file for import as PPI Metadata"
+        },
+//        {
+//            name: "Cross-Links (CSV)",
+//            eventName: "csvShow",
+//            tooltip: "Load Cross-Links from a local CSV File"
+//        },
         {
             name: "Cross-Link or PPI Metadata",
             eventName: "linkMetaShow",
