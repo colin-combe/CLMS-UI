@@ -92,16 +92,16 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {
                     label: "Decoy",
                     id: "decoys",
-                    tooltip: "Show decoy cross-links"
+                    tooltip: "Show passing decoy crosslinks"
                 },
                 {
-                    label: "Peptide",
+                    label: "Pep Seq",
                     id: "pepSeq",
                     chars: 7,
                     tooltip: "Filter to cross-links with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE",
                 },
                 {
-                    label: "Protein",
+                    label: "Name",
                     id: "protNames",
                     chars: 7,
                     tooltip: "Filter to cross-links involving a protein name/identifier including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
@@ -241,7 +241,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     }
                     else {
                         self.addTextFilter (d3.select(this));
-        }
+                    }
                 })
             ;
         }
@@ -363,7 +363,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         //addFilterGroup.call (this, {id: "validationStatus", groupName: "Auto Val"}, ["A", "B", "C", "Q", "AUTO", "unval", "decoys"]);
         initMinigramFilterGroup.call(this, {attr: "matchScoreCutoff", extentProperty: "scoreExtent", label: "Match Score", id: "matchScore", groupName: "Scores", tooltipIntro: "Filter out matches with scores"});
         initFDRPlaceholder.call(this);
-        addFilterGroup.call (this, {id: "navFilters", groupName: "Protein"}, ["pepSeq", "protNames"]);
+        addFilterGroup.call (this, {id: "navFilters", groupName: "Protein"}, ["pepSeq", "protNames", "protDesc", "protPDB"]);
         addFilterGroup.call (this, {id: "navMassSpecFilters", groupName: "Mass Spec"}, ["runName", "scanNumber"]);
         addFilterGroup.call (this, {id: "groupFilters", groupName: "Groups"}, groupIDs);
         addFilterGroup.call (this, {id: "navNumberFilters", groupName: "PPI"}, ["urpPpi"]);
