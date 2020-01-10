@@ -867,7 +867,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return resno !== undefined ? this.getAtomIndex (resObj.seqIndex, resObj.chainIndex) : undefined;
     },
 
-    getFirstAtomPerChainSelection: function(chainIndexSet) {
+    makeFirstAtomPerChainSelectionString: function(chainIndexSet) {
         var comp = this.get("structureComp").structure;
         var sels = [];
         comp.eachChain(function(cp) {
@@ -880,7 +880,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     // Get a NGL selection for chains listing only the chainIndices passed in as a property of chainItems
-    getChainSelection: function(chainItems) {
+    makeChainSelectionString: function(chainItems) {
         var selectionString = "all";
         var showAll = chainItems.showAll || false;
         var chainIndices = chainItems.chainIndices || [];
