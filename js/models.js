@@ -119,6 +119,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {}, {
             var entries = d3.entries (response);
             var values = entries.map(function (entry) {
                 entry.value.id = entry.key;
+                entry.value.name = entry.key;
                 return entry.value;
             });
 

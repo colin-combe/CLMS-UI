@@ -313,7 +313,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var residue = self.model.get("stageModel").getResidueByNGLGlobalIndex (arindex);
 
                 if (residue !== undefined) {
-                    var linkCount = self.xlRepr ? self.xlRepr.crosslinkData.getHalfLinkCountByResidue (residue) : 0;
+                    var linkCount = self.xlRepr ? self.xlRepr.nglModelWrapper.getHalfLinkCountByResidue (residue) : 0;
                     this.lastColour = (linkCount > 0 ? 0x000077 : 0xcccccc);
                 } else {
                     this.lastColour = 0xcccccc;
@@ -525,8 +525,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     },
 
     reportLinks: function () {
-        var fullLinkCount = this.xlRepr.crosslinkData.getFullLinkCount();
-        var halfLinkCount = this.xlRepr.crosslinkData.getHalfLinkCount();
+        var fullLinkCount = this.xlRepr.nglModelWrapper.getFullLinkCount();
+        var halfLinkCount = this.xlRepr.nglModelWrapper.getHalfLinkCount();
         var currentFilteredLinkCount = this.model.getFilteredCrossLinks().length;
         var missingLinkCount = currentFilteredLinkCount - fullLinkCount - halfLinkCount;
         var commaFormat = d3.format(",");
@@ -574,7 +574,6 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 selectedColor: "yellow",
                 selectedLinksColor: "yellow",
                 sstrucColourScheme: this.colourScheme,
-                displayedLabelColor: "black",
                 displayedLabelVisible: this.options.labelVisible,
                 showAllProteins: this.options.showAllProteins,
             }
@@ -803,14 +802,14 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     showHighlightedLinks: function() {
         if (this.xlRepr && this.isVisible()) {
-            this.xlRepr.setHighlightedLinks (this.xlRepr.crosslinkData.getFullLinks());
+            this.xlRepr.setHighlightedLinks (this.xlRepr.nglModelWrapper.getFullLinks());
         }
         return this;
     },
 
     showSelectedLinks: function() {
         if (this.xlRepr && this.isVisible()) {
-            this.xlRepr.setSelectedLinks (this.xlRepr.crosslinkData.getFullLinks());
+            this.xlRepr.setSelectedLinks (this.xlRepr.nglModelWrapper.getFullLinks());
         }
         return this;
     },
@@ -862,7 +861,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
 
 
-CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
+CLMSUI.CrosslinkRepresentation = function(newNGLModelWrapper, params) {
 
     var defaults = {
         sstrucColourScheme: "uniform",
@@ -882,7 +881,7 @@ CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
     //this.options = p;
     //this.setParameters (p, true);
 
-    this.setup(nglModelWrapper);
+    this.setup(newNGLModelWrapper);
 
     this.stage.signals.clicked.add(this._selectionPicking, this);
     this.stage.signals.hovered.add(this._highlightPicking, this);
@@ -890,7 +889,7 @@ CLMSUI.CrosslinkRepresentation = function(nglModelWrapper, params) {
         // so calls that reach here are those left clicks without ctrl
         if (!pickingProxy) { // and if no pickingProxy i.e. nothing was clicked on
             // then blank the current selection
-            nglModelWrapper.getModel().setMarkedCrossLinks("selection", [], false, false);
+            newNGLModelWrapper.getModel().setMarkedCrossLinks("selection", [], false, false);
         }
         return false;
     });
@@ -901,11 +900,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     constructor: CLMSUI.CrosslinkRepresentation,
 
     // just a way of accessing the main modelly bits more succintly
-    setup: function(nglModelWrapper) {
-        this.stage = nglModelWrapper.get("structureComp").stage;
-        this.chainMap = nglModelWrapper.get("chainMap");
-        this.structureComp = nglModelWrapper.get("structureComp");
-        this.crosslinkData = nglModelWrapper;
+    setup: function(newNGLModelWrapper) {
+        this.stage = newNGLModelWrapper.get("structureComp").stage;
+        this.chainMap = newNGLModelWrapper.get("chainMap");
+        this.structureComp = newNGLModelWrapper.get("structureComp");
+        this.nglModelWrapper = newNGLModelWrapper;
 
         this.colorOptions = {};
         this
@@ -947,8 +946,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _initStructureRepr: function() {
 
         var comp = this.structureComp;
-        var resSele = this.crosslinkData.getSelectionFromResidueList(this.crosslinkData.getResidues());
-        var resEmphSele = this.crosslinkData.getSelectionFromResidueList([]);
+        var resSele = this.nglModelWrapper.getSelectionFromResidueList(this.nglModelWrapper.getResidues());
+        var resEmphSele = this.nglModelWrapper.getSelectionFromResidueList([]);
 
         this.replaceChainRepresentation(this.options.chainRep);
 
@@ -973,11 +972,11 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _initLinkRepr: function() {
 
         var comp = this.structureComp;
-        var links = this.crosslinkData.getFullLinks();
+        var links = this.nglModelWrapper.getFullLinks();
 
-        var xlPair = this.crosslinkData.getAtomPairsFromLinks (links);
-        var xlPairEmph = this.crosslinkData.getAtomPairsFromLinks (this.filterByLinkState(links, "selection"));
-        var xlPairHigh = this.crosslinkData.getAtomPairsFromLinks (this.filterByLinkState(links, "highlights"));
+        var xlPair = this.nglModelWrapper.getAtomPairsFromLinks (links);
+        var xlPairEmph = this.nglModelWrapper.getAtomPairsFromLinks (this.filterByLinkState(links, "selection"));
+        var xlPairHigh = this.nglModelWrapper.getAtomPairsFromLinks (this.filterByLinkState(links, "highlights"));
         var baseLinkScale = 3;
 
         this.linkRepr = comp.addRepresentation("distance", {
@@ -1040,7 +1039,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var verboseSetting = this.options.chainLabelSetting;
 
         var chainIndexToProteinMap = d3.map();
-        d3.entries(self.crosslinkData.get("chainMap")).forEach(function(cmapEntry) {
+        d3.entries(self.nglModelWrapper.get("chainMap")).forEach(function(cmapEntry) {
             cmapEntry.value.forEach(function(chainData) {
                 chainIndexToProteinMap.set(chainData.index, cmapEntry.key);
             });
@@ -1051,7 +1050,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var pid = chainIndexToProteinMap.get(chainProxy.index);
             //console.log ("chain label", chainProxy.index, chainProxy.chainname, chainProxy.residueCount, chainProxy.entity.description, pid);
             if (pid && CLMSUI.NGLUtils.isViableChain(chainProxy)) {
-                var protein = self.crosslinkData.getModel().get("clmsModel").get("participants").get(pid);
+                var protein = self.nglModelWrapper.getModel().get("clmsModel").get("participants").get(pid);
                 var pname = protein ? protein.name : "none";
                 customText[chainProxy.atomOffset] = (verboseSetting === "None" ? "" : (pname + ":" + chainProxy.chainname + "(" + chainProxy.index + ")" + (verboseSetting === "Verbose" ? " " + description : "")));
             }
@@ -1063,7 +1062,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     _initLabelRepr: function() {
         var customText = this.getLabelTexts();
 
-        var atomSelection = this.crosslinkData.makeFirstAtomPerChainSelectionString();
+        var atomSelection = this.nglModelWrapper.makeFirstAtomPerChainSelectionString();
         //CLMSUI.utils.xilog ("LABEL SELE", atomSelection);
         this.labelRepr = this.structureComp.addRepresentation("label", {
             radiusScale: 3,
@@ -1091,9 +1090,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             var colCache = {};
             //var first = true;
             this.bondColor = function(b) {
-                var linkObj = self.crosslinkData.getFullLinkByNGLResIndices (b.atom1.residueIndex, b.atom2.residueIndex) || self.crosslinkData.getFullLinkByNGLResIndices (b.atom2.residueIndex, b.atom1.residueIndex);
+                var linkObj = self.nglModelWrapper.getFullLinkByNGLResIndices (b.atom1.residueIndex, b.atom2.residueIndex) || self.nglModelWrapper.getFullLinkByNGLResIndices (b.atom2.residueIndex, b.atom1.residueIndex);
                 var origLinkID = linkObj.origId;
-                var model = self.crosslinkData.getModel();
+                var model = self.nglModelWrapper.getModel();
                 var link = model.get("clmsModel").get("crossLinks").get(origLinkID);
                 var colRGBString = model.get("linkColourAssignment").getColour(link); // returns an 'rgb(r,g,b)' string
                 var col24bit = colCache[colRGBString];
@@ -1165,7 +1164,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     _handlePicking: function(pickingData, pickType, doEmpty) {
-        var crosslinkData = this.crosslinkData;
+        var nglModelWrapper = this.nglModelWrapper;
         //CLMSUI.utils.xilog ("Picking Data", pickingData);
         var pdtrans = {
             residue: undefined,
@@ -1190,28 +1189,28 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             if (atom !== undefined && link3d === undefined) {
                 //console.log (atom.atomname);
                 CLMSUI.utils.xilog("picked atom", atom, atom.residueIndex, atom.resno, atom.chainIndex);
-                var residue = crosslinkData.getResidueByNGLGlobalIndex (atom.residueIndex);
+                var residue = nglModelWrapper.getResidueByNGLGlobalIndex (atom.residueIndex);
                 if (residue) {
                     // this is to find the index of the residue in searchindex (crosslink) terms
                     // thought I could rely on residue.seqIndex + chain.residueOffset but nooooo.....
-                    var proteinId = crosslinkData.get("reverseChainMap").get(residue.chainIndex);
-                    var alignId = CLMSUI.NGLUtils.make3DAlignID (crosslinkData.getStructureName(), atom.chainname, atom.chainIndex);
+                    var proteinId = nglModelWrapper.get("reverseChainMap").get(residue.chainIndex);
+                    var alignId = CLMSUI.NGLUtils.make3DAlignID (nglModelWrapper.getStructureName(), atom.chainname, atom.chainIndex);
                     // align from 3d to search index. seqIndex is 0-indexed so +1 before querying
                     //CLMSUI.utils.xilog ("alignid", alignId, proteinId);
-                    var srindex = crosslinkData.getModel().get("alignColl").getAlignedIndex(residue.seqIndex + 1, proteinId, true, alignId);
+                    var srindex = nglModelWrapper.getModel().get("alignColl").getAlignedIndex(residue.seqIndex + 1, proteinId, true, alignId);
 
-                    pdtrans.links = crosslinkData.getFullLinksByResidueID (residue.residueId);
-                    var origFullLinks = crosslinkData.getOriginalCrossLinks (pdtrans.links);
-                    var halfLinks = crosslinkData.getHalfLinksByResidueID (residue.residueId);
-                    var origHalfLinks = crosslinkData.getOriginalCrossLinks (halfLinks);
+                    pdtrans.links = nglModelWrapper.getFullLinksByResidueID (residue.residueId);
+                    var origFullLinks = nglModelWrapper.getOriginalCrossLinks (pdtrans.links);
+                    var halfLinks = nglModelWrapper.getHalfLinksByResidueID (residue.residueId);
+                    var origHalfLinks = nglModelWrapper.getOriginalCrossLinks (halfLinks);
                     var distances = origFullLinks.map (function (xlink) { return xlink.getMeta("distance"); });
 
                     pdtrans.xlinks = origFullLinks.concat (origHalfLinks);
 
                     var cp = this.structureComp.structure.getChainProxy (residue.chainIndex);
-                    var protein = crosslinkData.getModel().get("clmsModel").get("participants").get(proteinId);
+                    var protein = nglModelWrapper.getModel().get("clmsModel").get("participants").get(proteinId);
                     //console.log ("cp", cp, pdtrans, this, this.structureComp);
-                    crosslinkData.getModel().get("tooltipModel")
+                    nglModelWrapper.getModel().get("tooltipModel")
                         .set("header", "Cross-Linked with " + CLMSUI.modelUtils.makeTooltipTitle.residue(protein, srindex, ":" + cp.chainname+"/"+cp.modelIndex))
                         .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks(pdtrans.xlinks, protein.id, srindex, {"Distance": distances}))
                         .set("location", this.makeTooltipCoords(pickingData.canvasPosition))
@@ -1221,20 +1220,20 @@ CLMSUI.CrosslinkRepresentation.prototype = {
                 // atomIndex / resno’s output here are wrong, usually sequential (indices) or the same (resno’s)
                 CLMSUI.utils.xilog("picked bond", link3d, link3d.index, link3d.atom1.resno, link3d.atom2.resno, link3d.atomIndex1, link3d.atomIndex2);
 
-                var residueA = crosslinkData.getResidueByNGLGlobalIndex (link3d.atom1.residueIndex);
-                var residueB = crosslinkData.getResidueByNGLGlobalIndex (link3d.atom2.residueIndex);
+                var residueA = nglModelWrapper.getResidueByNGLGlobalIndex (link3d.atom1.residueIndex);
+                var residueB = nglModelWrapper.getResidueByNGLGlobalIndex (link3d.atom2.residueIndex);
                 CLMSUI.utils.xilog("res", link3d.atom1.residueIndex, link3d.atom2.residueIndex);
                 if (pickType === "selection") {
-                    var selectionSelection = this.crosslinkData.getSelectionFromResidueList([residueA, residueB]);
+                    var selectionSelection = this.nglModelWrapper.getSelectionFromResidueList([residueA, residueB]);
                     CLMSUI.utils.xilog("seleSele", selectionSelection);
                     this.structureComp.autoView(selectionSelection, 1000);
                 }
 
                 if (residueA && residueB) {
-                    pdtrans.links = crosslinkData.getSharedLinks(residueA, residueB);
-                    pdtrans.xlinks = crosslinkData.getOriginalCrossLinks(pdtrans.links);
+                    pdtrans.links = nglModelWrapper.getSharedLinks(residueA, residueB);
+                    pdtrans.xlinks = nglModelWrapper.getOriginalCrossLinks(pdtrans.links);
 
-                    crosslinkData.getModel().get("tooltipModel")
+                    nglModelWrapper.getModel().get("tooltipModel")
                         .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
                         .set("contents", CLMSUI.modelUtils.makeTooltipContents.link(pdtrans.xlinks[0]))
                         .set("location", this.makeTooltipCoords(pickingData.canvasPosition))
@@ -1245,21 +1244,21 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
         if (!pdtrans.links && doEmpty) {
             pdtrans.xlinks = [];
-            crosslinkData.getModel().get("tooltipModel").set("contents", null); // Clear tooltip
+            nglModelWrapper.getModel().get("tooltipModel").set("contents", null); // Clear tooltip
         }
         //CLMSUI.utils.xilog ("pd and pdtrans", pickingData, pdtrans.xlinks);
 
-        crosslinkData.getModel().setMarkedCrossLinks(pickType, pdtrans.xlinks, false, add);
+        nglModelWrapper.getModel().setMarkedCrossLinks(pickType, pdtrans.xlinks, false, add);
     },
 
-    // fired when setLinkList called on representation's associated crosslinkData object
+    // fired when setLinkList called on representation's associated nglModelWrapper object
     _handleDataChange: function() {
         CLMSUI.utils.xilog("HANDLE DATA CHANGE 3D");
         this.redisplayProteins();
 
-        var links = this.crosslinkData.getFullLinks();
+        var links = this.nglModelWrapper.getFullLinks();
         this
-            .setDisplayedResidues(this.crosslinkData.getResidues())
+            .setDisplayedResidues(this.nglModelWrapper.getResidues())
             .setSelectedResidues([])
             .setDisplayedLinks(links)
             .setSelectedLinks(links)
@@ -1277,19 +1276,19 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     },
 
     makeVisibleChainsSelectionString: function (precalcedShowableChains) {  // precalced - if we already know which chains to show, so don't calculate twice
-        var showableChains = precalcedShowableChains || this.crosslinkData.getShowableChains(this.options.showAllProteins);
-        var chainSele = this.crosslinkData.makeChainSelectionString (showableChains);
+        var showableChains = precalcedShowableChains || this.nglModelWrapper.getShowableChains(this.options.showAllProteins);
+        var chainSele = this.nglModelWrapper.makeChainSelectionString (showableChains);
         CLMSUI.utils.xilog("showable chains", showableChains, chainSele);
         return chainSele;
     },
 
     redisplayProteins: function () {
-        var showableChains = this.crosslinkData.getShowableChains(this.options.showAllProteins);
+        var showableChains = this.nglModelWrapper.getShowableChains(this.options.showAllProteins);
         var chainSele = this.makeVisibleChainsSelectionString (showableChains);
         CLMSUI.utils.xilog("showable chains", showableChains, chainSele);
         this.sstrucRepr.setSelection(chainSele);
         if (this.labelRepr) {
-            var labelSele = this.crosslinkData.makeFirstAtomPerChainSelectionString(d3.set(showableChains.chainIndices));
+            var labelSele = this.nglModelWrapper.makeFirstAtomPerChainSelectionString(d3.set(showableChains.chainIndices));
             //CLMSUI.utils.xilog ("LABEL SELE", labelSele);
             this.labelRepr.setSelection(labelSele);
         }
@@ -1308,9 +1307,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
     // Repopulate a residue representation with a set of residues
     setResidues: function(residues, residueRepr) {
-        var availableResidues = this.crosslinkData.getAvailableResidues(residues);
+        var availableResidues = this.nglModelWrapper.getAvailableResidues(residues);
         residueRepr.setSelection (
-            this.crosslinkData.getSelectionFromResidueList(availableResidues)
+            this.nglModelWrapper.getSelectionFromResidueList(availableResidues)
         );
         return this;
     },
@@ -1337,7 +1336,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         if (linkState === undefined) {  // return every current link if no linkState defined
             return links;
         }
-        var selectedSet = d3.set(_.pluck(this.crosslinkData.getModel().getMarkedCrossLinks(linkState), "id"));
+        var selectedSet = d3.set(_.pluck(this.nglModelWrapper.getModel().getMarkedCrossLinks(linkState), "id"));
         return links.filter (function(l) {
             return selectedSet.has(l.origId);
         });
@@ -1345,8 +1344,8 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
     // Filter a link array by a link state and then set the atoms at each link end as pairs for a given distance representation
     setLinkRep: function(links, aLinkRepr, linkState) {
-        var availableLinks = this.crosslinkData.getAvailableLinks (this.filterByLinkState(links, linkState));
-        var availableAtomPairs = this.crosslinkData.getAtomPairsFromLinks(availableLinks);
+        var availableLinks = this.nglModelWrapper.getAvailableLinks (this.filterByLinkState(links, linkState));
+        var availableAtomPairs = this.nglModelWrapper.getAtomPairsFromLinks(availableLinks);
         aLinkRepr.setParameters ({atomPair: availableAtomPairs});
         return this;
     },

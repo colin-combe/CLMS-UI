@@ -127,20 +127,20 @@ CLMSUI.NGLUtils = {
                         }
                         var removeThese = bbmodel.get("stageModel") ? [bbmodel.get("stageModel").getStructureName()] : [];    // old alignments to remove
                         bbmodel.trigger("3dsync", sequenceMap, removeThese);
-                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
+                        // Now 3d sequence is added we can make a new NGL Model wrapper (as it needs aligning)
 
                         // Make a new model and set of data ready for the ngl viewer
-                        var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB();
-                        crosslinkData.set({
+                        var newNGLModelWrapper = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB();
+                        newNGLModelWrapper.set({
                             structureComp: structureComp,
                             chainMap: chainMap,
                             masterModel: bbmodel,
                         });
-                        bbmodel.set("stageModel", crosslinkData);
+                        bbmodel.set("stageModel", newNGLModelWrapper);
                         // important that the new stagemodel is set first ^^^ before we setupLinks() on the model
                         // otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
                         // changed:linklist event is received. (i.e. it broke the other way round)
-                        crosslinkData.setupLinks();
+                        newNGLModelWrapper.setupLinks();
                     }
                 }
             });

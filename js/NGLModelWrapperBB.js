@@ -774,7 +774,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         } else {
             // if resnoList == 'all' replace it with array of all residues
             if (resnoList === "all") {
-                resnoList = this.crosslinkData.getResidues();
+                resnoList = this.getResidues();
             }
 
             // if resnoList is single item, make it an array of the single item
