@@ -434,7 +434,8 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             CLMSUI.utils.xilog("STAGE MODEL CHANGED", arguments, this, prevStageModel);
             if (prevStageModel) {
                 this.stopListening (prevStageModel); // remove old stagemodel linklist change listener
-                prevStageModel.stopListening();
+                this.stopListening (CLMSUI.vent, "changeAllowInterModelDistances"); // stop this too, CLMSUI.vent hangs onto old stagemodel via this event otherwise
+                prevStageModel.stopListening (CLMSUI.vent, "changeAllowInterModelDistances");
             }
             // set xlRepr to null on stage model change as it's now an overview of old data
             // (it gets reset to a correct new value in repopulate() when distancesObj changes - eventlistener above)
@@ -468,7 +469,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     if (this.xlRepr) {
                         this.showFiltered();
                     }
-                    disableHaddock (newStageModel);
+                    disableHaddock (stageModel);
                 })
                 .listenTo (newStageModel, "change:showShortestLinksOnly", function (stageModel, value) {
                     this.options.shortestLinksOnly = value;
@@ -1367,8 +1368,19 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     dispose: function() {
         this.stage.signals.clicked.remove(this._selectionPicking, this);
         this.stage.signals.hovered.remove(this._highlightPicking, this);
+        this.stage.mouseControls.remove ('clickPick-left'); // added 14/01/2020 MJG to stop crosslinkrep object lingering in memory via mouseControl-NGL persistence
         // console.log ("dispose called");
         // this.stage.removeAllComponents(); // calls dispose on each component, which calls dispose on each representation
+
+        // Remove NGL Registered Colour Schemes - 14/01/2020 - MJG
+        // The colour schemes contain references to the CrosslinkRepresentation object that set it up, so unless we do this, the CrosslinkRepresentations
+        // keep hanging around in memory.
+        NGL.ColormakerRegistry.removeScheme (this.colorOptions.residueColourScheme);
+        NGL.ColormakerRegistry.removeScheme (this.colorOptions.linkColourScheme);
+
+        //console.log ("struc", this.structureComp);
+        //this.structureComp.measureRepresentations.dispose();
+
         return this;
     },
 

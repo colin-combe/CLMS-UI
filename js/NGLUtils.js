@@ -135,6 +135,7 @@ CLMSUI.NGLUtils = {
                             structureComp: structureComp,
                             chainMap: chainMap,
                             masterModel: bbmodel,
+                            name: "NGLModelWrapper "+structureComp.structure.name,
                         });
                         bbmodel.set("stageModel", newNGLModelWrapper);
                         // important that the new stagemodel is set first ^^^ before we setupLinks() on the model
@@ -208,7 +209,7 @@ CLMSUI.NGLUtils = {
         */
 
         function dealWithReturnedData (data) {
-            //console.log ("DATAAA", data);
+            console.log ("DATAAA", data);
             var map = d3.map();
 
             $(data).find("block").each(function(i, b) {

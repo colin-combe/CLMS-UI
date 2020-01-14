@@ -30,7 +30,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         this.listenTo (this, "change:allowInterModelDistances", function (model, val) {
             var compModel = this.get("masterModel");
             compModel.getCrossLinkDistances (compModel.getAllCrossLinks());  // regenerate distances for all crosslinks
-            CLMSUI.vent.trigger ("changeAllowInterModelDistances", val);
+            CLMSUI.vent.trigger ("changeAllowInterModelDistances", model, val);
         });
 
         this.listenTo (this, "change:chainMap", function (model, val) {
