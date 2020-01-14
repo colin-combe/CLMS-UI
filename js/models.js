@@ -32,21 +32,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
             },
         }),
 
-        ChainBooleanModel: Backbone.Model.extend({
-            initialize: function(modelOptions) {
-                var defaultOptions = {
-                    chainMap: {}
-                };
-                this.options = _.extend(defaultOptions, modelOptions.myOptions);
-
-                var chainValues = d3.values(this.options.chainMap);
-                chainValues = d3.merge(chainValues); // flatten array
-                chainValues.forEach (function (chainValue) {
-                    this.set (chainValue.index, true);
-                }, this);
-            },
-        }),
-
+        /*
         ConsensusModel: Backbone.Model.extend({
             initialize: function(modelOptions) {
 
@@ -106,6 +92,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 console.log("bb", baseCounts, seqCounts, approxCounts, uncertainties, information, heights);
             },
         }),
+        */
 
     });
 
@@ -119,6 +106,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {}, {
             var entries = d3.entries (response);
             var values = entries.map(function (entry) {
                 entry.value.id = entry.key;
+                entry.value.name = entry.key;
                 return entry.value;
             });
 
