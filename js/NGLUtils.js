@@ -3,19 +3,19 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.NGLUtils = {
     repopulateNGL: function (pdbInfo) {
         var params = pdbInfo.params || {}; // {sele: ":A"};    // example: show just 'A' chain
-        var uri = pdbInfo.pdbCode ? "rcsb://" + pdbInfo.pdbCode : pdbInfo.pdbFileContents;
+        console.log ("params", params);
 
+        var uri = pdbInfo.pdbCode ? "rcsb://" + pdbInfo.pdbCode : pdbInfo.pdbFileContents;
         var multiplePDBURI = pdbInfo.pdbCode
             ? pdbInfo.pdbCode.match(CLMSUI.utils.commonRegexes.multiPdbSplitter).map (function (code) { return {id: code, uri:"rcsb://"+code, local: false}; })
             : [{id: pdbInfo.name, uri: pdbInfo.pdbFileContents, local: true}]
         ;
-
-        //multiplePDBURI.push ({id: "1H3O", uri: "rcsb://1H3O", local: false});
-        console.log ("MP", multiplePDBURI);
+        //console.log ("MP", multiplePDBURI);
 
         var stage = pdbInfo.stage;
         var bbmodel = pdbInfo.bbmodel;
 
+        console.log ("CLEAR STAGE");
         stage.removeAllComponents(); // necessary to remove old stuff so old sequences don't pop up in sequence finding
 
         function returnFailure(reason) {
@@ -25,10 +25,7 @@ CLMSUI.NGLUtils = {
             bbmodel.trigger("3dsync", emptySequenceMap);
         }
 
-        console.log ("params", params);
-
         Promise.all (
-            //stage.loadFile("rcsb://1AO6", params)
             multiplePDBURI.map (function (pdbURI) {
                 return stage.loadFile (pdbURI.uri, params);
             })
@@ -40,7 +37,7 @@ CLMSUI.NGLUtils = {
             .then (function (structureCompArray) {
 
                 structureCompArray = structureCompArray || [];  // set to empty array if undefined to avoid error in next bit
-                CLMSUI.utils.xilog ("structureComp", structureCompArray);
+                //CLMSUI.utils.xilog ("structureComp", structureCompArray);
                 structureCompArray.forEach (function (scomp, i) {   // give structure a name if none present (usually because loaded as local file)
                     scomp.structure.name = scomp.structure.name || multiplePDBURI[i].id;
                 });
@@ -209,7 +206,6 @@ CLMSUI.NGLUtils = {
         */
 
         function dealWithReturnedData (data) {
-            console.log ("DATAAA", data);
             var map = d3.map();
 
             $(data).find("block").each(function(i, b) {
