@@ -73,7 +73,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
         var clmsModel = this.getModel().get("clmsModel");
         // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically (as it generates an identical distance matrix)
+        // Secondly, inserting a silent set to 'null' first stops backbone temporarily storing the previous distancesobj, as they could both be quite large
         // Also want to recalculate link distances with this object, before informing views the object is new (otherwise may draw with old data)
+        clmsModel.set("distancesObj", null, {silent: true});
         clmsModel.set("distancesObj", distancesObj, {silent: true});
         distancesObj.maxDistance = d3.max (this.getModel().getHomomDistances (this.getModel().getAllCrossLinks()));
         clmsModel.trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"));

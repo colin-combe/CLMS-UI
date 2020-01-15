@@ -415,27 +415,38 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.chartDiv.append("div").attr("class", "overlayInfo").html("No PDB File Loaded");
         this.chartDiv.append("div").attr("class", "linkInfo").html("...");
 
-        this.listenTo(this.model.get("filterModel"), "change", this.showFiltered); // any property changing in the filter model means rerendering this view
-        this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", function () {
-            this.rerenderColourSchemes ([this.xlRepr ? {nglRep: this.xlRepr.linkRepr, colourScheme: this.xlRepr.colorOptions.linkColourScheme} : {nglRep: null, colourScheme: null}]);
-        }); // if crosslink colour model changes internally, or is swapped for new one
+        this
+            .listenTo (this.model.get("filterModel"), "change", this.showFiltered) // any property changing in the filter model means rerendering this view
+            .listenTo (this.model, "change:linkColourAssignment currentColourModelChanged", function () {
+                this.rerenderColourSchemes ([this.xlRepr ? {nglRep: this.xlRepr.linkRepr, colourScheme: this.xlRepr.colorOptions.linkColourScheme} : {nglRep: null, colourScheme: null}]);
+            })  // if crosslink colour model changes internally, or is swapped for new one
+            .listenTo (this.model, "change:proteinColourAssignment currentProteinColourModelChanged", function () {
+                this.rerenderColourSchemes ([this.xlRepr ? {nglRep: this.xlRepr.sstrucRepr, colourScheme: this.xlRepr.colorOptions.residueColourScheme} : {nglRep: null, colourScheme: null}]);
+            })  // if cross-view protein colour model changes, or is swapped for new one
+            .listenTo (this.model, "change:selection", this.showSelectedLinks)
+            .listenTo (this.model, "change:highlights", this.showHighlightedLinks)
+        ;
 
-        this.listenTo(this.model, "change:proteinColourAssignment currentProteinColourModelChanged", function () {
-            this.rerenderColourSchemes ([this.xlRepr ? {nglRep: this.xlRepr.sstrucRepr, colourScheme: this.xlRepr.colorOptions.residueColourScheme} : {nglRep: null, colourScheme: null}]);
-        }); // if cross-view protein colour model changes, or is swapped for new one
+        var disableHaddock = function (stageModel) {
+            mainDivSel.select(".exportHaddockButton").property("disabled", !stageModel.get("allowInterModelDistances") || stageModel.get("structureComp").structure.modelStore.count == 1);
+        };
+        // listen to CLMSUI.vent rather than directly to newStageModel's change:allowInterModelDistances as we needed to recalc distances before informing views
+        this.listenTo (CLMSUI.vent, "changeAllowInterModelDistances", function (stageModel, value) {
+            this.options.allowInterModelDistances = value;
+            d3.select(this.el).selectAll(".allowInterModelDistancesCB input").property("checked", value);
+            if (this.xlRepr) {
+                this.showFiltered();
+            }
+            disableHaddock (stageModel);
+        });
 
-        this.listenTo(this.model, "change:selection", this.showSelectedLinks);
-        this.listenTo(this.model, "change:highlights", this.showHighlightedLinks);
-        //this.listenTo(CLMSUI.vent, "PDBPermittedChainSetsUpdated", this.showHighlightedLinks);
 
         this.listenTo(this.model, "change:stageModel", function(model, newStageModel) {
             // swap out stage models and listeners
             var prevStageModel = model.previous("stageModel");
             CLMSUI.utils.xilog("STAGE MODEL CHANGED", arguments, this, prevStageModel);
             if (prevStageModel) {
-                this.stopListening (prevStageModel); // remove old stagemodel linklist change listener
-                this.stopListening (CLMSUI.vent, "changeAllowInterModelDistances"); // stop this too, CLMSUI.vent hangs onto old stagemodel via this event otherwise
-                prevStageModel.stopListening (CLMSUI.vent, "changeAllowInterModelDistances");
+                this.stopListening (prevStageModel); // remove old stagemodel linklist change listener;
             }
             // set xlRepr to null on stage model change as it's now an overview of old data
             // (it gets reset to a correct new value in repopulate() when distancesObj changes - eventlistener above)
@@ -443,17 +454,16 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             // was generated for the first time (causing error)
             //
             // Sequence from pdbfilechooser.js is
-            // 1. New stage model made 2. Stage model change event fired here - xlRepr set to null
-            // 3. New linklist data generated 4. linklist change event fired here (but no-op as xlRepr === null)
-            // 5. New distanceObj generated (making new xlRepr) 6. distanceObj change event fired here making new xlRepr
+            // 1. New stage model made
+            // 2. Stage model change event fired here - xlRepr set to null
+            // 3. New linklist data generated
+            // 4. linklist change event fired here (but no-op as xlRepr === null)
+            // 5. New distanceObj generated (making new xlRepr)
+            // 6. distanceObj change event fired here making new xlRepr
             if (this.xlRepr) {
                 this.xlRepr.dispose(); // remove old mouse handlers or they keep firing and cause errors
                 this.xlRepr = null;
             }
-
-            var disableHaddock = function (stageModel) {
-                mainDivSel.select(".exportHaddockButton").property("disabled", !stageModel.get("allowInterModelDistances") || stageModel.get("structureComp").structure.modelStore.count == 1);
-            };
 
             this
                 .listenTo (newStageModel, "change:linkList", function () {
@@ -461,15 +471,6 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                         this.xlRepr._handleDataChange();
                         this.reportLinks();
                     }
-                })
-                // listen to CLMSUI.vent's version rather than newStageModel's allowInterModelDistances as we need to recalc distances before informing views
-                .listenTo (CLMSUI.vent, "changeAllowInterModelDistances", function (stageModel, value) {
-                    this.options.allowInterModelDistances = value;
-                    d3.select(this.el).selectAll(".allowInterModelDistancesCB input").property("checked", value);
-                    if (this.xlRepr) {
-                        this.showFiltered();
-                    }
-                    disableHaddock (stageModel);
                 })
                 .listenTo (newStageModel, "change:showShortestLinksOnly", function (stageModel, value) {
                     this.options.shortestLinksOnly = value;
@@ -482,7 +483,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             // Copy view state settings to new model
             newStageModel
-                .set ("allowInterModelDistances", this.options.allowInterModelDistances)
+                .set ("allowInterModelDistances", this.options.allowInterModelDistances, {silent: true})    // firing change at this point causes error
                 .set ("showShortestLinksOnly", this.options.shortestLinksOnly)
             ;
 
@@ -1378,8 +1379,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         NGL.ColormakerRegistry.removeScheme (this.colorOptions.residueColourScheme);
         NGL.ColormakerRegistry.removeScheme (this.colorOptions.linkColourScheme);
 
-        //console.log ("struc", this.structureComp);
-        //this.structureComp.measureRepresentations.dispose();
+        this.structureComp.structure.spatialHash = null;
+        this.structureComp.structure.bondHash = null;
+        this.structureComp.viewer.dispose();
 
         return this;
     },
