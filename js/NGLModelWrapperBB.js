@@ -30,7 +30,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         this.listenTo (this, "change:allowInterModelDistances", function (model, val) {
             var compModel = this.get("masterModel");
             compModel.getCrossLinkDistances (compModel.getAllCrossLinks());  // regenerate distances for all crosslinks
-            CLMSUI.vent.trigger ("changeAllowInterModelDistances", val);
+            CLMSUI.vent.trigger ("changeAllowInterModelDistances", model, val);
         });
 
         this.listenTo (this, "change:chainMap", function (model, val) {
@@ -774,7 +774,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         } else {
             // if resnoList == 'all' replace it with array of all residues
             if (resnoList === "all") {
-                resnoList = this.crosslinkData.getResidues();
+                resnoList = this.getResidues();
             }
 
             // if resnoList is single item, make it an array of the single item
@@ -867,7 +867,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return resno !== undefined ? this.getAtomIndex (resObj.seqIndex, resObj.chainIndex) : undefined;
     },
 
-    getFirstAtomPerChainSelection: function(chainIndexSet) {
+    makeFirstAtomPerChainSelectionString: function(chainIndexSet) {
         var comp = this.get("structureComp").structure;
         var sels = [];
         comp.eachChain(function(cp) {
@@ -880,7 +880,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     // Get a NGL selection for chains listing only the chainIndices passed in as a property of chainItems
-    getChainSelection: function(chainItems) {
+    makeChainSelectionString: function(chainItems) {
         var selectionString = "all";
         var showAll = chainItems.showAll || false;
         var chainIndices = chainItems.chainIndices || [];
