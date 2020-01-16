@@ -1093,6 +1093,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
             //var first = true;
             this.bondColor = function(b) {
                 var linkObj = self.nglModelWrapper.getFullLinkByNGLResIndices (b.atom1.residueIndex, b.atom2.residueIndex) || self.nglModelWrapper.getFullLinkByNGLResIndices (b.atom2.residueIndex, b.atom1.residueIndex);
+                if (!linkObj) {
+                    return 0x808080;
+                }
                 var origLinkID = linkObj.origId;
                 var model = self.nglModelWrapper.getModel();
                 var link = model.get("clmsModel").get("crossLinks").get(origLinkID);
@@ -1233,13 +1236,16 @@ CLMSUI.CrosslinkRepresentation.prototype = {
 
                 if (residueA && residueB) {
                     pdtrans.links = nglModelWrapper.getSharedLinks(residueA, residueB);
-                    pdtrans.xlinks = nglModelWrapper.getOriginalCrossLinks(pdtrans.links);
 
-                    nglModelWrapper.getModel().get("tooltipModel")
-                        .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
-                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.link(pdtrans.xlinks[0]))
-                        .set("location", this.makeTooltipCoords(pickingData.canvasPosition))
-                    ;
+                    if (pdtrans.links) {
+                        pdtrans.xlinks = nglModelWrapper.getOriginalCrossLinks(pdtrans.links);
+
+                        nglModelWrapper.getModel().get("tooltipModel")
+                            .set("header", CLMSUI.modelUtils.makeTooltipTitle.link())
+                            .set("contents", CLMSUI.modelUtils.makeTooltipContents.link(pdtrans.xlinks[0]))
+                            .set("location", this.makeTooltipCoords(pickingData.canvasPosition))
+                        ;
+                    }
                 }
             }
         }
