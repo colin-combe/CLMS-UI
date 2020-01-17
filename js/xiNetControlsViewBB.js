@@ -109,7 +109,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>";
 
         buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXiNetLabels' checked></label>"
-        buttonHtml += "&nbsp;<label>Link width:<input type='number' step='0.01' min='0' class='xiNetLinkWidth' title='pixels per Unique Linked Residue Pair'></label>"
+        // buttonHtml += "&nbsp;<label>Link width:<input type='number' step='0.01' min='0' class='xiNetLinkWidth' title='pixels per Unique Linked Residue Pair'></label>"
 
         mainDivSel.html(
             buttonHtml
