@@ -67,10 +67,11 @@ CLMSUI.modelUtils = {
         },
 
         link: function(xlink, extras) {
-            var linear = xlink.isLinearLink();
-            var info = [
+          var linear = xlink.isLinearLink();
+          var mono = xlink.isMonoLink();
+          var info = [
                 ["From", xlink.fromProtein.name, xlink.fromResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, false))],
-                linear ? ["To", "Linear", "---", "---"] : ["To", xlink.toProtein.name, xlink.toResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, true))],
+                linear ? ["To", "Linear", "---", "---"] : mono ? ["To", "Monolink", "---", "---"] : ["To", xlink.toProtein.name, xlink.toResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, true))],
                 ["Matches", xlink.filteredMatches_pp.length],
                 ["Highest Score", CLMSUI.modelUtils.highestScore(xlink)]
             ];
@@ -113,6 +114,35 @@ CLMSUI.modelUtils = {
                 }
                 contents.push(["GO", goTermsText]);
             }
+            return contents;
+        },
+
+        complex: function(interactor) {
+            var contents = [
+                ["Complex", interactor.id],
+              //  ["Members", Array.from(goTerm.relationship.values()).join(", ")]
+                // ["Accession", interactor.accession],
+                // ["Size", interactor.size],
+                // ["Desc.", interactor.description]
+            ];
+
+            // d3.entries(interactor.getMeta()).forEach(function(entry) {
+            //     var val = entry.value;
+            //     var key = entry.key.toLocaleLowerCase();
+            //     if (val !== undefined && !_.isObject(val)) {
+            //         contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
+            //     }
+            // });
+            //
+            // if (interactor.go) {
+            //     var goTermsMap = CLMSUI.compositeModelInst.get("go");
+            //     var goTermsText = "";
+            //     for (var goId of interactor.go) {
+            //         var goTerm = goTermsMap.get(goId);
+            //         goTermsText += goTerm.name + "<br>";
+            //     }
+            //     contents.push(["GO", goTermsText]);
+            // }
             return contents;
         },
 
@@ -248,6 +278,9 @@ CLMSUI.modelUtils = {
             return "Linked Residue Pair" + (linkCount > 1 ? "s" : "");
         },
         interactor: function(interactor) {
+            return interactor.name.replace("_", " ");
+        },
+        complex: function(interactor) {
             return interactor.name.replace("_", " ");
         },
         residue: function(interactor, residueIndex, residueExtraInfo) {
@@ -567,7 +600,7 @@ CLMSUI.modelUtils = {
         return pkey;
     },
 
-    updateLinkMetadata: function (metaDataFileContents, clmsModel) {
+    updateLinkMetadata: function(metaDataFileContents, clmsModel) {
         var crossLinks = clmsModel.get("crossLinks");
         var crossLinksArr = CLMS.arrayFromMapValues (crossLinks);
         var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);
@@ -591,7 +624,7 @@ CLMSUI.modelUtils = {
         var matchedCrossLinks = [];
         var ppiCount = 0;
 
-        d3.csv.parse (metaDataFileContents, function(d) {
+        d3.csv.parse(metaDataFileContents, function(d) {
             var linkID = d.linkID || d.LinkID;
             var singleCrossLink = crossLinks.get(linkID);
             var rowCrossLinkArr;
@@ -674,9 +707,9 @@ CLMSUI.modelUtils = {
         clmsModel.set("crossLinkMetaRegistry", registry);
 
         var result = {
-            columns: columns,
-            columnTypes: columnTypes,
-            items: crossLinks,
+                columns: columns,
+                columnTypes: columnTypes,
+                items: crossLinks,
             matchedItemCount: matchedCrossLinkCount,
             ppiCount: ppiCount
         };
@@ -1215,7 +1248,7 @@ CLMSUI.modelUtils = {
         var linearShim = {id: "*linear", name: "linear"};
         crossLinkArr.forEach(function(crossLink) {
             if (crossLink.toProtein || includeLinears) {
-                var fromProtein = crossLink.fromProtein;
+            var fromProtein = crossLink.fromProtein;
                 var toProtein = crossLink.toProtein || linearShim;
                 var proteinA = fromProtein.id > toProtein.id ? toProtein : fromProtein;
                 var proteinB = toProtein.id >= fromProtein.id ? toProtein : fromProtein;
