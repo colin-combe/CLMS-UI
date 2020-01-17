@@ -261,19 +261,18 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
             if (colourModel.get("id") !== this.colourScaleModel.get("id")) {    // test if model is distances, if so rendering is already guaranteed
                 this.renderCrossLinks();
             }
-        }); 
+        });
         this.listenTo (this.model, "change:highlights", function () { this.renderCrossLinks ({rehighlightOnly: true}); });
         this.listenTo (this.model, "change:linkColourAssignment", this.render);
         this.listenTo (this.model, "change:selectedProteins", this.makeProteinPairingOptions);
         this.listenTo (this.colourScaleModel, "colourModelChanged", function () { this.render({noResize: true}); }); // colourScaleModel is pointer to distance colour model, so this triggers even if not current colour model (redraws background)
         this.listenTo (this.model.get("clmsModel"), "change:distancesObj", this.distancesChanged); // Entire new set of distances
         this.listenTo (this.model.get("clmsModel"), "change:matches", this.matchesChanged); // New matches added (via csv generally)
-        this.listenTo (CLMSUI.vent, "distancesAdjusted", this.render); // Existing residues/pdb but distances changed
         this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function() {
             this.makeProteinPairingOptions();
             this.updateAxisLabels();
         });
-        this.listenTo (CLMSUI.vent, "PDBPermittedChainSetsUpdated changeAllowInterModelDistances", this.distancesChanged);
+        this.listenTo (CLMSUI.vent, "PDBPermittedChainSetsUpdated changeAllowInterModelDistances", this.distancesChanged); // New PDB or existing residues/pdb but distances changed
 
         var entries = this.makeProteinPairingOptions();
         var startPairing = _.isEmpty(entries) ? undefined : entries[0].value;
@@ -364,7 +363,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         return this;
     },
 
-    // New PDB File in town
+    // Either new PDB File in town, or change to existing distances
     distancesChanged: function() {
         this.render();
         return this;
@@ -729,7 +728,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                     var alignColl = this.model.get("alignColl");
                     var distanceMatrix = matrixValue.distanceMatrix;
                     var pw = this.canvas.attr("width");
-                    
+
                     var atoms1 = stageModel.getAllResidueCoordsForChain (matrixValue.chain1);
                     var atoms2 = (matrixValue.chain1 !== matrixValue.chain2) ? stageModel.getAllResidueCoordsForChain (matrixValue.chain2) : atoms1;
                     // precalc some stuff that would get recalculatd a lot in the inner loop
@@ -794,7 +793,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
                 var end = performance.now();
                 CLMSUI.times.push(Math.round(end - middle));
                 //console.log ("CLMSUI.times", CLMSUI.times);
-                
+
                 this.zoomGroup.select(".backgroundImage").select("image")
                     .style("display", null) // default value
                     .attr("width", this.canvas.attr("width"))
@@ -805,7 +804,7 @@ CLMSUI.DistanceMatrixViewBB = CLMSUI.utils.BaseFrameView.extend({
         }
         z = performance.now() - z;
         console.log ("render background map", z, "ms");
-        
+
         return this;
     },
 
