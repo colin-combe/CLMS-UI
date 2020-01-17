@@ -123,7 +123,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
             .style("position", "absolute")
             .style("transform", "translate(" + this.margin.left + "px," + this.margin.top + "px)")
         ;
-        
+
         // canvas for drawing the current filtered and selected node sets
         this.filteredCanvas = canvasDiv.append("canvas");
         // canvas for drawing the currently highlighted node set (should be faster than redrawing everything on one canvas)
@@ -240,7 +240,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.brush.extent(generousSelection);
                 self.scatg.select(".brush").call(self.brush); // recall brush binding so background rect is resized and brush redrawn
                 ["n", "e"].forEach(function(orient, i) {
-                    self.scatg.select(".resize." + orient + " text").text("[" + newSelection[0][i] + " to " + newSelection[1][i] + "]"); // for brush extent labelling  
+                    self.scatg.select(".resize." + orient + " text").text("[" + newSelection[0][i] + " to " + newSelection[1][i] + "]"); // for brush extent labelling
                 });
             }
         };
@@ -279,7 +279,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.listenTo(this.model, "highlightsMatchesLinksChanged", this.rehighlightCrossLinks);
         this.listenTo(this.model, "filteringDone", function() { this.renderCrossLinks({isFiltering: true}); });
         this.listenTo(this.model.get("clmsModel"), "change:distancesObj", this.ifADistanceAxisRerender);
-        this.listenTo(CLMSUI.vent, "distancesAdjusted PDBPermittedChainSetsUpdated changeAllowInterModelDistances", this.ifADistanceAxisRerender);
+        this.listenTo(CLMSUI.vent, "PDBPermittedChainSetsUpdated changeAllowInterModelDistances", this.ifADistanceAxisRerender);
         this.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaMetaData) {
             //console.log ("HELLO", arguments);
             var columns = metaMetaData.columns;
@@ -305,11 +305,11 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
 
         this.axisChosen().render(); // initial render with defaults
     },
-    
+
     takeImage: function(event, thisSVG) {
         return this.downloadSVGWithCanvas ();
     },
-    
+
     ifADistanceAxisRerender: function () {
         var distanceAxes = this.getBothAxesMetaData().filter(function (axis) {
             return axis.id === "Distance";
@@ -740,7 +740,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         this.renderCrossLinks({recolourOnly: true});
         return this;
     },
-    
+
     rehighlightCrossLinks: function() {
         this.renderCrossLinks({rehighlightOnly: true});
         return this;
@@ -750,7 +750,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
         renderOptions = renderOptions || {};
 
         if (renderOptions.isVisible || this.isVisible()) {
-            
+
             //console.log ("renderOptions", renderOptions);
 
             var highlightsOnly = renderOptions.rehighlightOnly;
@@ -766,7 +766,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
 
             var selectedMatchMap = this.model.getMarkedMatches("selection");
             var highlightedMatchMap = this.model.getMarkedMatches("highlights");
-            
+
             var sortedFilteredCrossLinks;
             if (highlightsOnly) {
                 sortedFilteredCrossLinks = filteredCrossLinks.filter (function (link) { return highlightedCrossLinkIDs.has(link.id); });
@@ -804,11 +804,11 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return pairs;
                 });
             };
-            
+
             var p = performance.now();
-            
+
             var contexts = [
-                {d3canvas: this.filteredCanvas, clear: !highlightsOnly}, 
+                {d3canvas: this.filteredCanvas, clear: !highlightsOnly},
                 {d3canvas: this.highlightedCanvas, clear: true}
             ].map (function (canvasInfo) {
                 var canvasNode = canvasInfo.d3canvas.node();
@@ -822,7 +822,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
             }, this);
             var ctx = contexts[0];
             var hctx = contexts[1];
-            
+
             // set constant styles for highlighted canvas
             hctx.fillStyle = this.options.highlightedColour;
             hctx.strokeStyle = "black";
@@ -874,16 +874,16 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                             ctx.strokeStyle = selected ? "black" : (decoy || ambig ? ctx.fillStyle : null);
                         }
                     }
-                    
+
                     var x = this.x(coord[0]) + xjr - halfPointSize;
                     var y = this.y(coord[1]) + yjr - halfPointSize;
                     if (x === x && y === y) { // Quick test for either of x or y being a NaN
-                        
+
                         if (high || !highlightsOnly) {
                             var context = (high && highlightsOnly) ? hctx : ctx;
                             x = Math.round(x); // the rounding and 0.5s are to make fills and strokes crisp (i.e. not anti-aliasing)
                             y = Math.round(y);
-                            
+
                             if (decoy) {
                                 //var offset = Math.floor (halfPointSize);
                                 context.strokeRect(x - 0.5, y - 0.5, pointSize, pointSize);
@@ -920,7 +920,7 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
                 this.redrawAxes (this.getSizeData());
             }
             */
-            
+
             //console.log ("scatter render", renderOptions, (performance.now() - p)/1000, "s");
 
             // Remove unknown from appearing in title if no data falls into this category
@@ -997,12 +997,12 @@ CLMSUI.ScatterplotViewBB = CLMSUI.utils.BaseFrameView.extend({
             .attr("height", sizeData.height)
             .classed ("backdrop", true)
         ;
-        
+
         this.highlightedCanvas
             .attr("width", sizeData.width)
             .attr("height", sizeData.height)
         ;
-        
+
         var extent = this.brush.extent(); // extent saved before x and y ranges updated
         var chartMargin = this.options.chartMargin;
 
