@@ -93,6 +93,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.emphasiseColumns = d3.set(["pos1", "pos2"]);
         this.changeableColumns = d3.set(["ambiguity", "autovalidated", "validated", "homom"]);   // values that can change in situ i.e. aren't fixed
 
+        var self = this;
+
         // entries commented out until a replacement is found for xlv
         var headerFilterFuncs = {
             ambiguity: function() {
@@ -117,7 +119,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             }
         );
 
-        var self = this;
         var twoZeroPadder = d3.format(".2f");
         var massZeroPadder = d3.format(".6f");
         var scientific = d3.format(".4e");

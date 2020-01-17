@@ -111,7 +111,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         toolbar.append("p").attr("id", optid);
         new CLMSUI.DropDownMenuViewBB({
             el: "#" + optid,
-            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            model: self.model.get("clmsModel"),
             myOptions: {
                 title: "3D Export ▼",
                 menu: saveExportButtonData.map(function(d) {
@@ -120,7 +120,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return d;
                 }),
                 closeOnClick: true,
-                tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+                tooltipModel: self.model.get("tooltipModel"),
             }
         });
 
@@ -262,7 +262,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         toolbar.append("p").attr("id", optid);
         new CLMSUI.DropDownMenuViewBB({
             el: "#" + optid,
-            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            model: self.model.get("clmsModel"),
             myOptions: {
                 title: "Show ▼",
                 menu: toggleButtonData.map(function(d) {
@@ -271,7 +271,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return d;
                 }),
                 closeOnClick: false,
-                tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+                tooltipModel: self.model.get("tooltipModel"),
             }
         });
 
