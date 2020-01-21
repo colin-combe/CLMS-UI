@@ -689,7 +689,7 @@ function callback (model) {
 
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
         var alignID = CLMSUI.NGLUtils.make3DAlignID ("1AO6", "A", 0);
-        var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("P02768-A", alignID);
+        var seqRange = alignCollBB.getRangeAsSearchSeq ("P02768-A", alignID);
         $.extend (seqRange, {alignID: alignID, chainIndex: 0, protID: "P02768-A"});
         var seqMap = d3.map ();
         seqMap.set ("P02768-A", {key: "P02768-A", values: [seqRange]});
@@ -724,7 +724,7 @@ function callback (model) {
 
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
         var alignID = CLMSUI.NGLUtils.make3DAlignID ("1AO6", "A", 0);
-        var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("P02768-A", alignID);
+        var seqRange = alignCollBB.getRangeAsSearchSeq ("P02768-A", alignID);
         var actualFilteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[1], false);	// 1 is KSTY
         actualFilteredSubSeqIndices = actualFilteredSubSeqIndices.slice(-10);	// last 10
 

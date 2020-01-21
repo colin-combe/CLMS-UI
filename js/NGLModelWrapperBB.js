@@ -87,8 +87,8 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return this;
     },
 
-    setLinkList: function (crossLinks) {
-        var linkDataObj = this.makeLinkList (crossLinks);
+    setLinkList: function (crossLinkArr) {
+        var linkDataObj = this.makeLinkList (crossLinkArr);
         var distanceObj = this.getModel().get("clmsModel").get("distancesObj");
         if (this.get("showShortestLinksOnly") && distanceObj) {
             linkDataObj.fullLinkList = distanceObj.getShortestLinkAlternatives(linkDataObj.fullLinkList);
@@ -97,7 +97,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return this;
     },
 
-    makeLinkList: function(linkModel) {
+    makeLinkList: function (crossLinkArr) {
         var structure = this.get("structureComp").structure;
         var nextResidueId = 0;
         var structureId = null;
@@ -218,7 +218,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         };
         var tieBreakerFunc = CLMSUI.DistancesObj.prototype.tieBreaker;
 
-        linkModel.forEach (function (xlink) {
+        crossLinkArr.forEach (function (xlink) {
             // loop through fromProtein's models/chains in modelIndexedChainMap
             // Within that have an inner loop through toProtein's models/chains in modelIndexedChainMap
             // Match by model index so can't have crosslinks between different models

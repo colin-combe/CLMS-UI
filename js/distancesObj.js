@@ -264,7 +264,7 @@ CLMSUI.DistancesObj.prototype = {
                 }, this) // remove chains that are currently distance barred
                 .map(function(chain) {
                     var alignID = CLMSUI.NGLUtils.make3DAlignID(this.structureName, chain.name, chain.index);
-                    var range = alignCollBB.getSearchRangeIndexOfMatches(protID, alignID);
+                    var range = alignCollBB.getRangeAsSearchSeq(protID, alignID);
                     $.extend(range, {
                         chainIndex: chain.index,
                         modelIndex: chain.modelIndex,
