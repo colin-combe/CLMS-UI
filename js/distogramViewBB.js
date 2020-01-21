@@ -141,7 +141,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 tooltipModel: self.model.get("tooltipModel"),
             }
         });
-        
+
         var maxid = this.el.id + "MaxXValue";
         var maxElem = toolbar.append("p").attr("id", maxid);
         maxElem.append("span").text("Axis Extent (X)");
@@ -152,7 +152,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 self.render();
             })
         ;
-        
+
 
         // Add a select widget for picking axis data type
         this.setMultipleSelectControls(toolbar, this.options.attributeOptions, false);
@@ -343,7 +343,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         function distancesAvailable() {
             //console.log("DISTOGRAM RAND DISTANCES MARKED FOR RECALCULATION");
             this.options.reRandom = true;
-            
+
             // Reset distance attribute max value according to max cross-link distance
             var distAttr = this.options.attributeOptions.filter (function (attr) { return attr.id === "Distance"; });
             if (distAttr.length === 1) {
@@ -353,7 +353,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                     distAttr[0].maxVal = CLMSUI.utils.niceRound (distObj.maxDistance * 1.3) + 1;
                 }
             }
-            
+
             if (this.getSelectedOption("X").id === "Distance") {
                 //console.log ("DISTOGRAM RERENDERED DUE TO DISTANCE CHANGES");
                 this.render();
@@ -378,7 +378,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             });
         }); // update selection series
         this.listenTo(this.model.get("clmsModel"), "change:distancesObj", distancesAvailable); // new distanceObj for new pdb
-        this.listenTo(CLMSUI.vent, "distancesAdjusted PDBPermittedChainSetsUpdated changeAllowInterModelDistances", distancesAvailable); // changes to distancesObj with existing pdb (usually alignment change) or change in pdb assembly meaning certain chains can't be used
+        this.listenTo(CLMSUI.vent, "PDBPermittedChainSetsUpdated changeAllowInterModelDistances", distancesAvailable); // changes to distancesObj with existing pdb (usually alignment change) or change in pdb assembly meaning certain chains can't be used
         this.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaMetaData) {
             var columns = metaMetaData.columns;
             //console.log ("HELLO", arguments);
@@ -464,7 +464,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
             // Add sub-series data
             // split TT list into sublists for length
-            var subSeries = colModel.get("labels").range()    // get colour scale category names  
+            var subSeries = colModel.get("labels").range()    // get colour scale category names
                 .concat([colModel.get("undefinedLabel")])       // add an 'undefined' label (returning as new array)
                 .map(function(name) {                           // make into object with name and linkValues properties
                     return {
@@ -486,7 +486,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
 
             // add sub-series data to main series array
             seriesData.push.apply (seriesData, subSeries);
-            
+
 
             //console.log ("seriesLengths", seriesLengths);
             var removeCatchAllCategory = (funcMeta.maxVal !== undefined);
@@ -583,7 +583,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             var tempTitleHandle = c3.chart.internal.fn.redrawTitle;
             c3.chart.internal.fn.redrawTitle = function() {};
             var chartInternal = this.chart.internal;
-            
+
             // Remove 'Undefined' and 'Selected' categories if empty
             // need to detect if these two get removed to do compareNewOldData
             removeSeries (colModel.get("undefinedLabel"), true);
@@ -591,7 +591,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
             var shortcut = this.compareNewOldData(countArrays) && !newX;
             console.log ("REDRAW TYPE", "noaxesrescale", options.noAxesRescale, "shortcut", shortcut);
             this.options.dodgeTidyXAxis &= (shortcut || options.noAxesRescale);
-            
+
             if (options.noAxesRescale) { // doing something where we don't need to rescale x/y axes or relabel (change of colour in scheme or selection)
                 var seriesChanges = redoChart.call(this);
                 c3.chart.internal.fn.redraw = tempHandle;
@@ -650,11 +650,11 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
         }
         return this;
     },
-    
+
     getAxisRange: function () {
         return this.chart.internal.orgXDomain[1] - this.chart.internal.orgXDomain[0];
     },
-    
+
     // make x tick text values the rounder numbers, and remove any that overlap afterwards
     tidyXAxis: function () {
         var xaxis = d3.select(this.el).select(".c3-axis-x");
@@ -892,7 +892,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 array.pop();
             });
         }
-        
+
         return {
             countArrays: countArrays,
             thresholds: thresholds
@@ -962,7 +962,7 @@ CLMSUI.DistogramBB = CLMSUI.utils.BaseFrameView.extend({
                 .filter(function(bin) { return bin !== undefined; })
             ;
             var bin = d3.merge(bins);
-            
+
 
             var ev = d3.event || {};
             if (matchBasedSelection) {

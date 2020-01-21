@@ -390,25 +390,25 @@ CLMSUI.init.views = function() {
     var checkBoxData = [{
             id: "circularChkBxPlaceholder",
             label: "Circular",
-            eventName: "circularShow",
+            eventName: "circularViewShow",
             tooltip: "Proteins are arranged circumferentially, with Cross-Links drawn in-between",
         },
         {
             id: "nglChkBxPlaceholder",
             label: "3D (NGL)",
-            eventName: "nglShow",
+            eventName: "nglViewShow",
             tooltip: "Spatial view of protein complexes and Cross-Links. Requires a relevant PDB File to be loaded [Load > PDB Data]"
         },
         {
             id: "matrixChkBxPlaceholder",
             label: "Matrix",
-            eventName: "matrixShow",
+            eventName: "matrixViewShow",
             tooltip: "AKA Contact Map. Relevant PDB File required for distance background"
         },
         {
             id: "proteinInfoChkBxPlaceholder",
             label: "Protein Info",
-            eventName: "proteinInfoShow",
+            eventName: "proteinInfoViewShow",
             tooltip: "Shows metadata and Cross-Link annotated sequences for currently selected proteins"
         },
         {
@@ -421,46 +421,46 @@ CLMSUI.init.views = function() {
         {
             id: "distoChkBxPlaceholder",
             label: "Histogram",
-            eventName: "distoShow",
+            eventName: "distoViewShow",
             tooltip: "Configurable view for showing distribution of one Cross-Link/Match property"
         },
         {
             id: "scatterplotChkBxPlaceholder",
             label: "Scatterplot",
-            eventName: "scatterplotShow",
+            eventName: "scatterplotViewShow",
             tooltip: "Configurable view for comparing two Cross-Link/Match properties",
         },
         {
             id: "listChkBxPlaceholder",
             label: "List",
-            eventName: "listShow",
+            eventName: "listViewShow",
             tooltip: "Sortable list of cross-links, can convert to heatmap",
             sectionEnd: true
         },
         {
             id: "alignChkBxPlaceholder",
             label: "Alignment",
-            eventName: "alignShow",
+            eventName: "alignViewShow",
             tooltip: "Shows alignments between Search/PDB/Uniprot sequences per protein"
         },
         {
             id: "searchSummaryChkBxPlaceholder",
             label: "Search Summaries",
-            eventName: "searchesShow",
+            eventName: "searchesViewShow",
             tooltip: "Shows metadata for current searches",
             sectionEnd: true
         },
         {
             id: "keyChkBxPlaceholder",
             label: "Legend & Colours",
-            eventName: "keyShow",
+            eventName: "keyViewShow",
             tooltip: "Explains and allows changing of current colour scheme",
             sectionEnd: true
         },
         {
             id: "goTermsChkBxPlaceholder",
             label: "GO Terms",
-            eventName: "goTermsShow",
+            eventName: "goTermsViewShow",
             tooltip: "Browse Gene Ontology terms"
         },
     ];
@@ -554,32 +554,32 @@ CLMSUI.init.views = function() {
     // Generate buttons for load dropdown
     var loadButtonData = [{
             name: "PDB Data",
-            eventName: "pdbShow",
+            eventName: "pdbFileChooserShow",
             tooltip: "Load a PDB File from local disk or by PDB ID code from RCSB.org. Allows viewing of 3D Structure and of distance background in Matrix View"
         },
         {
             name: "STRING Data",
-            eventName: "stringShow",
+            eventName: "stringDataChooserShow",
             tooltip: "Load STRING data from the STRING server. Note: limited to <2,000 proteins, for more generate a CSV file for import as PPI Metadata"
         },
         {
             name: "Cross-Links (CSV)",
-            eventName: "csvShow",
+            eventName: "csvFileChooserShow",
             tooltip: "Load Cross-Links from a local CSV File"
         },
         {
             name: "Cross-Link or PPI Metadata",
-            eventName: "linkMetaShow",
+            eventName: "linkMetaDataFileChooserShow",
             tooltip: "Load Cross-Link or PPI Meta-Data from a local CSV file"
         },
         {
             name: "Protein Metadata",
-            eventName: "proteinMetaShow",
+            eventName: "proteinMetaDataFileChooserShow",
             tooltip: "Load Protein Meta-Data from a local CSV file"
         },
         {
             name: "User Annotations",
-            eventName: "userAnnotationsMetaShow",
+            eventName: "userAnnotationsMetaDataFileChooserShow",
             tooltip: "Load User Annotations from a local CSV file"
         },
     ];
@@ -607,7 +607,7 @@ CLMSUI.init.views = function() {
     new CLMSUI.URLSearchBoxViewBB({
         el: "#urlSearchBox",
         model: compModel,
-        displayEventName: "shareURL",
+        displayEventName: "shareURLViewShow",
         myOptions: {}
     });
 
@@ -841,7 +841,7 @@ CLMSUI.init.viewsEssential = function(options) {
                         sectionEnd: true
                     },
                     {
-                        name: "Filtered Matches ",
+                        name: "Filtered Matches ",  // extra space to differentiate from first entry in menu
                         func: downloadSSL,
                         tooltip: "Produces an SSL file for quantitation in SkyLine",
                         categoryTitle: "As an SSL File",
@@ -851,7 +851,7 @@ CLMSUI.init.viewsEssential = function(options) {
                     {
                         name: "Make Filtered XI URL",
                         func: function() {
-                            CLMSUI.vent.trigger("shareURL", true);
+                            CLMSUI.vent.trigger("shareURLViewShow", true);
                         },
                         tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility",
                         categoryTitle: "As a URL",
@@ -936,20 +936,20 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     // This generates the legend div, we don't keep a handle to it - the event object has one
     new CLMSUI.KeyViewBB({
         el: "#keyPanel",
-        displayEventName: "keyShow",
+        displayEventName: "keyViewShow",
         model: compModel,
     });
 
     new CLMSUI.SearchSummaryViewBB({
         el: "#searchSummaryPanel",
-        displayEventName: "searchesShow",
+        displayEventName: "searchesViewShow",
         model: compModel.get("clmsModel"),
     });
 
     /* 'cos circle listens to annotation model which is formed from uniprot async data */
     new CLMSUI.CircularViewBB({
         el: "#circularPanel",
-        displayEventName: "circularShow",
+        displayEventName: "circularViewShow",
         model: compModel,
     });
 
@@ -1007,7 +1007,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     new CLMSUI.AlignCollectionViewBB({
         el: "#alignPanel",
         collection: compModel.get("alignColl"),
-        displayEventName: "alignShow",
+        displayEventName: "alignViewShow",
         tooltipModel: compModel.get("tooltipModel")
     });
 
@@ -1018,7 +1018,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         //colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
         //colourScaleModel: CLMSUI.linkColour.defaultColoursBB,
         colourScaleModel: CLMSUI.linkColour.groupColoursBB,
-        displayEventName: "distoShow",
+        displayEventName: "distoViewShow",
         myOptions: {
             chartTitle: "Histogram",
             seriesName: "Actual"
@@ -1030,7 +1030,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#matrixPanel",
         model: compModel,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
-        displayEventName: "matrixShow",
+        displayEventName: "matrixViewShow",
     });
 
     // This makes a list viewer
@@ -1038,7 +1038,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         el: "#listPanel",
         model: compModel,
         colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
-        displayEventName: "listShow",
+        displayEventName: "listViewShow",
     });
 
     // Make new ngl view with pdb dataset
@@ -1047,63 +1047,63 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     new CLMSUI.NGLViewBB({
         el: "#nglPanel",
         model: compModel,
-        displayEventName: "nglShow",
+        displayEventName: "nglViewShow",
     });
 
     var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString(window.location.search.slice(1));
     new CLMSUI.PDBFileChooserBB({
         el: "#pdbPanel",
         model: compModel,
-        displayEventName: "pdbShow",
+        displayEventName: "pdbFileChooserShow",
         initPDBs: urlChunkMap.pdb,
     });
 
     new CLMSUI.STRINGFileChooserBB({
         el: "#stringPanel",
         model: compModel,
-        displayEventName: "stringShow",
+        displayEventName: "stringDataChooserShow",
         //initPDBs: urlChunkMap.pdb,
     });
 
     new CLMSUI.ScatterplotViewBB({
         el: "#scatterplotPanel",
         model: compModel,
-        displayEventName: "scatterplotShow",
+        displayEventName: "scatterplotViewShow",
     });
 
     new CLMSUI.CSVFileChooserBB({
         el: "#csvPanel",
         model: compModel,
-        displayEventName: "csvShow",
+        displayEventName: "csvFileChooserShow",
     });
 
     new CLMSUI.LinkMetaDataFileChooserBB({
         el: "#linkMetaLoadPanel",
         model: compModel,
-        displayEventName: "linkMetaShow",
+        displayEventName: "linkMetaDataFileChooserShow",
     });
 
     new CLMSUI.ProteinMetaDataFileChooserBB({
         el: "#proteinMetaLoadPanel",
         model: compModel,
-        displayEventName: "proteinMetaShow",
+        displayEventName: "proteinMetaDataFileChooserShow",
     });
 
     new CLMSUI.UserAnnotationsMetaDataFileChooserBB({
         el: "#userAnnotationsMetaLoadPanel",
         model: compModel,
-        displayEventName: "userAnnotationsMetaShow",
+        displayEventName: "userAnnotationsMetaDataFileChooserShow",
     });
 
     new CLMSUI.GoTermsViewBB({
         el: "#goTermsPanel",
         model: compModel,
-        displayEventName: "goTermsShow",
+        displayEventName: "goTermsViewShow",
     });
 
     new CLMSUI.ProteinInfoViewBB({
         el: "#proteinInfoPanel",
-        displayEventName: "proteinInfoShow",
+        displayEventName: "proteinInfoViewShow",
         model: compModel,
     });
 

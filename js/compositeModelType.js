@@ -12,7 +12,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             annotationTypes: null,
             selectedProteins: [],
             highlightedProteins: [],
-            groupColours: null, // will be d3.scale for colouring by search/group,
             TTCrossLinkCount: 0,
             groupedGoTerms: [],
             xiNetLinkWidthAuto: true,
@@ -222,7 +221,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.getCrossLinkDistances (homomultiSwitchers);    // recalculate distances for crosslinks whose homomultimer status has changed
 
         // Filters after this point are those that depend on results of previous filtering
-        
+
         // Remove crosslinks with matches in multiple groups if filterModel's multipleGroup setting set to false
         if (filterModel && !filterModel.get("multipleGroup")) {
             crossLinksArr.forEach (function (crossLink) {
@@ -231,7 +230,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
                 }
             }, this);
         }
-        
+
         var b = performance.now();
         console.log("ser filtering time", (b - a), "ms");
 

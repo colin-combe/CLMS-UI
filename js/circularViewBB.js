@@ -163,10 +163,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             var convEnd = +feature.end;
             var type = feature.type.toLowerCase();
             var protAlignModel = self.model.get("alignColl").get(nodeid);
-            
+
             var annotationColl = self.model.get ("annotationTypes");
             var annotationTypeModel = annotationColl.get (annotationColl.modelId (feature));
-            var annotationTypeModelAlignmentID = annotationTypeModel ? annotationTypeModel.get("typeAlignmentID") : undefined; 
+            var annotationTypeModelAlignmentID = annotationTypeModel ? annotationTypeModel.get("typeAlignmentID") : undefined;
 
             if (protAlignModel) {
                 var alignmentID = feature.alignmentID || annotationTypeModelAlignmentID; // individual feature alignment ids trump feature type alignment ids
@@ -198,7 +198,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 toPos: convEnd
             };
         };
-        
+
         // if protein default colour model use this instead for legibility
         this.replacementDefaultNodeColourModel = {
             getColour: function () { return "#dde"; }
@@ -218,11 +218,11 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 })
             )
         ;
-        
+
         mainDivSel.select(".backdrop")
             // can replace .backdrop class colouring with this option if defined
             .style("background-color", this.options.background)
-        ; 
+        ;
 
 
         var buttonData = [{
@@ -292,7 +292,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         toolbar.append("p").attr("id", orderoptid);
         new CLMSUI.DropDownMenuViewBB({
             el: "#" + orderoptid,
-            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            model: self.model.get("clmsModel"),
             myOptions: {
                 title: "Order Proteins ▼",
                 menu: orderOptionsButtonData.map(function(d) {
@@ -301,7 +301,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return d;
                 }),
                 closeOnClick: false,
-                tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel")
+                tooltipModel: self.model.get("tooltipModel")
             }
         });
 
@@ -353,7 +353,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         toolbar.append("p").attr("id", showoptid);
         new CLMSUI.DropDownMenuViewBB({
             el: "#" + showoptid,
-            model: CLMSUI.compositeModelInst.get("clmsModel"),
+            model: self.model.get("clmsModel"),
             myOptions: {
                 title: "Show ▼",
                 menu: showOptionsButtonData.map(function(d) {
@@ -362,7 +362,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                     return d;
                 }),
                 closeOnClick: false,
-                tooltipModel: CLMSUI.compositeModelInst.get("tooltipModel"),
+                tooltipModel: self.model.get("tooltipModel"),
             }
         });
 
@@ -422,10 +422,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 return aMid - bMid;
             });
             var bespokeOrder = _.object(
-                _.pluck (nodeData, "id"), 
+                _.pluck (nodeData, "id"),
                 _.range(0, nodeData.length)
             ); // generate {7890: 0, 1234: 1, 2345: 2} etc
-            
+
             if (!_.isEqual(bespokeOrder, this.bespokeOrder)) {
                 self.bespokeOrder = bespokeOrder;
                 self.options.sort = "bespoke";
@@ -689,7 +689,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 .filter(function(d) { return !idset.has(d.id); })
                 .classed(linkType, false)
             ;
-            
+
             d3Selection.filter(function(d) { return idset.has(d.id); })
                 .classed(linkType, true)
             ;
@@ -1054,10 +1054,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 self.showAccentOnTheseLinks.call(self, this, "selection");
             })
         ;
-        
+
         return this;
     },
-    
+
     selectNode: function (d) {
         var add = d3.event.ctrlKey || d3.event.shiftKey;
         this.actionNodeLinks(d.id, "selection", add);
@@ -1075,10 +1075,10 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
             colourScheme = this.replacementDefaultNodeColourModel;
         }
         var interactors = this.model.get("clmsModel").get("participants");
-        
+
         var nodeLayer = this.addOrGetGroupLayer(g, "nodeLayer");
         var nodeJoin = nodeLayer.selectAll(".circleNode").data(nodes, self.idFunc);
-        
+
         nodeJoin.exit().remove();
 
         nodeJoin.enter()
@@ -1288,7 +1288,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
         //CLMSUI.utils.xilog ("FEATURES", features);
 
         var annotColl = this.model.get("annotationTypes");
-        
+
         featureJoin
             .order()
             .attr("d", this.featureArc)
