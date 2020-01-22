@@ -285,7 +285,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
                 },
                 name: fileObj.name,
                 stage: self.stage,
-                bbmodel: self.model
+                compositeModel: self.model
             });
         });
     },
@@ -308,7 +308,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
                 cAlphaOnly: this.cAlphaOnly,
             },
             stage: this.stage,
-            bbmodel: this.model
+            compositeModel: this.model
         });
     },
 

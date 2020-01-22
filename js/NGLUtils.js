@@ -13,7 +13,7 @@ CLMSUI.NGLUtils = {
         //console.log ("MP", multiplePDBURI);
 
         var stage = pdbInfo.stage;
-        var bbmodel = pdbInfo.bbmodel;
+        var compositeModel = pdbInfo.compositeModel;
 
         console.log ("CLEAR STAGE");
         stage.removeAllComponents(); // necessary to remove old stuff so old sequences don't pop up in sequence finding
@@ -22,7 +22,7 @@ CLMSUI.NGLUtils = {
             var id = _.pluck(multiplePDBURI, "id").join(", ");
             var emptySequenceMap = [];
             emptySequenceMap.failureReason = "Error for " + id + ", " + reason;
-            bbmodel.trigger("3dsync", emptySequenceMap);
+            compositeModel.trigger("3dsync", emptySequenceMap);
         }
 
         Promise.all (
@@ -61,7 +61,7 @@ CLMSUI.NGLUtils = {
                 if (structureComp) {
                     // match by alignment func for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
                     function matchByXiAlignment (whichNGLSequences, pdbUniProtMap) {
-                        var protAlignCollection = bbmodel.get("alignColl");
+                        var protAlignCollection = compositeModel.get("alignColl");
                         CLMSUI.vent.listenToOnce (CLMSUI.vent, "sequenceMatchingDone", function (matchMatrix) {
                             var pdbXiProtMap = CLMSUI.modelUtils.matrixPairings (matchMatrix, whichNGLSequences);
                             CLMSUI.utils.xilog ("XI PAIRED", pdbXiProtMap);
@@ -76,7 +76,7 @@ CLMSUI.NGLUtils = {
                     }
 
                     var nglSequences = CLMSUI.NGLUtils.getChainSequencesFromNGLStructure (structureComp);
-                    var interactorMap = bbmodel.get("clmsModel").get("participants");
+                    var interactorMap = compositeModel.get("clmsModel").get("participants");
                     var interactorArr = CLMS.arrayFromMapValues(interactorMap);
 
                     // If have a pdb code AND legal accession IDs use a web service in matchPDBChainsToUniprot to glean matches
@@ -119,11 +119,11 @@ CLMSUI.NGLUtils = {
                         });
                         CLMSUI.utils.xilog ("chainmap", chainMap, "stage", stage, "\nhas sequences", sequenceMap);
 
-                        if (bbmodel.get("stageModel")) {
-                            bbmodel.get("stageModel").stopListening(); // Stop the following 3dsync event triggering stuff in the old stage model
+                        if (compositeModel.get("stageModel")) {
+                            compositeModel.get("stageModel").stopListening(); // Stop the following 3dsync event triggering stuff in the old stage model
                         }
-                        var removeThese = bbmodel.get("stageModel") ? [bbmodel.get("stageModel").getStructureName()] : [];    // old alignments to remove
-                        bbmodel.trigger("3dsync", sequenceMap, removeThese);
+                        var removeThese = compositeModel.get("stageModel") ? [compositeModel.get("stageModel").getStructureName()] : [];    // old alignments to remove
+                        compositeModel.trigger("3dsync", sequenceMap, removeThese);
                         // Now 3d sequence is added we can make a new NGL Model wrapper (as it needs aligning)
 
                         // Make a new model and set of data ready for the ngl viewer
@@ -131,10 +131,10 @@ CLMSUI.NGLUtils = {
                         newNGLModelWrapper.set({
                             structureComp: structureComp,
                             chainMap: chainMap,
-                            masterModel: bbmodel,
+                            compositeModel: compositeModel,
                             name: "NGLModelWrapper "+structureComp.structure.name,
                         });
-                        bbmodel.set("stageModel", newNGLModelWrapper);
+                        compositeModel.set("stageModel", newNGLModelWrapper);
                         // important that the new stagemodel is set first ^^^ before we setupLinks() on the model
                         // otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
                         // changed:linklist event is received. (i.e. it broke the other way round)

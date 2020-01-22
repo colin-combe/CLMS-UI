@@ -3,7 +3,7 @@ CLMSUI.BackboneModelTypes = CLMSUI.BackboneModelTypes || {};
 
 CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     defaults: {
-        masterModel: null,
+        compositeModel: null,
         structureComp: null,
         chainMap: null,
         linkList: null,
@@ -16,19 +16,19 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     // in a PDB structure.
 
     initialize: function() {
-        // When masterModel is declared, hang a listener on it that listens to change in alignment model as this
+        // When compositeModel is declared, hang a listener on it that listens to change in alignment model as this
         // possibly changes links and distances in 3d model
         // this is in case 3d stuff has been set up before main model (used to happen that pdb's were autoloaded for some searches)
-        this.listenToOnce (this, "change:masterModel", function() { // only do this once (should only happen once anyways but better safe than sorry)
+        this.listenToOnce (this, "change:compositeModel", function() { // only do this once (should only happen once anyways but better safe than sorry)
             // alignment change may mean distances are different so recalc
-            this.listenTo(this.getModel().get("alignColl"), "bulkAlignChange", function() {
+            this.listenTo(this.getCompositeModel().get("alignColl"), "bulkAlignChange", function() {
                 console.log("SET UP LINKS");
                 this.setupLinks();
             });
         });
 
         this.listenTo (this, "change:allowInterModelDistances", function (model, val) {
-            var compModel = this.get("masterModel");
+            var compModel = this.get("compositeModel");
             compModel.getCrossLinkDistances (compModel.getAllCrossLinks());  // regenerate distances for all crosslinks
             CLMSUI.vent.trigger ("changeAllowInterModelDistances", model, val);
         });
@@ -53,44 +53,50 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return this;
     },
 
-    getModel: function() {
-        return this.get("masterModel");
+    getCompositeModel: function() {
+        return this.get("compositeModel");
     },
 
     getStructureName: function () {
         return this.get("structureComp").structure.name;
     },
 
+    /**
+    *   Call when new PDB file loaded
+    */
     setupLinks: function() {
         var chainInfo = this.getChainInfo();
-        this.calculateCAtomsAllResidues(chainInfo.viableChainIndices);
+        this.calculateAllCaAtomIndices (chainInfo.viableChainIndices);
         this.setFilteredLinkList ();
 
-        // The point of this is to build a distances cache so we don't have to keep asking the ngl components for them
+        // The point of this is to build a cache for Ca-Ca distances so we don't have to keep asking the ngl components for them
         // For very large structures we just store the distances that map to crosslinks, so we have to get other distances by reverting to the ngl stuff
         var distances = this.getChainDistances(chainInfo.resCount > this.defaults.fullDistanceCalcCutoff);
         var distancesObj = new CLMSUI.DistancesObj (distances, this.get("chainMap"), this.getStructureName());
 
-        var clmsModel = this.getModel().get("clmsModel");
+        var clmsModel = this.getCompositeModel().get("clmsModel");
         // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically (as it generates an identical distance matrix)
         // Secondly, inserting a silent set to 'null' first stops backbone temporarily storing the previous distancesobj, as they could both be quite large
         // Also want to recalculate link distances with this object, before informing views the object is new (otherwise may draw with old data)
         clmsModel.set("distancesObj", null, {silent: true});
         clmsModel.set("distancesObj", distancesObj, {silent: true});
-        distancesObj.maxDistance = d3.max (this.getModel().getHomomDistances (this.getModel().getAllCrossLinks()));
+        distancesObj.maxDistance = d3.max (this.getCompositeModel().getHomomDistances (this.getCompositeModel().getAllCrossLinks()));
         clmsModel.trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"));
         return this;
     },
 
+    /**
+    *   Call when set of filtered cross-links has changed
+    */
     setFilteredLinkList: function () {
-        this.setLinkList (this.getModel().getFilteredCrossLinks());
+        this.setLinkList (this.getCompositeModel().getFilteredCrossLinks());
         return this;
     },
 
     setLinkList: function (crossLinkArr) {
         var linkDataObj = this.makeLinkList (crossLinkArr);
-        var distanceObj = this.getModel().get("clmsModel").get("distancesObj");
-        if (this.get("showShortestLinksOnly") && distanceObj) {
+        var distanceObj = this.getCompositeModel().get("clmsModel").get("distancesObj");
+        if (this.get("showShortestLinksOnly") && distanceObj) { // filter to shortest links if showShortestLinksOnly set
             linkDataObj.fullLinkList = distanceObj.getShortestLinkAlternatives(linkDataObj.fullLinkList);
         }
         this.setLinkListWrapped (linkDataObj);
@@ -108,7 +114,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var residueProxy1 = structure.getResidueProxy();
         var chainProxy = structure.getChainProxy();
         var atomProxy = structure.getAtomProxy();
-        var alignColl = this.getModel().get("alignColl");
+        var alignColl = this.getCompositeModel().get("alignColl");
 
         function getResidueId (globalNGLResIndex) {
             // TODO add structureId to key
@@ -186,7 +192,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         // Can save many calculations if assembly type is a smaller unit than the default pdb assembly type.
         // e.g. for assembly type BU1 or BU2 in 1AO6 only check chain combination A-A or B-B rather than all of A-A, A-B, B-A and B-B
         var chainMap = $.extend ({}, this.get("chainMap"));
-        var distObj = this.getModel().get("clmsModel").get("distancesObj");
+        var distObj = this.getCompositeModel().get("clmsModel").get("distancesObj");
         if (distObj) {
             var chainSet = distObj.permittedChainIndicesSet;
             d3.entries(chainMap).forEach (function (proteinEntry) {
@@ -357,7 +363,6 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             });
         }
 
-
         halfLinkList.forEach (function (halfLink) {
             halfLinkIdMap[halfLink.linkId] = halfLink;
             insertResidue(halfLink.residue, halfLink, residueIdToHalfLinkIds);
@@ -478,7 +483,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
     // Return original crosslinks from this model's link objects using origId property value
     getOriginalCrossLinks: function(linkObjs) {
-        var xlinks = this.getModel().get("clmsModel").get("crossLinks");
+        var xlinks = this.getCompositeModel().get("clmsModel").get("crossLinks");
         return linkObjs.map(function(linkObj) {
             return xlinks.get(linkObj.origId);
         });
@@ -535,7 +540,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         };
     },
 
-    calculateCAtomsAllResidues: function(chainIndices) {
+    calculateAllCaAtomIndices: function(chainIndices) {
         var structure = this.get("structureComp").structure;
         var chainProxy = structure.getChainProxy();
         var atomProxy = structure.getAtomProxy();
@@ -611,7 +616,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     getLinkDistancesBetween2Chains: function(chainAtomIndices1, chainAtomIndices2, chainIndex1, chainIndex2, links) {
 
         var notHomomultimeric = function (xlinkID, c1, c2) {
-            var xlink = this.getModel().get("clmsModel").get("crossLinks").get(xlinkID);
+            var xlink = this.getCompositeModel().get("clmsModel").get("crossLinks").get(xlinkID);
             return CLMSUI.NGLUtils.not3DHomomultimeric(xlink, c1, c2);
         };
 
@@ -904,7 +909,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
     // Return chain indices covered by currently visible proteins
     getShowableChains: function(showAll) {
-        var protMap = CLMS.arrayFromMapValues(this.getModel().get("clmsModel").get("participants"));
+        var protMap = CLMS.arrayFromMapValues(this.getCompositeModel().get("clmsModel").get("participants"));
         var prots = Array.from(protMap).filter(function(prot) {
             return !prot.hidden;
         }).map(function(prot) {

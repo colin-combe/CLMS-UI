@@ -457,7 +457,7 @@ function callback (model) {
 
         var stageModel = CLMSUI.compositeModelInst.get("stageModel");
         var shortenThese = [0, 1];
-        var actualMapping = $.extend({}, stageModel.calculateCAtomsAllResidues (shortenThese));	// copy object so as not to affect original (causes error)
+        var actualMapping = $.extend({}, stageModel.calculateAllCaAtomIndices (shortenThese));	// copy object so as not to affect original (causes error)
         shortenThese.forEach (function (index) {
             actualMapping[index] = actualMapping[index].slice(-20);
         });
@@ -1361,7 +1361,7 @@ function testSetupNew (cbfunc) {
             });
 
             var stage = new NGL.Stage ("ngl", {tooltip: false});
-            CLMSUI.NGLUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, bbmodel: CLMSUI.compositeModelInst});
+            CLMSUI.NGLUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, compositeModel: CLMSUI.compositeModelInst});
             console.log ("here");
         });
 
