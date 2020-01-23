@@ -47,7 +47,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         return this;
     },
 
-    // Get distances if links are made homomultimr if possible, needed to generate initial distance range
+    // Get distances if links are made homomultimer if possible, needed to generate initial distance range
     getHomomDistances: function (crossLinkArr) {
         // Store current homo states
         var oldHom = _.pluck (crossLinkArr, "confirmedHomomultimer");

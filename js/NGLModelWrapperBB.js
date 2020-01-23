@@ -201,21 +201,22 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             //console.log ("chainMap", chainMap, chainSet);
         }
 
-        // divide protein --> chain map into protein --> model --> chain map, in case we don't want to make links between different models
+        // divide map of protein --> array of chains into two-deep map of protein --> model --> array of chains, in case we don't want to make links between different models
         var modelIndexedChainMap = CLMSUI.modelUtils.makeSubIndexedMap(chainMap, "modelIndex");
 
         // d3.mapped and wrapped versions of chainMap and modelIndexedChainMap. Easier to use for some operations.
         var chainValueMap = d3.map();
-        var chainModelMapMap = d3.map();
+        var modelIndexedChainValueMap = d3.map();
         d3.entries(chainMap).forEach (function (protEntry) {
             chainValueMap.set (protEntry.key, {values: protEntry.value});
         });
         d3.entries(modelIndexedChainMap).forEach (function (protEntry) {
-            chainModelMapMap.set (protEntry.key, d3.map (protEntry.value, function(d) { return d.key; }));
+            modelIndexedChainValueMap.set (protEntry.key, d3.map (protEntry.value, function(d) { return d.key; }));
         });
-
+        
+        console.log ("CHAINS", chainMap, chainValueMap, modelIndexedChainMap, modelIndexedChainValueMap);
         var allowInterModelDistances = this.get("allowInterModelDistances");
-        console.log ("chainValueMap", chainValueMap, chainModelMapMap, modelIndexedChainMap);
+
         var octAccessorObj = {
             id: function (d) { return d; },
             x: function (d) { return d.coords[0]; },
@@ -225,11 +226,12 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         var tieBreakerFunc = CLMSUI.DistancesObj.prototype.tieBreaker;
 
         crossLinkArr.forEach (function (xlink) {
-            // loop through fromProtein's models/chains in modelIndexedChainMap
-            // Within that have an inner loop through toProtein's models/chains in modelIndexedChainMap
-            // Match by model index so can't have crosslinks between different models
+            // Check from chain - to chain pairings for valid crosslink possibilities.
+            // Where inter-model links barred, divide from and to chains into sets per model and
+            // loop through the pairings in subsets.
             var fromProtID = xlink.fromProtein.id;
             var toProtID = xlink.toProtein.id;
+            
             var fromPerModelChains = allowInterModelDistances ? [chainValueMap.get(fromProtID)] : modelIndexedChainMap[fromProtID];
             var toPerModelChains = modelIndexedChainMap[toProtID];
 
@@ -239,7 +241,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             if (!fromEmpty && !toEmpty) {
 
                 // get a map (key -> value) of the toPerModelChains entries
-                var toPerModelChainMap = chainModelMapMap.get (toProtID);
+                var toPerModelChainMap = modelIndexedChainValueMap.get (toProtID);
                 var toChainMap = chainValueMap.get (toProtID);
 
                 var octreeIgnoreFunc = function (point1, point2) {
@@ -247,9 +249,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
                 };
 
                 fromPerModelChains.forEach (function (fromPerModelChainEntry) {
-                    var toChains = allowInterModelDistances ? toChainMap : toPerModelChainMap.get (fromPerModelChainEntry.key);  // bar possible crosslinks between models
+                    // If inter-model links allowed, pick all toChains, else pick only toChains
+                    // with same modelID as current set of fromModelChains
+                    var toChains = allowInterModelDistances ? toChainMap : toPerModelChainMap.get (fromPerModelChainEntry.key);
 
-                    //console.log ("XLINK CHAINS", fromPerModelChains, toPerModelChains);
+                    //console.log ("XLINK CHAINS", xlink.id, fromPerModelChains, toPerModelChains);
 
                     if (toChains) { // don't proceed if inter model distances barred and no 'to' chains within current model
 
