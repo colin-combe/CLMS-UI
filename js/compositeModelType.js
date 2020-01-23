@@ -15,8 +15,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             groupColours: null, // will be d3.scale for colouring by search/group,
             TTCrossLinkCount: 0,
             groupedGoTerms: [],
-            xiNetLinkWidthAuto: true,
-            xiNetLinkWidthScale: 1
+            xinetPpiSteps: [2, 3]
         });
 
         this.listenTo(this.get("clmsModel"), "change:matches", function() {
