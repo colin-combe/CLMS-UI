@@ -476,7 +476,6 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
                 refilter: true
             });
         });
-        this.listenTo(CLMSUI.vent, "distancesAdjusted", this.render); // Existing residues/pdb but distances changed
         this.listenTo(CLMSUI.vent, "linkMetadataUpdated", function(metaData) {
             this
                 .addTableColumns(metaData)

@@ -393,7 +393,7 @@ function callback (model) {
 
     QUnit.test ("Get Chain Start Positions as Atom Indices (for label representation)", function (assert) {
         var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-        var chainStartSele = stageModel.getFirstAtomPerChainSelection (d3.set([0,1 ]));
+        var chainStartSele = stageModel.makeFirstAtomPerChainSelectionString (d3.set([0,1 ]));
         var expectedValue = "@0,4599";
         assert.deepEqual (chainStartSele, expectedValue, "Expected "+expectedValue+" for chain start atom NGL selection, Passed!");
     });
@@ -401,7 +401,7 @@ function callback (model) {
 
     QUnit.test ("Get Just Chain Selection", function (assert) {
         var stageModel = CLMSUI.compositeModelInst.get("stageModel");
-        var chainSele = stageModel.getChainSelection ({showAll: false, chainIndices: [0,1]});
+        var chainSele = stageModel.makeChainSelectionString ({showAll: false, chainIndices: [0,1]});
         var expectedValue = "(( /0 AND (:A OR :B) ) )";
         assert.deepEqual (chainSele, expectedValue, "Expected "+expectedValue+" for just chain selection, Passed!");
     });

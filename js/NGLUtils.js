@@ -3,19 +3,19 @@ var CLMSUI = CLMSUI || {};
 CLMSUI.NGLUtils = {
     repopulateNGL: function (pdbInfo) {
         var params = pdbInfo.params || {}; // {sele: ":A"};    // example: show just 'A' chain
+        console.log ("params", params);
+
         var uri = pdbInfo.pdbCode ? "rcsb://" + pdbInfo.pdbCode : pdbInfo.pdbFileContents;
-        
-        var multiplePDBURI = pdbInfo.pdbCode 
+        var multiplePDBURI = pdbInfo.pdbCode
             ? pdbInfo.pdbCode.match(CLMSUI.utils.commonRegexes.multiPdbSplitter).map (function (code) { return {id: code, uri:"rcsb://"+code, local: false}; })
             : [{id: pdbInfo.name, uri: pdbInfo.pdbFileContents, local: true}]
         ;
-        
-        //multiplePDBURI.push ({id: "1H3O", uri: "rcsb://1H3O", local: false});
-        console.log ("MP", multiplePDBURI);      
-        
+        //console.log ("MP", multiplePDBURI);
+
         var stage = pdbInfo.stage;
         var bbmodel = pdbInfo.bbmodel;
 
+        console.log ("CLEAR STAGE");
         stage.removeAllComponents(); // necessary to remove old stuff so old sequences don't pop up in sequence finding
 
         function returnFailure(reason) {
@@ -25,10 +25,7 @@ CLMSUI.NGLUtils = {
             bbmodel.trigger("3dsync", emptySequenceMap);
         }
 
-        console.log ("params", params);
-        
         Promise.all (
-            //stage.loadFile("rcsb://1AO6", params)
             multiplePDBURI.map (function (pdbURI) {
                 return stage.loadFile (pdbURI.uri, params);
             })
@@ -40,14 +37,14 @@ CLMSUI.NGLUtils = {
             .then (function (structureCompArray) {
 
                 structureCompArray = structureCompArray || [];  // set to empty array if undefined to avoid error in next bit
-                CLMSUI.utils.xilog ("structureComp", structureCompArray);
+                //CLMSUI.utils.xilog ("structureComp", structureCompArray);
                 structureCompArray.forEach (function (scomp, i) {   // give structure a name if none present (usually because loaded as local file)
                     scomp.structure.name = scomp.structure.name || multiplePDBURI[i].id;
                 });
-            
+
                 var structureComp;
                 if (structureCompArray.length > 1) {
-                    //structureCompArray 
+                    //structureCompArray
                     var oldStructures = _.pluck (structureCompArray, "structure");
                     var combinedStructure = NGL.concatStructures.apply (NGL, ["concat"].concat(oldStructures));
                     CLMSUI.NGLUtils.copyEntities (combinedStructure, oldStructures);
@@ -60,7 +57,7 @@ CLMSUI.NGLUtils = {
                 } else {
                     structureComp = structureCompArray[0];
                 }
-            
+
                 if (structureComp) {
                     // match by alignment func for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
                     function matchByXiAlignment (whichNGLSequences, pdbUniProtMap) {
@@ -127,31 +124,32 @@ CLMSUI.NGLUtils = {
                         }
                         var removeThese = bbmodel.get("stageModel") ? [bbmodel.get("stageModel").getStructureName()] : [];    // old alignments to remove
                         bbmodel.trigger("3dsync", sequenceMap, removeThese);
-                        // Now 3d sequence is added we can make a new crosslinkrepresentation (as it needs aligning)
+                        // Now 3d sequence is added we can make a new NGL Model wrapper (as it needs aligning)
 
                         // Make a new model and set of data ready for the ngl viewer
-                        var crosslinkData = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB();
-                        crosslinkData.set({
+                        var newNGLModelWrapper = new CLMSUI.BackboneModelTypes.NGLModelWrapperBB();
+                        newNGLModelWrapper.set({
                             structureComp: structureComp,
                             chainMap: chainMap,
                             masterModel: bbmodel,
+                            name: "NGLModelWrapper "+structureComp.structure.name,
                         });
-                        bbmodel.set("stageModel", crosslinkData);
+                        bbmodel.set("stageModel", newNGLModelWrapper);
                         // important that the new stagemodel is set first ^^^ before we setupLinks() on the model
                         // otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
                         // changed:linklist event is received. (i.e. it broke the other way round)
-                        crosslinkData.setupLinks();
+                        newNGLModelWrapper.setupLinks();
                     }
                 }
             });
     },
-    
+
     getChainSequencesFromNGLStructure: function (structureComponent) {
         var sequences = [];
         var structure = structureComponent.structure;
         var chainToOriginalStructureMap = structure.chainToOriginalStructureIDMap || {};
         //console.log ("comp", structureComponent);
-        
+
         structure.eachChain(function(c) {
             //console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname, c.qualifiedName());
             if (CLMSUI.NGLUtils.isViableChain(c)) { // short chains are ions/water molecules, ignore
@@ -161,7 +159,7 @@ CLMSUI.NGLUtils = {
                 });
                 //esList = structure.getSequence (new NGL.Selection (c.qualifiedName()));
                 var structureID = chainToOriginalStructureMap[c.index] || structure.name;
-                
+
                 sequences.push ({
                     chainName: c.chainname,
                     chainIndex: c.index,
@@ -173,11 +171,11 @@ CLMSUI.NGLUtils = {
                 //console.log ("chain", c, c.residueCount, c.residueOffset, c.chainname, c.qualifiedName(), resList.join(""));
             }
         });
-        
+
         CLMSUI.utils.xilog ("seq", sequences);
         return sequences;
     },
-    
+
     getChainSequencesFromNGLStage: function (stage) {
         var sequences = [];
         //console.log ("stage", stage);
@@ -197,7 +195,7 @@ CLMSUI.NGLUtils = {
         var count = pdbUris.length;
         var dataArr = [];
         var requireXiAlign = [];
-        
+
         /*
         function handleError(data, status) {
             console.log("error", data, status);
@@ -208,7 +206,6 @@ CLMSUI.NGLUtils = {
         */
 
         function dealWithReturnedData (data) {
-            //console.log ("DATAAA", data);
             var map = d3.map();
 
             $(data).find("block").each(function(i, b) {
@@ -261,7 +258,7 @@ CLMSUI.NGLUtils = {
                 callback ({uniprotMapped: mapArr, remaining: requireXiAlign});
             }
         }
-        
+
         pdbUris.forEach (function (pdbUri) {
             $.get("https://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query=" + pdbUri.id,
                 function(data, status, xhr) {
@@ -270,7 +267,7 @@ CLMSUI.NGLUtils = {
                     } else { // usually some kind of error if reached here as we didn't detect xml
                         requireXiAlign.push (pdbUri);
                     }
-                
+
                     count--;
                     if (count === 0) {
                         dealWithReturnedData (dataArr);
@@ -284,7 +281,7 @@ CLMSUI.NGLUtils = {
                 }
             });
         });
-        
+
         /*
         $.get("https://www.rcsb.org/pdb/rest/das/pdb_uniprot_mapping/alignment?query=" + pdbCode,
             function(data, status, xhr) {
@@ -302,7 +299,7 @@ CLMSUI.NGLUtils = {
     // Fallback protein-to-pdb chain matching routines for when we don't have a pdbcode to query the pdb web services or it's offline or we still have sequences in the pdb unmatched to proteins
     matchSequencesToExistingProteins: function (protAlignCollection, sequenceObjs, proteins, extractFunc) {
         CLMSUI.utils.xilog ("SEQS TO PAIR INTERNALLY", sequenceObjs);
-        
+
         proteins = CLMSUI.modelUtils.filterOutDecoyInteractors (proteins)
             .filter(function(protein) {
                 return protAlignCollection.get(protein.id);
@@ -376,7 +373,7 @@ CLMSUI.NGLUtils = {
             finished(matchMatrix);
         }
     },
-    
+
     make3DAlignID: function(baseID, chainName, chainIndex) {
         return baseID + ":" + chainName + ":" + chainIndex;
     },
@@ -390,7 +387,7 @@ CLMSUI.NGLUtils = {
         });
         return matchChains[0] ? matchChains[0].name : undefined;
     },
-    
+
     getRangedCAlphaResidueSelectionForChain: function(chainProxy) { // chainProxy is NGL Object
         var min, max;
         chainProxy.eachResidue(function(rp) {
@@ -407,26 +404,26 @@ CLMSUI.NGLUtils = {
         var sel = ":" + chainProxy.chainname + "/" + chainProxy.modelIndex + " AND " + min + "-" + max + ".CA";
         return sel;
     },
-    
+
     getReasonableDistanceLimit: function (nglStageModel) {
         //var showableChains = nglStageModel.getShowableChains (false);
-        var chainSele;  // = nglStageModel.getChainSelection(showableChains);
+        var chainSele;  // = nglStageModel.makeChainSelectionString(showableChains);
         var boundingBox = nglStageModel.get("structureComp").getBoxUntransformed(chainSele);
         function xyzToArray (xyz) {
             return [xyz.x, xyz.y, xyz.z];
         }
         var dist = CLMSUI.modelUtils.getDistanceSquared (xyzToArray (boundingBox.min), xyzToArray (boundingBox.max));
-        
+
         return Math.sqrt (dist);
     },
-    
+
     // test to ignore short chains and those that aren't polymer chains (such as water molecules)
     isViableChain: function(chainProxy) {
         //console.log ("cp", chainProxy.entity, chainProxy.residueCount, chainProxy);
         // should be chainProxy.entity.isPolymer() but some hand-built ngl models muff these settings up
         return chainProxy.residueCount > 10 && (!chainProxy.entity || (!chainProxy.entity.isWater() && !chainProxy.entity.isMacrolide()));
     },
-    
+
     exportPDB: function (structure, nglModelWrapper, name, remarks) {
         var PDBLinks = nglModelWrapper.getPDBLinkString (nglModelWrapper.getFullLinks());
         var PDBConects = nglModelWrapper.getPDBConectString (nglModelWrapper.getFullLinks());
@@ -435,7 +432,7 @@ CLMSUI.NGLUtils = {
         PDBRemarks = d3.merge (PDBRemarks);
         PDBRemarks.unshift ("");
         PDBRemarks = PDBRemarks.map (function (remark) { return "  3 "+remark; });
-        
+
         var writer = new NGL.PdbWriter (structure, {renumberSerial: false, remarks: PDBRemarks});
         writer.oldGetData = writer.getData;
         writer.getData = function () {
@@ -444,30 +441,30 @@ CLMSUI.NGLUtils = {
             var conectInsert = data.lastIndexOf("END");
             return data.substring(0, linkInsert) + PDBLinks + "\n" + data.slice (linkInsert, conectInsert) + PDBConects + "\n" + data.slice(conectInsert);
         };
-    
+
         writer.download (name || structure.name+"-Crosslinked");
     },
-    
+
     exportPymolCrossLinkSyntax: function (structure, nglModelWrapper, name, remarks) {
         var crossLinks = nglModelWrapper.getFullLinks();
         var pymolLinks =  CLMSUI.NGLUtils.makePymolCrossLinkSyntax (structure, crossLinks, remarks);
         var fileName = downloadFilename ("pymol", "pml");
         download (pymolLinks.join("\r\n"), "plain/text", fileName);
     },
-    
+
     makePymolCrossLinkSyntax: function (structure, links, remarks) {
         var pdbids = structure.chainToOriginalStructureIDMap || {};
         var cp = structure.getChainProxy();
         var rp = structure.getResidueProxy();
-        
+
         var remarkLines = (remarks || []).map (function (remark) {
-            return "# "+remark;    
+            return "# "+remark;
         });
-                    
+
         var pdbs = d3.set(d3.values(pdbids)).values();
         if (_.isEmpty (pdbs)) { pdbs = [structure.name]; }
         var pdbLines = pdbs.map (function (pdb) { return "fetch "+pdb+", async=0"; });
-        
+
         var crossLinkLines = links.map (function (link) {
             cp.index = link.residueA.chainIndex;
             var chainA = cp.chainname;
@@ -486,47 +483,47 @@ CLMSUI.NGLUtils = {
         var lines = remarkLines.concat(pdbLines, crossLinkLines);
         return lines;
     },
-    
+
     exportHaddockCrossLinkSyntax: function (structure, nglModelWrapper, name, remarks, crossLinkerObj) {
         var crossLinks = nglModelWrapper.getFullLinks();
         var haddockLinks = CLMSUI.NGLUtils.makeHaddockCrossLinkSyntax (structure, crossLinks, remarks, crossLinkerObj);
         var fileName = downloadFilename ("haddock", "tbl");
         download (haddockLinks.join("\r\n"), "plain/text", fileName);
     },
-    
+
     makeHaddockCrossLinkSyntax: function (structure, links, remarks, crossLinkerObj) {
         //console.log ("CLO", crossLinkerObj);
         var str = ["zeroth", "first", "second", "third", "fourth", "fifth", "next"];
         var pdbids = structure.chainToOriginalStructureIDMap || {};
 
         var remarkLines = (remarks || []).map (function (remark) {
-            return "! "+remark;    
+            return "! "+remark;
         });
-        
+
         var crossLinkers = d3.values(crossLinkerObj.crossLinkerInfo);
         crossLinkers.push ({id: "default", name: "default", restraints: "12.0 10.0 18.0"});
         var restraints = d3.map (crossLinkers, function(d) { return d.id; });
-        
+
         var pdbs = d3.set(d3.values(pdbids)).values();
         if (_.isEmpty (pdbs)) { pdbs = [structure.name]; }
         var pdbLines = pdbs.map (function (pdb, i) { return "! upload "+pdb+" as "+str[Math.min(i+1, 6)]+" file"; });
-        
+
         var interModelLinks = links.filter (function (link) {
             return link.residueA.modelIndex != link.residueB.modelIndex;
         });
-        
+
         var crossLinkLines = {};
         crossLinkers.forEach (function (clinker) { crossLinkLines[clinker.id] = ["! "+clinker.name+" based length restraints"]; });
         var origCrossLinks = crossLinkerObj.crossLinks;
         interModelLinks.forEach (function (link) {
             var origLink = origCrossLinks.get(link.origId);
             // get crosslinkers used by this crosslink
-            var crossLinkerIDs = 
+            var crossLinkerIDs =
                 (origLink ? d3.set (origLink.filteredMatches_pp.map (function (match) { return match.match.crosslinker_id; })).values() : [])
                 .map (function (clid) { return clid === "undefined" ? "default" : clid; })
             ;
             if (_.isEmpty (crossLinkerIDs)) { crossLinkerIDs = ["default"]; }
-            
+
             // add a restraint line for each different crosslinker
             crossLinkerIDs.forEach (function (clid) {
                 //console.log ("clid", clid, restraints);
@@ -539,17 +536,17 @@ CLMSUI.NGLUtils = {
                 crossLinkLines[clid].push (line);
             });
         });
-        
+
         // merge all the lines together (this keeps them grouped by crosslinker, rather than crosslink)
         var allCrossLinkLines = d3.merge (d3.values(crossLinkLines));
-        
-        var lines = remarkLines.concat(pdbLines, allCrossLinkLines);     
+
+        var lines = remarkLines.concat(pdbLines, allCrossLinkLines);
         return lines;
     },
-    
+
     copyEntities: function (combinedStructure, originalStructures) {
         var gci = 0;
-        
+
         originalStructures.forEach (function (s) {
             s.eachChain (function (cp) {
                 var entity = cp.entity;
@@ -558,36 +555,36 @@ CLMSUI.NGLUtils = {
                 //    structure, targetEntityIndex, entity.description, entity.type, [gci]
                 //));
                 combinedStructure.entityList.push (entity);
-                
+
                 var targetcp = combinedStructure.getChainProxy (gci);
                 targetcp.entityIndex = targetEntityIndex;
                 gci++;
             });
         });
-        
+
         //console.log (combinedStructure.entityList);
     },
-    
+
     makeChainToOriginalStructureIDMap: function (combinedStructure, originalStructures) {
         var gci = 0;
         var chainToOriginalStructureIDMap = [];
-        
+
         originalStructures.forEach (function (s) {
             s.eachChain (function () {
                 chainToOriginalStructureIDMap[gci] = s.name;
                 gci++;
             });
         });
-        
+
         combinedStructure.chainToOriginalStructureIDMap = chainToOriginalStructureIDMap;
-        
+
         return chainToOriginalStructureIDMap;
     },
-    
+
     exportMMCIF: function (structure, nglModelWrapper, name, remarks) {
-        
+
     },
-    
+
     not3DHomomultimeric: function(crossLink, chain1ID, chain2ID) {
         return chain1ID !== chain2ID || !crossLink.confirmedHomomultimer;
     },

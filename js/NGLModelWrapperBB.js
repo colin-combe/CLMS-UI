@@ -30,7 +30,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         this.listenTo (this, "change:allowInterModelDistances", function (model, val) {
             var compModel = this.get("masterModel");
             compModel.getCrossLinkDistances (compModel.getAllCrossLinks());  // regenerate distances for all crosslinks
-            CLMSUI.vent.trigger ("changeAllowInterModelDistances", val);
+            CLMSUI.vent.trigger ("changeAllowInterModelDistances", model, val);
         });
 
         this.listenTo (this, "change:chainMap", function (model, val) {
@@ -73,7 +73,9 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
         var clmsModel = this.getModel().get("clmsModel");
         // silent change and trigger, as loading in the same pdb file doesn't trigger the change automatically (as it generates an identical distance matrix)
+        // Secondly, inserting a silent set to 'null' first stops backbone temporarily storing the previous distancesobj, as they could both be quite large
         // Also want to recalculate link distances with this object, before informing views the object is new (otherwise may draw with old data)
+        clmsModel.set("distancesObj", null, {silent: true});
         clmsModel.set("distancesObj", distancesObj, {silent: true});
         distancesObj.maxDistance = d3.max (this.getModel().getHomomDistances (this.getModel().getAllCrossLinks()));
         clmsModel.trigger("change:distancesObj", clmsModel, clmsModel.get("distancesObj"));
@@ -774,7 +776,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         } else {
             // if resnoList == 'all' replace it with array of all residues
             if (resnoList === "all") {
-                resnoList = this.crosslinkData.getResidues();
+                resnoList = this.getResidues();
             }
 
             // if resnoList is single item, make it an array of the single item
@@ -867,7 +869,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         return resno !== undefined ? this.getAtomIndex (resObj.seqIndex, resObj.chainIndex) : undefined;
     },
 
-    getFirstAtomPerChainSelection: function(chainIndexSet) {
+    makeFirstAtomPerChainSelectionString: function(chainIndexSet) {
         var comp = this.get("structureComp").structure;
         var sels = [];
         comp.eachChain(function(cp) {
@@ -880,7 +882,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     // Get a NGL selection for chains listing only the chainIndices passed in as a property of chainItems
-    getChainSelection: function(chainItems) {
+    makeChainSelectionString: function(chainItems) {
         var selectionString = "all";
         var showAll = chainItems.showAll || false;
         var chainIndices = chainItems.chainIndices || [];
