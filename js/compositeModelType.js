@@ -30,6 +30,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             }
         });
 
+
+        this.listenTo (CLMSUI.vent, "recalcLinkDistances", function () {
+            if (this.get("clmsModel")) {    // bar the alternative model from doing this because it has no crosslinks and will crash
+                this.getCrossLinkDistances (this.getAllCrossLinks());
+            }
+        });
+
         this.calcAndStoreTTCrossLinkCount();
     },
 

@@ -145,15 +145,12 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             return str.replace(/[^a-z0-9 ,.?!]/ig, '');
         }
 
-        this.listenTo (this.model.get("clmsModel"), "change:matches", function() {
-            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
-        });
-        this.listenTo (this.model, "change:selectedProteins", function() {
-            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
-        });
-        this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function() {
-            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
-        });
+        function updatePD () {
+            this.updateProteinDropdown (d3.select(this.el).select(".queryBox"));
+        }
+        this.listenTo (this.model.get("clmsModel"), "change:matches", updatePD);
+        this.listenTo (this.model, "change:selectedProteins", updatePD);
+        this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", updatePD);
 
         this.listenTo (this.model, "3dsync", function(newSequences) {
             var count = _.isEmpty(newSequences) ? 0 : newSequences.length;
@@ -176,9 +173,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             this.setStatusText(msg, success);
         });
 
-        this.listenTo (CLMSUI.vent, "alignmentProgress", function(msg) {
-            this.setStatusText(msg);
-        });
+        this.listenTo (CLMSUI.vent, "alignmentProgress", this.setStatusText);
 
         // Pre-load pdb if requested
         if (viewOptions.initPDBs) {
