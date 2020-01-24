@@ -977,9 +977,9 @@ CLMSUI.CrosslinkRepresentation.prototype = {
         var comp = this.structureComp;
         var links = this.nglModelWrapper.getFullLinks();
 
-        var xlPair = this.nglModelWrapper.getAtomPairsFromLinks (links);
-        var xlPairEmph = this.nglModelWrapper.getAtomPairsFromLinks (this.filterByLinkState(links, "selection"));
-        var xlPairHigh = this.nglModelWrapper.getAtomPairsFromLinks (this.filterByLinkState(links, "highlights"));
+        var xlPair = this.nglModelWrapper.getAtomPairsFromLinkList (links);
+        var xlPairEmph = this.nglModelWrapper.getAtomPairsFromLinkList (this.filterByLinkState(links, "selection"));
+        var xlPairHigh = this.nglModelWrapper.getAtomPairsFromLinkList (this.filterByLinkState(links, "highlights"));
         var baseLinkScale = 3;
 
         this.linkRepr = comp.addRepresentation("distance", {
@@ -1354,7 +1354,7 @@ CLMSUI.CrosslinkRepresentation.prototype = {
     // Filter a link array by a link state and then set the atoms at each link end as pairs for a given distance representation
     setLinkRep: function(links, aLinkRepr, linkState) {
         var availableLinks = this.nglModelWrapper.getAvailableLinks (this.filterByLinkState(links, linkState));
-        var availableAtomPairs = this.nglModelWrapper.getAtomPairsFromLinks(availableLinks);
+        var availableAtomPairs = this.nglModelWrapper.getAtomPairsFromLinkList(availableLinks);
         aLinkRepr.setParameters ({atomPair: availableAtomPairs});
         return this;
     },

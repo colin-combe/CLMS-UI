@@ -213,7 +213,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
         d3.entries(modelIndexedChainMap).forEach (function (protEntry) {
             modelIndexedChainValueMap.set (protEntry.key, d3.map (protEntry.value, function(d) { return d.key; }));
         });
-        
+
         console.log ("CHAINS", chainMap, chainValueMap, modelIndexedChainMap, modelIndexedChainValueMap);
         var allowInterModelDistances = this.get("allowInterModelDistances");
 
@@ -231,7 +231,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
             // loop through the pairings in subsets.
             var fromProtID = xlink.fromProtein.id;
             var toProtID = xlink.toProtein.id;
-            
+
             var fromPerModelChains = allowInterModelDistances ? [chainValueMap.get(fromProtID)] : modelIndexedChainMap[fromProtID];
             var toPerModelChains = modelIndexedChainMap[toProtID];
 
@@ -498,15 +498,15 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     // Return an array of atom pair indices (along with original link id) for a given array of crosslink objects
-    getAtomPairsFromLinks: function (fullLinkList) {
+    getAtomPairsFromLinkList: function (linkList) {
         var atomPairs = [];
 
-        if (fullLinkList) {
-            if (fullLinkList === "all") {
-                fullLinkList = this.getFullLinks();
+        if (linkList) {
+            if (linkList === "all") {
+                linkList = this.getFullLinks();
             }
 
-            fullLinkList.forEach(function(link) {
+            linkList.forEach(function(link) {
                 var atomA = this.getAtomIndexFromResidueObj (link.residueA);
                 var atomB = this.getAtomIndexFromResidueObj (link.residueB);
 
@@ -523,7 +523,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     getAtomPairsFromResidue: function (residue) {
-        return this.getAtomPairsFromLinks (this.getFullLinks (residue));
+        return this.getAtomPairsFromLinkList (this.getFullLinks (residue));
     },
 
     getChainInfo: function() {
@@ -708,11 +708,11 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
     },
 
     // make an array of pdb file compatible link entries for the supplied crosslink objects
-    getAtomPairsFromLinksWithDistances: function (links) {
+    getAtomPairsAndDistancesFromLinkList: function (links) {
         var struc = this.get("structureComp").structure;
         var ap1 = struc.getAtomProxy();
         var ap2 = struc.getAtomProxy();
-        var atomPairs = this.getAtomPairsFromLinks (links);
+        var atomPairs = this.getAtomPairsFromLinkList (links);
 
         atomPairs.forEach (function (pair) {
             ap1.index = pair[0];
@@ -760,7 +760,7 @@ CLMSUI.BackboneModelTypes.NGLModelWrapperBB = Backbone.Model.extend({
 
     getPDBConectString: function (links) {  // Conect is spelt right
         var pdbConects = [];
-        var atomPairs = this.getAtomPairsFromLinks (links);
+        var atomPairs = this.getAtomPairsFromLinkList (links);
         var conectFormat = 'CONECT%5d%5d                                                                ';
         atomPairs.sort (function (a, b) { return a[0] - b[0]; });   // order by ascending first atompair index
 
