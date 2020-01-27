@@ -12,10 +12,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             annotationTypes: null,
             selectedProteins: [],
             highlightedProteins: [],
-            groupColours: null, // will be d3.scale for colouring by search/group,
             TTCrossLinkCount: 0,
             groupedGoTerms: [],
-            xinetPpiSteps: [2, 3]
+            xiNetLinkWidthAuto: true,
+            xiNetLinkWidthScale: 1
         });
 
         this.listenTo(this.get("clmsModel"), "change:matches", function() {
@@ -27,6 +27,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             if (!filterModel.get("fdrMode")) {
                 // Need to clear all crosslinks as they all get valued
                 CLMSUI.clearFdr(this.getAllCrossLinks());
+            }
+        });
+
+
+        this.listenTo (CLMSUI.vent, "recalcLinkDistances", function () {
+            if (this.get("clmsModel")) {    // bar the alternative model from doing this because it has no crosslinks and will crash
+                this.getCrossLinkDistances (this.getAllCrossLinks());
             }
         });
 
@@ -47,7 +54,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         return this;
     },
 
-    // Get distances if links are made homomultimr if possible, needed to generate initial distance range
+    // Get distances if links are made homomultimer if possible, needed to generate initial distance range
     getHomomDistances: function (crossLinkArr) {
         // Store current homo states
         var oldHom = _.pluck (crossLinkArr, "confirmedHomomultimer");
@@ -348,7 +355,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var clmsModel = this.get("clmsModel");
         if (clmsModel) {
             var ttCrossLinks = this.getAllCrossLinks().filter(function(link) {
-                return !link.isDecoyLink() && !link.isLinearLink() && !link.isMonoLink();
+                return !link.isDecoyLink() && !link.isLinearLink();
             });
             return ttCrossLinks;
         }
@@ -584,20 +591,22 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             var clCount = crossLinks.length;
             for (var cl = 0; cl < clCount; cl++) {
                 var crossLink = crossLinks[cl];
-                var fromProtein = crossLink.fromProtein;
-                if (fromProtein.is_decoy != true) {
-                    fromProtein.manuallyHidden = false;
-                    toSelect.add(fromProtein);
-                }
-                if (crossLink.toProtein && crossLink.toProtein.is_decoy != true) {
-                    var toProtein = crossLink.toProtein;
-                    toProtein.manuallyHidden = false;
-                    toSelect.add(toProtein);
+                if (crossLink.filteredMatches_pp.length) {
+                    var fromProtein = crossLink.fromProtein;
+                    if (fromProtein.is_decoy != true) {
+                        fromProtein.manuallyHidden = false;
+                        toSelect.add(fromProtein);
+                    }
+                    if (crossLink.toProtein && crossLink.toProtein.is_decoy != true) {
+                        var toProtein = crossLink.toProtein;
+                        toProtein.manuallyHidden = false;
+                        toSelect.add(toProtein);
+                    }
                 }
             }
         }
 
-        this.get("filterModel").trigger("change");
+        //this.get("filterModel").trigger("change");
         this.setSelectedProteins(Array.from(toSelect));
 
     },

@@ -457,7 +457,7 @@ function callback (model) {
 
         var stageModel = CLMSUI.compositeModelInst.get("stageModel");
         var shortenThese = [0, 1];
-        var actualMapping = $.extend({}, stageModel.calculateCAtomsAllResidues (shortenThese));	// copy object so as not to affect original (causes error)
+        var actualMapping = $.extend({}, stageModel.calculateAllCaAtomIndices (shortenThese));	// copy object so as not to affect original (causes error)
         shortenThese.forEach (function (index) {
             actualMapping[index] = actualMapping[index].slice(-20);
         });
@@ -689,7 +689,7 @@ function callback (model) {
 
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
         var alignID = CLMSUI.NGLUtils.make3DAlignID ("1AO6", "A", 0);
-        var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("P02768-A", alignID);
+        var seqRange = alignCollBB.getRangeAsSearchSeq ("P02768-A", alignID);
         $.extend (seqRange, {alignID: alignID, chainIndex: 0, protID: "P02768-A"});
         var seqMap = d3.map ();
         seqMap.set ("P02768-A", {key: "P02768-A", values: [seqRange]});
@@ -724,7 +724,7 @@ function callback (model) {
 
         var alignCollBB = CLMSUI.compositeModelInst.get("alignColl");
         var alignID = CLMSUI.NGLUtils.make3DAlignID ("1AO6", "A", 0);
-        var seqRange = alignCollBB.getSearchRangeIndexOfMatches ("P02768-A", alignID);
+        var seqRange = alignCollBB.getRangeAsSearchSeq ("P02768-A", alignID);
         var actualFilteredSubSeqIndices = CLMSUI.modelUtils.filterSequenceByResidueSet (seqRange.subSeq, linkableResidues[1], false);	// 1 is KSTY
         actualFilteredSubSeqIndices = actualFilteredSubSeqIndices.slice(-10);	// last 10
 
@@ -1361,7 +1361,7 @@ function testSetupNew (cbfunc) {
             });
 
             var stage = new NGL.Stage ("ngl", {tooltip: false});
-            CLMSUI.NGLUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, bbmodel: CLMSUI.compositeModelInst});
+            CLMSUI.NGLUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, compositeModel: CLMSUI.compositeModelInst});
             console.log ("here");
         });
 

@@ -63,13 +63,14 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             .attr("class", "btn btn-1 btn-1a fakeButton")
             .append("span")
             //.attr("class", "noBreak")
-            .text("Select A Local PDB File")
+            .text("Select Local PDB Files")
             .append("input")
             .attr({
                 type: "file",
                 accept: ".txt,.cif,.pdb",
                 class: "selectPdbButton"
             })
+            .property("multiple", true)
         ;
 
 
@@ -145,15 +146,12 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             return str.replace(/[^a-z0-9 ,.?!]/ig, '');
         }
 
-        this.listenTo (this.model.get("clmsModel"), "change:matches", function() {
-            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
-        });
-        this.listenTo (this.model, "change:selectedProteins", function() {
-            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
-        });
-        this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function() {
-            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
-        });
+        function updatePD () {
+            this.updateProteinDropdown (d3.select(this.el).select(".queryBox"));
+        }
+        this.listenTo (this.model.get("clmsModel"), "change:matches", updatePD);
+        this.listenTo (this.model, "change:selectedProteins", updatePD);
+        this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", updatePD);
 
         this.listenTo (this.model, "3dsync", function(newSequences) {
             var count = _.isEmpty(newSequences) ? 0 : newSequences.length;
@@ -176,9 +174,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             this.setStatusText(msg, success);
         });
 
-        this.listenTo (CLMSUI.vent, "alignmentProgress", function(msg) {
-            this.setStatusText(msg);
-        });
+        this.listenTo (CLMSUI.vent, "alignmentProgress", this.setStatusText);
 
         // Pre-load pdb if requested
         if (viewOptions.initPDBs) {
@@ -267,27 +263,47 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
     selectPDBFile: function(evt) {
         this.setWaitingEffect();
+        this.loadRoute = "file";
         var self = this;
-        var fileObj = evt.target.files[0];
-        evt.target.value = null;    // reset value so same file can be chosen twice in succession
+        //console.log ("target files", evt.target.files, evt.target.value);
+        var pdbSettings = [];
+        var fileCount = evt.target.files.length;
 
-        CLMSUI.modelUtils.loadUserFile(fileObj, function(pdbFileContents) {
-            self.loadRoute = "file";
-            var blob = new Blob([pdbFileContents], {
-                type: 'application/text'
-            });
-            var fileExtension = fileObj.name.substr(fileObj.name.lastIndexOf('.') + 1);
-            CLMSUI.NGLUtils.repopulateNGL({
-                pdbFileContents: blob,
-                params: {
-                    ext: fileExtension,
-                    cAlphaOnly: self.cAlphaOnly,
+        var onLastLoad = _.after (fileCount, function() {
+                CLMSUI.NGLUtils.repopulateNGL({
+                    pdbSettings: pdbSettings,
+                    stage: self.stage,
+                    compositeModel: self.model
+                });
+            }
+        );
+
+        for (var n = 0; n < fileCount; n++) {
+            var fileObj = evt.target.files[n];
+
+            CLMSUI.modelUtils.loadUserFile (
+                fileObj,
+                function (fileContents, associatedData) {
+                    var blob = new Blob([fileContents], {
+                        type: 'application/text'
+                    });
+                    var name = associatedData.name;
+                    pdbSettings.push ({
+                        id: name,
+                        uri: blob,
+                        local: true,
+                        params: {
+                            ext: name.substr(name.lastIndexOf('.') + 1),
+                            cAlphaOnly: self.cAlphaOnly,
+                        }
+                    });
+                    onLastLoad();
                 },
-                name: fileObj.name,
-                stage: self.stage,
-                bbmodel: self.model
-            });
-        });
+                {name: fileObj.name}    // pass this associatedData in, so async loading doesn't break things i.e. if load A, B, and return order B, A
+            );
+        }
+
+        evt.target.value = null;    // reset value so same file can be chosen twice in succession
     },
 
     enteringPDBCode: function(evt) {
@@ -302,13 +318,15 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         var pdbCode = d3.select(this.el).select(".inputPDBCode").property("value");
         this.loadRoute = "pdb";
         this.setWaitingEffect();
+
+        var pdbSettings = pdbCode.match(CLMSUI.utils.commonRegexes.multiPdbSplitter).map (function (code) {
+            return {id: code, pdbCode: code, uri:"rcsb://"+code, local: false, params: {calphaOnly: this.cAlphaOnly}};
+        }, this);
+
         CLMSUI.NGLUtils.repopulateNGL({
-            pdbCode: pdbCode,
-            params: {
-                cAlphaOnly: this.cAlphaOnly,
-            },
+            pdbSettings: pdbSettings,
             stage: this.stage,
-            bbmodel: this.model
+            compositeModel: this.model
         });
     },
 

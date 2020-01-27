@@ -93,6 +93,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.emphasiseColumns = d3.set(["pos1", "pos2"]);
         this.changeableColumns = d3.set(["ambiguity", "autovalidated", "validated", "homom"]);   // values that can change in situ i.e. aren't fixed
 
+        var self = this;
+
         // entries commented out until a replacement is found for xlv
         var headerFilterFuncs = {
             ambiguity: function() {
@@ -117,7 +119,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             }
         );
 
-        var self = this;
         var twoZeroPadder = d3.format(".2f");
         var massZeroPadder = d3.format(".6f");
         var scientific = d3.format(".4e");
@@ -244,7 +245,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                      }
                  })
             ;
-            
+
             var timer, interval;
             pager.append("span").selectAll(".btn")
                 .data([{text: "<", incr: -1, tooltip: "Higher scoring crosslinks"}, {text: ">", incr: 1, tooltip: "Lower scoring crosslinks"}])
@@ -405,7 +406,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
             this.setPage(this.page);
         }
-        
+
         d3.select(this.el).select("table").style("display", this.matchCountIndices.length && !this.viewStateModel.get("hidden") ? null : "none");
     },
 
@@ -497,7 +498,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var totalSelectedFilteredMatches = mci.length ? _.last(mci).runningTotalEnd : 0;
         return Math.floor(totalSelectedFilteredMatches / this.pageSize) + 1;
     },
-    
+
     makeColourSwatch: function (elem, colourScheme) {
         elem.attr("class", "colourSwatchSquare")
             .style("background", function(d) {
@@ -549,7 +550,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         allLinks.select(".niceCrossLinkName").text(niceCrossLinkName);
         var colourScheme = this.model.get("linkColourAssignment");
         allLinks.each (function (d) {
-            self.makeColourSwatch (d3.select(this).select(".colourSwatchSquare"), colourScheme);    
+            self.makeColourSwatch (d3.select(this).select(".colourSwatchSquare"), colourScheme);
         });
 
 
@@ -662,13 +663,13 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 }
             });
     },
-    
+
     updateSwatchesOnly: function () {
         var colourScheme = this.model.get("linkColourAssignment");
         var self = this;
         d3.select(this.el).selectAll(".colourSwatchSquare")
             .each (function () {
-                self.makeColourSwatch (d3.select(this), colourScheme);    
+                self.makeColourSwatch (d3.select(this), colourScheme);
             })
         ;
     },

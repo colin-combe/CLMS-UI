@@ -127,7 +127,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
             })
             .datum();
 
-        var dag = CLMSUI.compositeModelInst.get("goDags")[termType];
+        var dag = this.model.get("goDags")[termType];
 
         function treeNode(dagNode, treeParent) {
             var node = {

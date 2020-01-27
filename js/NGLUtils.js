@@ -2,32 +2,24 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.NGLUtils = {
     repopulateNGL: function (pdbInfo) {
-        var params = pdbInfo.params || {}; // {sele: ":A"};    // example: show just 'A' chain
-        console.log ("params", params);
-
-        var uri = pdbInfo.pdbCode ? "rcsb://" + pdbInfo.pdbCode : pdbInfo.pdbFileContents;
-        var multiplePDBURI = pdbInfo.pdbCode
-            ? pdbInfo.pdbCode.match(CLMSUI.utils.commonRegexes.multiPdbSplitter).map (function (code) { return {id: code, uri:"rcsb://"+code, local: false}; })
-            : [{id: pdbInfo.name, uri: pdbInfo.pdbFileContents, local: true}]
-        ;
-        //console.log ("MP", multiplePDBURI);
-
+        //console.log ("pdbInfo", pdbInfo);
+        var pdbSettings = pdbInfo.pdbSettings;
         var stage = pdbInfo.stage;
-        var bbmodel = pdbInfo.bbmodel;
+        var compositeModel = pdbInfo.compositeModel;
 
         console.log ("CLEAR STAGE");
         stage.removeAllComponents(); // necessary to remove old stuff so old sequences don't pop up in sequence finding
 
         function returnFailure(reason) {
-            var id = _.pluck(multiplePDBURI, "id").join(", ");
+            var id = _.pluck(pdbSettings, "id").join(", ");
             var emptySequenceMap = [];
             emptySequenceMap.failureReason = "Error for " + id + ", " + reason;
-            bbmodel.trigger("3dsync", emptySequenceMap);
+            compositeModel.trigger("3dsync", emptySequenceMap);
         }
 
         Promise.all (
-            multiplePDBURI.map (function (pdbURI) {
-                return stage.loadFile (pdbURI.uri, params);
+            pdbSettings.map (function (pdbSetting) {
+                return stage.loadFile (pdbSetting.uri, pdbSetting.params);
             })
         )
         //stage.loadFile(uri, params)
@@ -39,7 +31,7 @@ CLMSUI.NGLUtils = {
                 structureCompArray = structureCompArray || [];  // set to empty array if undefined to avoid error in next bit
                 //CLMSUI.utils.xilog ("structureComp", structureCompArray);
                 structureCompArray.forEach (function (scomp, i) {   // give structure a name if none present (usually because loaded as local file)
-                    scomp.structure.name = scomp.structure.name || multiplePDBURI[i].id;
+                    scomp.structure.name = scomp.structure.name || pdbSettings[i].id;
                 });
 
                 var structureComp;
@@ -61,7 +53,7 @@ CLMSUI.NGLUtils = {
                 if (structureComp) {
                     // match by alignment func for searches where we don't know uniprot ids, don't have pdb codes, or when matching by uniprot ids returns no matches
                     function matchByXiAlignment (whichNGLSequences, pdbUniProtMap) {
-                        var protAlignCollection = bbmodel.get("alignColl");
+                        var protAlignCollection = compositeModel.get("alignColl");
                         CLMSUI.vent.listenToOnce (CLMSUI.vent, "sequenceMatchingDone", function (matchMatrix) {
                             var pdbXiProtMap = CLMSUI.modelUtils.matrixPairings (matchMatrix, whichNGLSequences);
                             CLMSUI.utils.xilog ("XI PAIRED", pdbXiProtMap);
@@ -76,14 +68,14 @@ CLMSUI.NGLUtils = {
                     }
 
                     var nglSequences = CLMSUI.NGLUtils.getChainSequencesFromNGLStructure (structureComp);
-                    var interactorMap = bbmodel.get("clmsModel").get("participants");
+                    var interactorMap = compositeModel.get("clmsModel").get("participants");
                     var interactorArr = CLMS.arrayFromMapValues(interactorMap);
 
                     // If have a pdb code AND legal accession IDs use a web service in matchPDBChainsToUniprot to glean matches
                     // between ngl protein chains and clms proteins. This is asynchronous so we use a callback
-                    if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
+                    if (pdbSettings[0].pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
                         console.log("WEB SERVICE CALLED");
-                        CLMSUI.NGLUtils.matchPDBChainsToUniprot(multiplePDBURI /*pdbInfo.pdbCode*/, nglSequences, interactorArr, function (uniprotMappingResults) {
+                        CLMSUI.NGLUtils.matchPDBChainsToUniprot(pdbSettings, nglSequences, interactorArr, function (uniprotMappingResults) {
                             CLMSUI.utils.xilog ("UniprotMapRes", uniprotMappingResults, nglSequences);
                             if (uniprotMappingResults.remaining.length) { // Some PDB sequences don't have unicode protein matches in this search
                                 var remainingSequences = _.pluck (uniprotMappingResults.remaining, "seqObj");   // strip the remaining ones back to just sequence objects
@@ -119,11 +111,11 @@ CLMSUI.NGLUtils = {
                         });
                         CLMSUI.utils.xilog ("chainmap", chainMap, "stage", stage, "\nhas sequences", sequenceMap);
 
-                        if (bbmodel.get("stageModel")) {
-                            bbmodel.get("stageModel").stopListening(); // Stop the following 3dsync event triggering stuff in the old stage model
+                        if (compositeModel.get("stageModel")) {
+                            compositeModel.get("stageModel").stopListening(); // Stop the following 3dsync event triggering stuff in the old stage model
                         }
-                        var removeThese = bbmodel.get("stageModel") ? [bbmodel.get("stageModel").getStructureName()] : [];    // old alignments to remove
-                        bbmodel.trigger("3dsync", sequenceMap, removeThese);
+                        var removeThese = compositeModel.get("stageModel") ? [compositeModel.get("stageModel").getStructureName()] : [];    // old alignments to remove
+                        compositeModel.trigger("3dsync", sequenceMap, removeThese);
                         // Now 3d sequence is added we can make a new NGL Model wrapper (as it needs aligning)
 
                         // Make a new model and set of data ready for the ngl viewer
@@ -131,10 +123,10 @@ CLMSUI.NGLUtils = {
                         newNGLModelWrapper.set({
                             structureComp: structureComp,
                             chainMap: chainMap,
-                            masterModel: bbmodel,
+                            compositeModel: compositeModel,
                             name: "NGLModelWrapper "+structureComp.structure.name,
                         });
-                        bbmodel.set("stageModel", newNGLModelWrapper);
+                        compositeModel.set("stageModel", newNGLModelWrapper);
                         // important that the new stagemodel is set first ^^^ before we setupLinks() on the model
                         // otherwise the listener in the 3d viewer is still pointing to the old stagemodel when the
                         // changed:linklist event is received. (i.e. it broke the other way round)
