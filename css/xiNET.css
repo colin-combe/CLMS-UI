@@ -60,6 +60,10 @@ svg {
     pointer-events: none;
 }
 
+.proteinLabel {
+    font-size: 9pt; 
+}
+
 .custom-menu-margin {
     padding: 20px;
     display: none;

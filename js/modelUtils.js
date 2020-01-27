@@ -591,7 +591,7 @@ CLMSUI.modelUtils = {
         var matchedCrossLinks = [];
         var ppiCount = 0;
 
-        d3.csv.parse (metaDataFileContents, function(d) {
+        d3.csv.parse(metaDataFileContents, function(d) {
             var linkID = d.linkID || d.LinkID;
             var singleCrossLink = crossLinks.get(linkID);
             var rowCrossLinkArr;
@@ -674,9 +674,9 @@ CLMSUI.modelUtils = {
         clmsModel.set("crossLinkMetaRegistry", registry);
 
         var result = {
-            columns: columns,
-            columnTypes: columnTypes,
-            items: crossLinks,
+                columns: columns,
+                columnTypes: columnTypes,
+                items: crossLinks,
             matchedItemCount: matchedCrossLinkCount,
             ppiCount: ppiCount
         };
@@ -1215,7 +1215,7 @@ CLMSUI.modelUtils = {
         var linearShim = {id: "*linear", name: "linear"};
         crossLinkArr.forEach(function(crossLink) {
             if (crossLink.toProtein || includeLinears) {
-                var fromProtein = crossLink.fromProtein;
+            var fromProtein = crossLink.fromProtein;
                 var toProtein = crossLink.toProtein || linearShim;
                 var proteinA = fromProtein.id > toProtein.id ? toProtein : fromProtein;
                 var proteinB = toProtein.id >= fromProtein.id ? toProtein : fromProtein;

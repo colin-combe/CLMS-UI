@@ -14,8 +14,8 @@ span, label {
 
 /* class not named .background as that clashes with d3 brush stuff */
 .backdrop {
-    background: #eee;
-    background-color: #eee;
+	background: #eee;
+	background-color: #eee;
 }
 
 
@@ -34,6 +34,10 @@ span, label {
   text-align: right;
 }
 
+#sslOption{
+  display: none;
+}
+
 .showHidden{
   margin: 0px;
 }
@@ -46,7 +50,7 @@ span, label {
     transition: all .3s;
     cursor:pointer;
     padding: 0 1px;
-    user-select: none;
+	user-select: none;
 }
 .fa-xi:hover {
     color: #091D42;
@@ -265,7 +269,7 @@ span, label {
 
 #main .controls{
     overflow-y: hidden;
-    overflow-x: visible;
+	overflow-x: visible;
     /*display: table-row;*/
 
     position: fixed;
@@ -301,24 +305,24 @@ span, label {
     left: 10px;
     height: 35em;
     width: 45em;
-    min-height: 25em;
-    min-width: 45em;
+	min-height: 25em;
+	min-width: 45em;
 }
 
 #listPanel {
-    left: 2em;
-    height: 40em;
-    min-height: 20em;
-    width: 60em;
-    min-width: 20em;
+	left: 2em;
+	height: 40em;
+	min-height: 20em;
+	width: 60em;
+	min-width: 20em;
 }
 
 #searchSummaryPanel{
     left:10px;
     width:40em;
     height:40em;
-    min-width: 35em;
-    min-height: 20em;
+	min-width: 35em;
+	min-height: 20em;
 }
 
 #spectrumPanel{
@@ -342,51 +346,51 @@ span, label {
     left: 40px;
     width: 60em;
     height: 50em;
-    min-width: 45em;
-    min-height: 30em;
+	min-width: 45em;
+	min-height: 30em;
 }
 #distoPanel{
     left: 40px;
     width:50em;
     height:35em;
-    min-width: 40em;
-    min-height: 25em;
+	min-width: 40em;
+	min-height: 25em;
 }
 
 #circularPanel {
     left: 40px;
     width: 40em;
     height: 45em;
-    min-width: 20em;
-    min-height: 30em;
+	min-width: 20em;
+	min-height: 30em;
 }
 
 #proteinInfoPanel {
     left: 40px;
     width: 40em;
     height: 40em;
-    min-width: 30em;
-    min-height: 20em;
+	min-width: 30em;
+	min-height: 20em;
 }
 
 #scatterplotPanel {
-    left: 40px;
-    width: 45em;
-    height: 45em;
-    min-width: 35em;
-    min-height: 35em;
+	left: 40px;
+	width: 45em;
+	height: 45em;
+	min-width: 35em;
+	min-height: 35em;
 }
 
 #urlSearchBox {
-    left: 60px;
+	left: 60px;
 }
 
 #matrixPanel {
-    left: 40px;
-    width: 40em;
-    height: 50em;
-    min-width: 15em;
-    min-height: 30em;
+	left: 40px;
+	width: 40em;
+	height: 50em;
+	min-width: 15em;
+	min-height: 30em;
 }
 
 .verticalFlexContainer {
@@ -414,7 +418,7 @@ span, label {
 #alignPanel{
     left: 40px;
     width: 70em;
-    min-width: 30em;
+	min-width: 30em;
     /*height:80px;*/
 }
 
@@ -450,23 +454,23 @@ label.horizontalFlow::after, #nglPanel label.btn::before, #pdbPanel label.btn::b
 }
 
 #pdbPanel .prompt {
-    font-size: 1.4em;
-    vertical-align: middle;
-    padding: 0 0.5em;
+	font-size: 1.4em;
+	vertical-align: middle;
+	padding: 0 0.5em;
 }
 
 #pdbPanel .toolbar {
-    display: flex;
-    flex-wrap: wrap;
+	display: flex;
+	flex-wrap: wrap;
 }
 
 #pdbPanel .toolbar .verticalFlexContainer {
-    display: flex;
+	display: flex;
 }
 
 #pdbPanel button i.fa {
-    padding-left: 0.4em;
-    vertical-align: sub;
+	padding-left: 0.4em;
+	vertical-align: sub;
 }
 
 A.btn {
@@ -474,11 +478,11 @@ A.btn {
 }
 
 .nopadRight {
-    padding-right: 0;
+	padding-right: 0;
 }
 
 .nopadLeft {
-    padding-left: 0;
+	padding-left: 0;
 }
 
 
@@ -543,8 +547,8 @@ A.btn {
 .sectionTable h2 {
     width: 100%;
     cursor: pointer;
-    border-top: 1px solid transparent;
-    border-bottom: 1px solid transparent;
+	border-top: 1px solid transparent;
+	border-bottom: 1px solid transparent;
 }
 
 .sectionTable h2 svg {
@@ -553,14 +557,14 @@ A.btn {
     height: 16px;
     fill: white;
     stroke: #888;
-    shape-rendering: crispedges;
+	shape-rendering: crispedges;
     vertical-align: sub;
 }
 
 .sectionTable h2:hover {
     background: white;
-    border-bottom: 1px solid black;
-    border-top: 1px solid black;
+	border-bottom: 1px solid black;
+	border-top: 1px solid black;
 }
 
 .sectionTable table td:first-child, .sectionTable table th {
@@ -573,7 +577,7 @@ A.btn {
 }
 
 .sectionTable tbody tr:hover td {
-    color: #777;
+	color: #777;
     background: inherit;
     -webkit-transition: none;
     -moz-transition: none;
@@ -585,7 +589,7 @@ A.btn {
 }
 
 .sectionTable table {
-    border-collapse: separate;
+	border-collapse: separate;
 }
 
 .sectionTable table table {
@@ -605,9 +609,9 @@ A.btn {
 }
 
 div.columnbar[disabled], div.columnbar[disabled], label.fakeButton[disabled] {
-    color: grey;
-    pointer-events: none;
-    border-color: grey;
+	color: grey;
+	pointer-events: none;
+	border-color: grey;
 }
 
 .toolbar button {
@@ -623,25 +627,25 @@ div.columnbar[disabled], div.columnbar[disabled], label.fakeButton[disabled] {
 }
 
 .toolbar > .sectionDividerRight {
-    border-right: 1px solid rgba(0,0,0,0.5);
-    margin-right: 0.5em;
-    padding-right: 0.5em;
+	border-right: 1px solid rgba(0,0,0,0.5);
+	margin-right: 0.5em;
+	padding-right: 0.5em;
 }
 
 .toolbar > .sectionDivider2 {
-    border-right: 1px solid rgba(0,0,0,0.5);
-    margin-right: 0.5em;
-    padding-right: 1em;
+	border-right: 1px solid rgba(0,0,0,0.5);
+	margin-right: 0.5em;
+	padding-right: 1em;
 }
 
 .toolbar > .dashedBorder {
-    border-right-style: dashed;
+	border-right-style: dashed;
 }
 
 .sectionDividerLeft {
-    border-left: 1px solid rgba(0,0,0,0.5);
-    margin-left: 0.5em;
-    padding-left: 0.5em;
+	border-left: 1px solid rgba(0,0,0,0.5);
+	margin-left: 0.5em;
+	padding-left: 0.5em;
 }
 
 .toolbar hr.toolbarSeparator {
@@ -650,7 +654,7 @@ div.columnbar[disabled], div.columnbar[disabled], label.fakeButton[disabled] {
 }
 
 .pdbWindowButton {
-    vertical-align: text-bottom;
+	vertical-align: text-bottom;
 }
 
 button.pdbWindowButton {
@@ -658,72 +662,72 @@ button.pdbWindowButton {
 }
 
 DIV.messagebar {
-    font-size: 1.4em;
-    height: 3em;
+	font-size: 1.4em;
+	height: 3em;
 }
 
 /* if div has class 'messagebar' give it this style providing it is not the last div in its container (it's different to div.messageBar) */
 DIV[class='messagebar']:not(:last-of-type) {
-    margin-bottom: 0.15em;
-    border-bottom: 1px solid rgba(0,0,0,0.5);
+	margin-bottom: 0.15em;
+	border-bottom: 1px solid rgba(0,0,0,0.5);
 }
 
 .expectedFormatPanel {
-    margin-bottom: 0.15em;
-    border-bottom: 1px solid rgba(0,0,0,0.5);
+	margin-bottom: 0.15em;
+	border-bottom: 1px solid rgba(0,0,0,0.5);
 }
 
 .expectedFormatPanel TABLE TBODY {
-    color: grey;
-    font-size: 0.7rem;
-    font-family: monospace;
+	color: grey;
+	font-size: 0.7rem;
+	font-family: monospace;
 }
 
 
 /* tweaks to jsonview */
 
 .jsonview {
-    line-height: 1.2em;
+	line-height: 1.2em;
 }
 
 .jsonview ul ul ul ul {
-    background: #ccc;
+	background: #ccc;
 }
 
 .jsonview ul ul ul ul ul ul {
-    background: #bbb;
+	background: #bbb;
 }
 
 .jsonview ul.array {
-    list-style:decimal;
-    list-style-position: inside;
+	list-style:decimal;
+	list-style-position: inside;
 }
 
 .jsonview .collapser {
-    top: 0;
+	top: 0;
 }
 
 .jsonview .collapser:hover {
-    background: white;
-    font-weight: normal;
+	background: white;
+	font-weight: normal;
 }
 
 .jsonview .collapser + .prop:hover {
-    background: white;
+	background: white;
 }
 
 .jsonview .prop {
-    cursor: default;
+	cursor: default;
 }
 
 .jsonview .collapser + .prop {
-    cursor: pointer;
+	cursor: pointer;
 }
 
 svg.tempKey {
-    text-transform: initial;	/* reset text-transforms for temporary svgs */
-    letter-spacing: 0;
-    font-family: "Helvetica";
+	text-transform: initial;	/* reset text-transforms for temporary svgs */
+	letter-spacing: 0;
+	font-family: "Helvetica";
     font-size: 12px;
 }
 
@@ -736,13 +740,13 @@ svg.tempKey a.imageOrigin text {
 }
 
 svg.tempKey .keyTitle {
-    font-style: italic;
+	font-style: italic;
 }
 
 svg.tempKey .keyPoint rect {
-    shape-rendering: crispedges;
-    stroke-width: 1px;
-    stroke: black;
+	shape-rendering: crispedges;
+	stroke-width: 1px;
+	stroke: black;
 }
 
 svg.tempKey text {
@@ -752,42 +756,42 @@ svg.tempKey text {
 }
 
 .errorCloseButton {
-    position: absolute;
-    top: 0;
-    right: -0.7em;
-    color: grey;
+	position: absolute;
+	top: 0;
+	right: -0.7em;
+	color: grey;
 }
 
 #subPanelLimiter {
-    position: absolute;
-    pointer-events: none;
-    top: 39px;
-    bottom: 65px;
-    left: 0;
-    right: 0;
+	position: absolute;
+	pointer-events: none;
+	top: 39px;
+	bottom: 65px;
+	left: 0;
+	right: 0;
 }
 
 .rappsilberImage {
-    display: block;
-    border-top: 1px solid white;
-    padding: 0.5em 0;
+	display: block;
+	border-top: 1px solid white;
+	padding: 0.5em 0;
 }
 
 .rappsilberImage:hover {
-    -webkit-filter: invert(1);
-    filter: invert(1);
-    background: black;
+	-webkit-filter: invert(1);
+	filter: invert(1);
+	background: black;
 }
 
 select {
-    color: #091d42;
-    border-color: #091d42;
-    font-family: Lato-Bold;
+	color: #091d42;
+	border-color: #091d42;
+	font-family: Lato-Bold;
 }
 
 input {
-    color: #091d42;
-    font-family: Lato-Bold;
+	color: #091d42;
+	font-family: Lato-Bold;
 }
 
 input.xiNetLinkWidth {
@@ -803,10 +807,10 @@ input.withSideMargins, select.withSideMargins {
 sup {font-size:xx-small; vertical-align:super;}
 
 .smallHeading {
-    margin-top: 0.5em;
-    font-size: 0.75em;
-    color: #668;
-    line-height: 1.4em;
+	margin-top: 0.5em;
+	font-size: 0.75em;
+	color: #668;
+	line-height: 1.4em;
 }
 
 .smallHeadingBar {
@@ -814,9 +818,9 @@ sup {font-size:xx-small; vertical-align:super;}
 }
 
 .btn-tight {
-    margin: 0;
-    padding: 2px 2px;
-    border: 1px solid grey;
+	margin: 0;
+	padding: 2px 2px;
+	border: 1px solid grey;
 }
 
 .rainbow {
@@ -826,22 +830,22 @@ sup {font-size:xx-small; vertical-align:super;}
     margin-right: 0.5em;
     vertical-align: middle;
     margin-left: -1.5em;
-    /* generated at http://www.colorzilla.com/gradient-editor/ */
-    background: -moz-linear-gradient(left, #fc3932 0%, #e4e82c 25%, #20cc3d 50%, #0436ea 75%, #f986bc 100%); /* FF3.6-15 */
-    background: -webkit-linear-gradient(left, #fc3932 0%,#e4e82c 25%,#20cc3d 50%,#0436ea 75%,#f986bc 100%); /* Chrome10-25,Safari5.1-6 */
-    background: linear-gradient(to right, #fc3932 0%,#e4e82c 25%,#20cc3d 50%,#0436ea 75%,#f986bc 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+	/* generated at http://www.colorzilla.com/gradient-editor/ */
+	background: -moz-linear-gradient(left, #fc3932 0%, #e4e82c 25%, #20cc3d 50%, #0436ea 75%, #f986bc 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(left, #fc3932 0%,#e4e82c 25%,#20cc3d 50%,#0436ea 75%,#f986bc 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to right, #fc3932 0%,#e4e82c 25%,#20cc3d 50%,#0436ea 75%,#f986bc 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
 }
 
 .testTopLeft {
-    position: absolute;
-    z-index: 5000;
-    top: 0;
-    left: 0;
-    background: white;
+	position: absolute;
+	z-index: 5000;
+	top: 0;
+	left: 0;
+	background: white;
 }
 
 input:invalid:focus {
-    background: pink;
+	background: pink;
 }
 
 image.sharpImage {

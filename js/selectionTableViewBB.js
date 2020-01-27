@@ -85,7 +85,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             searchMissedCleavages: "Search Max. Missed Cleavages",
         };
 
-        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError", "missingPeaks", "precursorIntensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd"]);
+        this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorIntensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd"]);
         this.colSectionStarts = d3.set(["protein1", "protein2", "score"]); //i added protein1 also - cc
         this.monospacedColumns = d3.set(["pepSeq1raw", "pepSeq2raw"]);
         this.maxWidthColumns = d3.set(["protein1", "protein2"]);
@@ -281,7 +281,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         d3el.select("table").attr("tabindex", 0); // so table can capture key events
 
         // Internal view state. Can use backbone events to listen to and trigger changes within view.
-        this.viewStateModel = new (Backbone.Model.extend ({
+        this.viewStateModel = new(Backbone.Model.extend({
             initialize: function() {
                 this.listenTo(this, "change:topOnly", function() {
                     self.render.call(self);
@@ -525,8 +525,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             var matchCount = crosslink.runningTotalEnd - crosslink.runningTotalStart;
             crosslink = crosslink.link;
             return /*(i+1)+". "+*/ matchCount + " Selected Match" + (matchCount > 1 ? "es" : "") + " for " + crosslink.fromProtein.name + ", " +
-                (crosslink.isLinearLink() ? "linear peptides" : (crosslink.fromResidue + " - " +
-                    crosslink.toProtein.name + ", " + crosslink.toResidue));
+                (crosslink.isLinearLink() ? "linear peptides" : (crosslink.isMonoLink() ? "monolink @ " + crosslink.fromResidue : (crosslink.fromResidue + " - " +
+                    crosslink.toProtein.name + ", " + crosslink.toResidue)));
         };
 
         // table building starts here

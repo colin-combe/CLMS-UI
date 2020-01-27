@@ -31,15 +31,14 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "change .showXiNetLabels": function() {
                 CLMSUI.vent.trigger("xiNetShowLabels", d3.select(".showXiNetLabels").property("checked"));
             },
-            "change .xiNetLinkWidth": function() {
-                var lwScale = d3.select(".xiNetLinkWidth").property("value");
-                console.log("changing xlw", lwScale);
-                if (lwScale.trim() == "") {
-                   this.model.set("xiNetLinkWidthAuto", true);
-                } else {
-                   this.model.set("xiNetLinkWidthAuto", false);
-                   this.model.set("xiNetLinkWidthScale", lwScale);
-                }
+            "change .fixedSize": function() {
+                CLMSUI.vent.trigger("xiNetFixedSize", d3.select(".fixedSize").property("checked"));
+            },
+            "change .xinetPpiStep1": function() {
+                this.updatePpiSteps();
+            },
+            "change .xinetPpiStep2": function() {
+                this.updatePpiSteps();
             },
         });
 
@@ -109,7 +108,8 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>";
 
         buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXiNetLabels' checked></label>"
-        buttonHtml += "&nbsp;<label>Link width:<input type='number' step='0.01' min='0' class='xiNetLinkWidth' title='pixels per Unique Linked Residue Pair'></label>"
+        buttonHtml += "&nbsp;<label>Fixed size<input type='checkbox' class='fixedSize'></label>"
+        buttonHtml += "&nbsp;<label>PPI width steps:<input type='number' step='1' min='1' max='10' value='2' class='xinetPpiStep1' ><input type='number' step='1' min='1' max='100' value='3' class='xinetPpiStep2' ></label>"
 
         mainDivSel.html(
             buttonHtml
@@ -149,16 +149,23 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             }
         });
 
-        this.listenTo(this.model, "change:xiNetLinkWidthScale", function() {
-            var linkWidthScale = this.model.get("xiNetLinkWidthScale");
-            d3.select(".xiNetLinkWidth").property("value", linkWidthScale);
-        });
+        // this.listenTo(this.model, "change:xiNetLinkWidthScale", function() {
+        //     var linkWidthScale = this.model.get("xiNetLinkWidthScale");
+        //     d3.select(".xiNetLinkWidth").property("value", linkWidthScale);
+        // });
+        //
+        // this.listenTo(this.model, "change:xiNetLinkWidthAuto", function() {
+        //     var linkWidthAuto = this.model.get("xiNetLinkWidthAuto");
+        //     d3.select(".xiNetLinkWidth").style("color", linkWidthAuto? "#cccccc" : "#091d42" );
+        // });
 
-        this.listenTo(this.model, "change:xiNetLinkWidthAuto", function() {
-            var linkWidthAuto = this.model.get("xiNetLinkWidthAuto");
-            d3.select(".xiNetLinkWidth").style("color", linkWidthAuto? "#cccccc" : "#091d42" );
-        });
+    },
 
+    updatePpiSteps: function () {
+        var steps = [];
+        steps[0] = d3.select(".xinetPpiStep1").property("value");
+        steps[1] = d3.select(".xinetPpiStep2").property("value");
+        this.model.set("xinetPpiSteps", steps);
     },
 
     identifier: "xiNet Controls",

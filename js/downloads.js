@@ -26,7 +26,23 @@ function downloadMatches() {
 }
 
 function downloadSSL() {
-    download(getSSL(), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
+
+// $("#sslOption").dialog({
+//   modal: true,
+//   buttons: {
+//     'OK': function () {
+//       var sslOption = $('input[name="sslOption"]').val();
+//       alert(name);
+      download(getSSL(sslOption), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
+//       // storeData(name);
+//       $(this).dialog('close');
+//     },
+//     'Cancel': function () {
+//       $(this).dialog('close');
+//     }
+//   }
+// });
+
 }
 
 function downloadLinks() {
@@ -260,7 +276,7 @@ function getMatchesCSV() {
     return csv;
 }
 
-function getSSL() {
+function getSSL(sslOption) {
     var csv = 'file\tscan\tcharge\tsequence\tscore-type\tscore\tId\tProtein1\tSeqPos1\tPepPos1\tPepSeq1\tLinkPos1\tProtein2\tSeqPos2\tPepPos2\tPepSeq2\tLinkPos2\tCharge\tExpMz\tExpMass\tCalcMz\tCalcMass\tMassError\tAutoValidated\tValidated\tSearch\tRawFileName\tPeakListFileName\tScanNumber\tScanIndex\tCrossLinkerModMass\tFragmentTolerance\tIonTypes\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     //var mass6dp = d3.format(".6f");
@@ -458,6 +474,7 @@ function getLinksCSV() {
             validationStats.push(match.validated);
             searchesFound.add(match.searchId);
         }
+
         var decoyType;
         if (linear) {
             if (crossLink.fromProtein.is_decoy) {

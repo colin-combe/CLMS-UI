@@ -43,6 +43,7 @@
         <link rel="stylesheet" href="../vendor/css/reset.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/common.css<?php echo $cacheBuster ?>" />
         <link rel="stylesheet" href="../vendor/css/byrei-dyndiv_0.5.css<?php echo $cacheBuster ?>" />
+        <link rel="stylesheet" href="../vendor/css/jquery-ui.css<?php echo $cacheBuster ?>"/>
 
         <!-- Spectrum Viewer styles  -->
         <link rel="stylesheet" href="../spectrum/css/spectrum.css<?php echo $cacheBuster ?>">
@@ -78,9 +79,9 @@
         <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
-            <link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
-            <link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
-            <link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
+    		<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
+    		<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
+    		<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
         <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script> <!-- IE11 Promise Polyfill -->
 
@@ -96,12 +97,13 @@
         <script type="text/javascript" src="../vendor/js/jquery-3.4.1.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-            <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
+		    <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
-            <script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
-            <script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
-            <script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
+    		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
+    		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
+    		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3-octree.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/jquery-ui.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SearchResultsModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>
@@ -197,23 +199,27 @@
             </div>
 
             <div class="page-header">
-                <i class="fa fa-home fa-xi"
-                    onclick="window.location = '../history/history.html';"
-                    title="Return to search history / Login"></i>
-                <p id="loadDropdownPlaceholder"></p>
-                <p id="viewDropdownPlaceholder"></p>
-                <p id="proteinSelectionDropdownPlaceholder"></p>
-                <p id="annotationsDropdownPlaceholder"></p>
-                <p id="expDropdownPlaceholder"></p>
-                <p id="helpDropdownPlaceholder"></p>
+                    <i class="fa fa-home fa-xi"
+                        onclick="window.location = '../history/history.html';"
+                        title="Return to search history / Login"></i>
+                    <p id="loadDropdownPlaceholder"></p>
+                    <p id="viewDropdownPlaceholder"></p>
+                    <p id="proteinSelectionDropdownPlaceholder"></p>
+                    <p id="annotationsDropdownPlaceholder"></p>
+                    <p id="expDropdownPlaceholder"></p>
+                    <p id="helpDropdownPlaceholder"></p>
                 <p id="surveyPlaceholder"><a href="https://edinburgh.onlinesurveys.ac.uk/xiview-usability" target="_blank" class="btn btn-1 btn-1a btn-tight" title="Click to do the xiView Survey!!!">* Survey *</a></p>
-                <div id="xiNetButtonBar"></div>
+                    <div id="xiNetButtonBar"></div>
             </div>
 
             <div id='hiddenProteinsMessage'>
                 <p id='hiddenProteinsText'>Manually Hidden Message</p>
                 <!-- not very backbone but its only a button -->
                 <button class='btn btn-1 btn-1a showHidden' onclick="CLMSUI.compositeModelInst.showHiddenProteins()">Show</button>
+            </div>"
+
+            <div id='sslOption'>
+                <form><input type="text" style="z-index:10000" name="sslOption" value="L" size=1><br></form>
             </div>"
 
             <div class="controls">
@@ -224,7 +230,7 @@
                 </div>
             </div>
 
-            <div id="subPanelLimiter"></div>
+			<div id="subPanelLimiter"></div>
         </div><!-- MAIN -->
 
 
@@ -242,11 +248,11 @@
             }
         ?>
 
-        var spinner = new Spinner({scale: 5}).spin (d3.select("#main").node());
+		var spinner = new Spinner({scale: 5}).spin (d3.select("#main").node());
         var z;
 
-        var success = function (json) {
-            try {
+		var success = function (json) {
+			try {
                 if (json.error) {
                     throw "Error from server";
                 }
@@ -262,15 +268,15 @@
                     CLMSUI.utils.displayError (function() { return true; }, "Warning <p class='errorReason'>"+json.warn+"</p>");
                 }
 
-                CLMSUI.init.models (json);
-                var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
-                document.title = CLMS.arrayFromMapKeys(searches).join();
+				CLMSUI.init.models (json);
+				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
+				document.title = CLMS.arrayFromMapKeys(searches).join();
 
-                Split (["#topDiv", "#bottomDiv"],
-                    { direction: "vertical", sizes: [80,20], minSize: [200,10],
-                        onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
-                    }
-                );
+				Split (["#topDiv", "#bottomDiv"],
+					{ direction: "vertical", sizes: [80,20], minSize: [200,10],
+						onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
+					}
+				);
                 d3.select(".gutter").attr("title", "Drag to change space available to selection table");
 
                 var returnedTimeStamp = new Date (json.timeStamp * 1000);
@@ -279,12 +285,12 @@
                     CLMSUI.utils.displayError (function() { return true; }, "Returned search results were generated at "+returnedTimeStamp+" and are likely from cache.<p class='errorReason'>If you have revalidated results since, press CTRL + F5 to refresh.</p>");
                 }
 
-                CLMSUI.init.views();
-                allDataLoaded ();
-            } catch (err) {
-                CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
-            }
-        };
+				CLMSUI.init.views();
+				allDataLoaded ();
+			} catch (err) {
+				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
+			}
+		};
 
 
         z = performance.now();
@@ -297,7 +303,7 @@
             var newQueryString = d3.entries(phpProps).map(function (entry) { return entry.key+"="+entry.value; }).join("&");
             console.log ("ucm", urlChunkMap, newQueryString);
             var url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;
-
+            
             d3.json (url, function (error, json) {
                 spinner.stop(); // stop spinner on request returning
 
@@ -308,7 +314,7 @@
                     console.error ("Error", error);
                 }
             });
-
+            
         } else {
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches
