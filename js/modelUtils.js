@@ -496,14 +496,14 @@ CLMSUI.modelUtils = {
         }
     },
 
-    loadUserFile: function(fileObj, successFunc) {
+    loadUserFile: function (fileObj, successFunc, associatedData) {
         if (window.File && window.FileReader && window.FileList && window.Blob) {
             var reader = new FileReader();
 
             // Closure to capture the file information.
             reader.onload = (function() {
                 return function(e) {
-                    successFunc(e.target.result);
+                    successFunc(e.target.result, associatedData);
                 };
             })(fileObj);
 

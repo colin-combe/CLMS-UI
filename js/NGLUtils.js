@@ -2,16 +2,8 @@ var CLMSUI = CLMSUI || {};
 
 CLMSUI.NGLUtils = {
     repopulateNGL: function (pdbInfo) {
-        var params = pdbInfo.params || {}; // {sele: ":A"};    // example: show just 'A' chain
-        console.log ("params", params);
-
-        var uri = pdbInfo.pdbCode ? "rcsb://" + pdbInfo.pdbCode : pdbInfo.pdbFileContents;
-        var multiplePDBURI = pdbInfo.pdbCode
-            ? pdbInfo.pdbCode.match(CLMSUI.utils.commonRegexes.multiPdbSplitter).map (function (code) { return {id: code, uri:"rcsb://"+code, local: false}; })
-            : [{id: pdbInfo.name, uri: pdbInfo.pdbFileContents, local: true}]
-        ;
-        //console.log ("MP", multiplePDBURI);
-
+        //console.log ("pdbInfo", pdbInfo);
+        var pdbSettings = pdbInfo.pdbSettings;
         var stage = pdbInfo.stage;
         var compositeModel = pdbInfo.compositeModel;
 
@@ -19,15 +11,15 @@ CLMSUI.NGLUtils = {
         stage.removeAllComponents(); // necessary to remove old stuff so old sequences don't pop up in sequence finding
 
         function returnFailure(reason) {
-            var id = _.pluck(multiplePDBURI, "id").join(", ");
+            var id = _.pluck(pdbSettings, "id").join(", ");
             var emptySequenceMap = [];
             emptySequenceMap.failureReason = "Error for " + id + ", " + reason;
             compositeModel.trigger("3dsync", emptySequenceMap);
         }
 
         Promise.all (
-            multiplePDBURI.map (function (pdbURI) {
-                return stage.loadFile (pdbURI.uri, params);
+            pdbSettings.map (function (pdbSetting) {
+                return stage.loadFile (pdbSetting.uri, pdbSetting.params);
             })
         )
         //stage.loadFile(uri, params)
@@ -39,7 +31,7 @@ CLMSUI.NGLUtils = {
                 structureCompArray = structureCompArray || [];  // set to empty array if undefined to avoid error in next bit
                 //CLMSUI.utils.xilog ("structureComp", structureCompArray);
                 structureCompArray.forEach (function (scomp, i) {   // give structure a name if none present (usually because loaded as local file)
-                    scomp.structure.name = scomp.structure.name || multiplePDBURI[i].id;
+                    scomp.structure.name = scomp.structure.name || pdbSettings[i].id;
                 });
 
                 var structureComp;
@@ -81,9 +73,9 @@ CLMSUI.NGLUtils = {
 
                     // If have a pdb code AND legal accession IDs use a web service in matchPDBChainsToUniprot to glean matches
                     // between ngl protein chains and clms proteins. This is asynchronous so we use a callback
-                    if (pdbInfo.pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
+                    if (pdbSettings[0].pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
                         console.log("WEB SERVICE CALLED");
-                        CLMSUI.NGLUtils.matchPDBChainsToUniprot(multiplePDBURI /*pdbInfo.pdbCode*/, nglSequences, interactorArr, function (uniprotMappingResults) {
+                        CLMSUI.NGLUtils.matchPDBChainsToUniprot(pdbSettings, nglSequences, interactorArr, function (uniprotMappingResults) {
                             CLMSUI.utils.xilog ("UniprotMapRes", uniprotMappingResults, nglSequences);
                             if (uniprotMappingResults.remaining.length) { // Some PDB sequences don't have unicode protein matches in this search
                                 var remainingSequences = _.pluck (uniprotMappingResults.remaining, "seqObj");   // strip the remaining ones back to just sequence objects
