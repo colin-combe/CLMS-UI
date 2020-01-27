@@ -611,26 +611,56 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         });
         this.setSelectedProteins(toSelect);
     },
-/*
+
     groupSelectedProteins: function() {
         var groups = this.get("groups");
         if (!groups){
-          groups = [];
+          groups = new d3.map();;
         }
-        var group = [];
-        var selectedArr = this.get("selectedProteins");
-        var selectedCount = selectedArr.length;
-        for (var s = 0; s < selectedCount; s++) {
-            var participant = selectedArr[s];
-            group.push(participant);
-        }
-        groups.push(group);
+        // var group = [];
+        // var selectedArr = this.get("selectedProteins");
+        // var selectedCount = selectedArr.length;
+        // for (var s = 0; s < selectedCount; s++) {
+        //     var participant = selectedArr[s];
+        //     group.push(participant);
+        // }
+        // groups.push(group);
     //    this.setSelectedProteins([]);
-        this.set("groups", groups);
+
+
+    var groupMap = new d3.map();
+    //var participantsArr = [];//CLMS.arrayFromMapValues(meta.items); // its not a d3 map so we need to use this shim
+    var participantsArr = this.get("selectedProteins");
+    // var selectedCount = selectedArr.length;
+    // for (var s = 0; s < selectedCount; s++) {
+    //     var participant = selectedArr[s];
+    //     group.push(participant);
+    // }
+
+
+    var pCount = participantsArr.length;
+    for (var p = 0; p < pCount; p++) {
+        var participant = participantsArr[p];
+        // if (participant.meta && participant.meta.complex) {
+            group = participantsArr.sort().join('-');//participant.meta.complex;
+            if (groupMap.get(group)) {
+                groupMap.get(group).add(participant.id);
+            } else {
+                var groupParticipants = new d3.set();
+                groupParticipants.add(participant.id);
+                groupMap.set(group, groupParticipants)
+            }
+        // }
+    }
+
+    // init n-ary link
+    //this.groupsChanged();
+
+        this.set("groups", groupMap.entries());
         this.trigger("groupsChanged");
 
     },
-*/
+
     // Things that can cause a cross-link's minimum distance to change:
     // 1. New PDB File loaded
     // 2. Change in alignment
