@@ -97,17 +97,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         pdbCodeSpan.append("span").text("& Press Enter");
 
-        /*
-        pdbCodeSpan.append("span").attr("class", "prompt").text("→");
-
-        pdbCodeSpan.append("button")
-            .attr("class", "PDBSubmit btn btn-1 btn-1a")
-            .text("Enter")
-            .property("disabled", true)
-        ;
-        */
-
-
+        
         var queryBox = box.append("div").attr("class", "verticalFlexContainer queryBox");
 
         queryBox.append("p").attr("class", "smallHeading").text("PDB Query Services");
