@@ -97,34 +97,25 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         pdbCodeSpan.append("span").text("& Press Enter");
 
-        /*
-        pdbCodeSpan.append("span").attr("class", "prompt").text("→");
-
-        pdbCodeSpan.append("button")
-            .attr("class", "PDBSubmit btn btn-1 btn-1a")
-            .text("Enter")
-            .property("disabled", true)
-        ;
-        */
-
-
+        
         var queryBox = box.append("div").attr("class", "verticalFlexContainer queryBox");
 
         queryBox.append("p").attr("class", "smallHeading").text("PDB Query Services");
 
-        queryBox.append("button")
-            .attr("class", "pdbWindowButton btn btn-1 btn-1a")
-            .text("Show PDBs Matching UniProt Accessions @ RCSB.org")
-            .attr("title", "Queries RCSB with Uniprot accession numbers of selected proteins (all if none selected)")
-        ;
-
-        queryBox.append("button")
-            .attr("class", "ebiPdbWindowButton btn btn-1 btn-1a")
-            .text("Show PDBs Matching a Protein Sequence @ EBI")
-            .attr("title", "Queries EBI with an individual protein sequence to find relevant PDBs")
+        var qButtonData = [
+            {class: "pdbWindowButton", text: "Show PDBs Matching UniProt Accessions @ RCSB.org", tooltip: "Queries RCSB with Uniprot accession numbers of selected proteins (all if none selected)"},
+            {class: "ebiPdbWindowButton", text: "Show PDBs Matching a Protein Sequence @ EBI", tooltip: "Queries EBI with an individual protein sequence to find relevant PDBs"}
+        ];
+        queryBox.selectAll("button").data(qButtonData, function (d) { return d.text; })
+            .enter()
+            .append("button")
+            .attr("class", function(d) { return d.class; })
+            .text(function(d) { return d.text; })
+            .attr("title", function(d) { return d.tooltip; })
         ;
 
         queryBox.selectAll("button")
+            .classed ("btn btn-1 btn-1a", true)
             .append("i").attr("class", "fa fa-xi fa-external-link")
         ;
 
