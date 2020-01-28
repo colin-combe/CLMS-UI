@@ -14,8 +14,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             highlightedProteins: [],
             TTCrossLinkCount: 0,
             groupedGoTerms: [],
-            xiNetLinkWidthAuto: true,
-            xiNetLinkWidthScale: 1
+            xinetPpiSteps: [2, 3],
         });
 
         this.listenTo(this.get("clmsModel"), "change:matches", function() {
@@ -355,7 +354,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         var clmsModel = this.get("clmsModel");
         if (clmsModel) {
             var ttCrossLinks = this.getAllCrossLinks().filter(function(link) {
-                return !link.isDecoyLink() && !link.isLinearLink();
+                return !link.isDecoyLink() && !link.isLinearLink() && !link.isMonoLink();
             });
             return ttCrossLinks;
         }
