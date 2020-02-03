@@ -590,22 +590,20 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             var clCount = crossLinks.length;
             for (var cl = 0; cl < clCount; cl++) {
                 var crossLink = crossLinks[cl];
-                if (crossLink.filteredMatches_pp.length) {
-                    var fromProtein = crossLink.fromProtein;
-                    if (fromProtein.is_decoy != true) {
-                        fromProtein.manuallyHidden = false;
-                        toSelect.add(fromProtein);
-                    }
-                    if (crossLink.toProtein && crossLink.toProtein.is_decoy != true) {
-                        var toProtein = crossLink.toProtein;
-                        toProtein.manuallyHidden = false;
-                        toSelect.add(toProtein);
-                    }
+                var fromProtein = crossLink.fromProtein;
+                if (fromProtein.is_decoy != true) {
+                    fromProtein.manuallyHidden = false;
+                    toSelect.add(fromProtein);
+                }
+                if (crossLink.toProtein && crossLink.toProtein.is_decoy != true) {
+                    var toProtein = crossLink.toProtein;
+                    toProtein.manuallyHidden = false;
+                    toSelect.add(toProtein);
                 }
             }
         }
 
-        //this.get("filterModel").trigger("change");
+        this.get("filterModel").trigger("change");
         this.setSelectedProteins(Array.from(toSelect));
 
     },
