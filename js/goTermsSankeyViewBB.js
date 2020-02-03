@@ -465,14 +465,14 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                         });
 
                         //i'm finding these get in the way - cc
-                        // self.model.get("tooltipModel")
-                        //     .set("header", "GO Term "+d.id)
-                        //     .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(d.term))
-                        //     .set("location", {
-                        //         pageX: d3.event.pageX,
-                        //         pageY: d3.event.pageY
-                        //     })
-                        // ;
+                        self.model.get("tooltipModel")
+                            .set("header", "GO Term "+d.id)
+                            .set("contents", CLMSUI.modelUtils.makeTooltipContents.goTerm(d.term))
+                            .set("location", {
+                                pageX: d3.event.pageX,
+                                pageY: d3.event.pageY
+                            })
+                        ;
 
                         self.model.setHighlightedProteins(Array.from(term.getInteractors().values()));
                     })

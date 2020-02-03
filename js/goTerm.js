@@ -10,20 +10,20 @@ CLMSUI.GoTerm = function() {
     this.filtInteractorCount = 0;
 };
 
-CLMSUI.GoTerm.prototype.getInteractors = function (storeCount) {
+CLMSUI.GoTerm.prototype.getInteractors = function(storeCount) {
     var go = CLMSUI.compositeModelInst.get("go");
     CLMSUI.GoTerm.prototype.getCount++;
-    
+
     var subTreeSet; // = new Set();
-    
+
     if (this.parts || this.subclasses || this.interactors) {
         subTreeSet = new Set();
-        
+
         if (this.parts) {
             for (let partId of this.parts) {
                 var sub = go.get(partId).getInteractors(storeCount);
                 if (sub) {
-                    sub.forEach (subTreeSet.add, subTreeSet);
+                    sub.forEach(subTreeSet.add, subTreeSet);
                 }
             }
         }
@@ -31,7 +31,7 @@ CLMSUI.GoTerm.prototype.getInteractors = function (storeCount) {
             for (let subclassId of this.subclasses) {
                 var sub = go.get(subclassId).getInteractors(storeCount);
                 if (sub) {
-                    sub.forEach (subTreeSet.add, subTreeSet);
+                    sub.forEach(subTreeSet.add, subTreeSet);
                 }
             }
         }
@@ -43,27 +43,54 @@ CLMSUI.GoTerm.prototype.getInteractors = function (storeCount) {
                 }
             }
         }
-        
-        if (subTreeSet.size === 0) { subTreeSet = null; }
+
+        if (subTreeSet.size === 0) {
+            subTreeSet = null;
+        }
     }
     if (storeCount) {
         this.filtInteractorCount = subTreeSet ? subTreeSet.size : 0;
         //if (subTreeSet.size) { console.log ("sub", subTreeSet, this.id); }
     }
-    
+
     return subTreeSet;
 };
 
 
 CLMSUI.GoTerm.prototype.isDirectRelation = function(anotherGoTerm) {
     var agoid = anotherGoTerm.id;
-    return ( 
+    return (
         (this == anotherGoTerm) ||
-        (this.is_a && this.is_a.has (agoid)) ||
-        (this.subclasses && this.subclasses.has (agoid)) ||
-        (this.part_of && this.part_of.has (agoid)) ||
-        (this.parts && this.parts.has (agoid)) 
+        (this.is_a && this.is_a.has(agoid)) ||
+        (this.subclasses && this.subclasses.has(agoid)) ||
+        (this.part_of && this.part_of.has(agoid)) ||
+        (this.parts && this.parts.has(agoid))
     );
+}
+
+
+CLMSUI.GoTerm.prototype.isDescendantOf = function(anotherGoTermId) {
+    var go = CLMSUI.compositeModelInst.get("go");
+    if (anotherGoTermId == this.id) {
+        return true;
+    }
+    if (this.part_of) {
+        for (let part_ofId of this.part_of) {
+            var partOf = go.get(part_ofId);
+            if (partOf.isDescendantOf(anotherGoTermId)) {
+                return true;
+            }
+        }
+    }
+    if (this.is_a) {
+        for (let superclassId of this.is_a) {
+            var sup = go.get(superclassId);
+            if (sup.isDescendantOf(anotherGoTermId)) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 

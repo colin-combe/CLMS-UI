@@ -27,6 +27,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "click .autoLayoutButton": function() {
                 CLMSUI.vent.trigger("xiNetAutoLayout", true);
             },
+            "click .autoGroupButton": "autoGroup",
             "click .saveLayoutButton": "saveLayout",
             "change .showXiNetLabels": function() {
                 CLMSUI.vent.trigger("xiNetShowLabels", d3.select(".showXiNetLabels").property("checked"));
@@ -46,40 +47,40 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
     saveLayout: function() {
         var xmlhttp = new XMLHttpRequest();
-            var url = "./php/isLoggedIn.php";
-            xmlhttp.open("POST", url, true);
-            //Send the proper header information along with the request
-            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xmlhttp.onreadystatechange = function() { //Call a function when the state changes.
-                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                    if(xmlhttp.responseText == "false"){
-                        alert("You must be logged in to save layout. A new tab will open for you to log in, you can then return here and Save.")
-                        window.open("../userGUI/userLogin.html", "_blank");
-                    } else {
-                        var callback = function(layoutJson) {
-                            var xmlhttp = new XMLHttpRequest();
-                            var url = "./php/saveLayout.php";
-                            xmlhttp.open("POST", url, true);
-                            //Send the proper header information along with the request
-                            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                            xmlhttp.onreadystatechange = function() { //Call a function when the state changes.
-                                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                                    console.log("Saved layout " + xmlhttp.responseText, true);
-                                    alert("Layout Saved");
-                                }
-                            };
-                            var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
-                            var params = "sid=" + sid +
-                                "&layout=" + encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g, "")) +
-                                "&name=" + encodeURIComponent(d3.select(".savedLayoutName").property("value"));
-                            xmlhttp.send(params);
+        var url = "./php/isLoggedIn.php";
+        xmlhttp.open("POST", url, true);
+        //Send the proper header information along with the request
+        xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xmlhttp.onreadystatechange = function() { //Call a function when the state changes.
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                if (xmlhttp.responseText == "false") {
+                    alert("You must be logged in to save layout. A new tab will open for you to log in, you can then return here and Save.")
+                    window.open("../userGUI/userLogin.html", "_blank");
+                } else {
+                    var callback = function(layoutJson) {
+                        var xmlhttp = new XMLHttpRequest();
+                        var url = "./php/saveLayout.php";
+                        xmlhttp.open("POST", url, true);
+                        //Send the proper header information along with the request
+                        xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                        xmlhttp.onreadystatechange = function() { //Call a function when the state changes.
+                            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                                console.log("Saved layout " + xmlhttp.responseText, true);
+                                alert("Layout Saved");
+                            }
                         };
+                        var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
+                        var params = "sid=" + sid +
+                            "&layout=" + encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g, "")) +
+                            "&name=" + encodeURIComponent(d3.select(".savedLayoutName").property("value"));
+                        xmlhttp.send(params);
+                    };
 
-                        CLMSUI.vent.trigger("xiNetSaveLayout", callback);
-                    }
+                    CLMSUI.vent.trigger("xiNetSaveLayout", callback);
                 }
-            };
-            xmlhttp.send();
+            }
+        };
+        xmlhttp.send();
     },
 
     initialize: function(viewOptions) {
@@ -101,7 +102,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
 
         buttonHtml += "<input type='text' name='name' id='name' class='savedLayoutName' value='' placeholder='Enter Save Layout Name'>" +
-                "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>"; // +
+            "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>"; // +
 
         buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
             "</span>" +
@@ -109,8 +110,8 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
         buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXiNetLabels' checked></label>"
         buttonHtml += "&nbsp;<label>Fixed size<input type='checkbox' class='fixedSize'></label>"
-        buttonHtml += "&nbsp;<label>PPI width steps:<input type='number' step='1' min='1' max='10' value='2' class='xinetPpiStep1' ><input type='number' step='1' min='1' max='100' value='3' class='xinetPpiStep2' ></label>"
-
+        buttonHtml += "&nbsp;<label>PPI width steps:<input type='number' step='1' min='1' max='10' value='2' class='xinetPpiStep1' ><input type='number' step='1' min='1' max='100' value='3' class='xinetPpiStep2' ></label>" +
+            "<button class='btn btn-1 btn-1a autoGroupButton'>Auto Group</button>";
         mainDivSel.html(
             buttonHtml
         );
@@ -161,11 +162,70 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
     },
 
-    updatePpiSteps: function () {
+    updatePpiSteps: function() {
         var steps = [];
         steps[0] = d3.select(".xinetPpiStep1").property("value");
         steps[1] = d3.select(".xinetPpiStep2").property("value");
         this.model.set("xinetPpiSteps", steps);
+    },
+
+    autoGroup: function() {
+        var groupMap = new Map();
+        var uncharacterised = new Set();
+        var periphery = new Set();
+        //groupMap.set("uncharacterised", uncharacterised);
+
+        var periphery = new Set();
+        groupMap.set("periphery", periphery);
+
+        var intracellular = new Set();
+        groupMap.set("intracellular", intracellular);
+
+        var both = new Set();
+        groupMap.set("periphery_intracellular", both);
+
+        /* // not gonna work 
+        var characterised = new Set();
+        groupMap.set("characterised", characterised);
+        characterised.add("periphery");
+        characterised.add("intracellular");
+        characterised.add("periphery_intracellular");
+        */
+
+        var go = this.model.get("go");
+        var proteins = this.model.get("clmsModel").get("participants").values();
+        for (var protein of proteins) {
+
+            if (protein.uniprot) {
+                var peri = false;
+                var intr = false;
+                for (var goId of protein.uniprot.go) {
+                    var goTerm = go.get(goId);
+                    if (goTerm) {
+                        //GO0071944
+                        if (goTerm.isDescendantOf("GO0071944") == true) {
+                            peri = true;
+                        } //GO0071944
+                        if (goTerm.isDescendantOf("GO0005622") == true) {
+                            intr = true;
+                        }
+                    }
+
+                }
+
+                if (peri == true && intr == true) {
+                    both.add(protein.id);
+                } else if (peri == true) {
+                    periphery.add(protein.id);
+                } else if (intr == true) {
+                    intracellular.add(protein.id);
+                } else {
+                    uncharacterised.add(protein.id);
+                }
+            }
+
+        }
+        this.model.set("groups", groupMap);
     },
 
     identifier: "xiNet Controls",
