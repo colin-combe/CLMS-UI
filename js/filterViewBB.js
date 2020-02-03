@@ -27,7 +27,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {
                     label: "Manual",
                     id: "manualMode",
-                    tooltip: "Filter using cross-link metadata",
+                    tooltip: "Filter using crosslink metadata",
                 },
                 {
                     label: "FDR",
@@ -40,40 +40,40 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     tooltip: "Show linear peptides",
                 },
                 {
-                    label: "Cross-links",
+                    label: "Crosslinks",
                     id: "crosslinks",
-                    tooltip: "Show cross-links",
+                    tooltip: "Show crosslinks",
                 },
                 {
                     label: "Ambig.",
                     id: "ambig",
-                    tooltip: "Show ambiguous cross-links",
+                    tooltip: "Show ambiguous crosslinks",
                 },
                 {
                     label: "Between",
                     id: "betweenLinks",
-                    tooltip: "Show cross-links between different proteins",
+                    tooltip: "Show crosslinks between different proteins",
                 },
                 {
                     label: "Self",
                     id: "selfLinks",
-                    tooltip: "Show cross-links between the same protein",
+                    tooltip: "Show crosslinks between the same protein",
                 },
                 {
                     label: "Homomult.",
                     id: "homomultimericLinks",
-                    tooltip: "Show cross-links with overlapping linked peptides",
+                    tooltip: "Show crosslinks with overlapping linked peptides",
                 },
                 {
                     label: "AA apart",
                     id: "aaApart",
-                    tooltip: "Only show cross-links separated by at least N amino acids e.g. 10",
+                    tooltip: "Only show crosslinks separated by at least N amino acids e.g. 10",
                     inequality: "&ge;",
                 },
                 {
                     label: "Pep. length",
                     id: "pepLength",
-                    tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4",
+                    tooltip: "Only show crosslinks where both linked peptides are at least N amino acids long e.g. 4",
                     inequality: "&ge;",
                 },
                 {
@@ -95,63 +95,63 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {
                     label: "Auto",
                     id: "AUTO",
-                    tooltip: "Show autovalidated cross-links"
+                    tooltip: "Show autovalidated crosslinks"
                 },
                 {
                     label: "Unval.",
                     id: "unval",
-                    tooltip: "Show unvalidated cross-links"
+                    tooltip: "Show unvalidated crosslinks"
                 },
                 {
                     label: "Decoy",
                     id: "decoys",
-                    tooltip: "Show passing decoy cross-links"
+                    tooltip: "Show passing decoy crosslinks"
                 },
                 {
                     label: "Pep Seq",
                     id: "pepSeq",
                     chars: 7,
-                    tooltip: "Filter to cross-links with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE",
+                    tooltip: "Filter to crosslinks with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE",
                 },
                 {
                     label: "Name",
                     id: "protNames",
                     chars: 7,
-                    tooltip: "Filter to cross-links involving a protein name/identifier including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
+                    tooltip: "Filter to crosslinks involving a protein name/identifier including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
                 {
                     label: "Description",
                     id: "protDesc",
                     chars: 7,
-                    tooltip: "Filter to cross-links involving a protein with a description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
+                    tooltip: "Filter to crosslinks involving a protein with a description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
                 {
                     label: "PDB?",
                     id: "protPDB",
-                    tooltip: "Filter to cross-links where the proteins at both ends are in the current PDB file (if one chosen)"
+                    tooltip: "Filter to crosslinks where the proteins at both ends are in the current PDB file (if one chosen)"
                 },
                 {
                     label: "Run",
                     id: "runName",
                     chars: 5,
-                    tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"
+                    tooltip: "Filter to crosslinks with matches whose run name includes this text e.g. 07_Lumos"
                 },
                 {
                     label: "Scan",
                     id: "scanNumber",
                     chars: 5,
-                    tooltip: "Filter to cross-links with matches with this scan number e.g. 44565",
+                    tooltip: "Filter to crosslinks with matches with this scan number e.g. 44565",
                 },
                 {
                     label: "Multi",
                     id: "multipleGroup",
-                    tooltip: "Pass cross-links with matches from more than one group"
+                    tooltip: "Pass crosslinks with matches from more than one group"
                 },
                 {
                     label: "Residue Pairs per PPI",
                     id: "urpPpi",
                     inequality: "&ge;",
-                    tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"
+                tooltip: "Filter out protein-protein interactions with less than * supporting unique residue pairs"
                 }
             ]
         };
@@ -269,44 +269,44 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 var tpl = _.template("<div><p>"+config.label+"</p><P class='vmin cutoffLabel'><span>&gt;</span></P><P>Min</P></div><div id='<%= eid %>'></div><div><p>"+config.label+"</p><P class='cutoffLabel vmax'><span>&lt;</span></P><P>Max</P></div><div class='undef'></div>");
                 sliderSection.html(tpl({
                     eid: self.el.id + config.id + "SliderHolder"
-                }));
-                // sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
-                sliderSection.selectAll("p.cutoffLabel")
-                    .attr("title", function() {
-                        var isMinInput = d3.select(this).classed("vmin");
+            }));
+            // sliderSection.style('display', (self.model.get("scores") === null) ? 'none' : null);
+            sliderSection.selectAll("p.cutoffLabel")
+                .attr("title", function() {
+                    var isMinInput = d3.select(this).classed("vmin");
                         return config.tooltipIntro+" " + (isMinInput ? "less than" : "greater than") + " X e.g. " + (isMinInput ? "8.0" : "20.0");
-                    })
-                    .append("input")
-                    .attr({
-                        type: "number",
+                })
+                .append("input")
+                .attr({
+                    type: "number",
                         step: config.step || 0.1,
-                        //min: 0,
-                    })
-                    .property("value", function() {
-                        var isMinInput = d3.select(this.parentNode).classed("vmin");
+                    //min: 0,
+                })
+                .property("value", function() {
+                    var isMinInput = d3.select(this.parentNode).classed("vmin");
                         var cutoff = self.model.get(config.attr);
-                        var val = cutoff[isMinInput ? 0 : 1];
-                        return val !== undefined ? val : "";
-                    })
-                    .on("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
-                        //console.log ("model", self.model);
-                        var val = +this.value;
-                        var isMinInput = d3.select(this.parentNode).classed("vmin");
+                    var val = cutoff[isMinInput ? 0 : 1];
+                    return val !== undefined ? val : "";
+                })
+                .on("change", function() { // "input" activates per keypress which knackers typing in anything >1 digit
+                    //console.log ("model", self.model);
+                    var val = +this.value;
+                    var isMinInput = d3.select(this.parentNode).classed("vmin");
                         var cutoff = self.model.get(config.attr);
                         var extent = self.model[config.extentProperty];
-                        // take new values, along with score extents, sort them and discard extremes for new cutoff settings
+                    // take new values, along with score extents, sort them and discard extremes for new cutoff settings
                         var newVals = [isMinInput ? val : (cutoff[0] !== undefined ? cutoff[0] : extent[0]),
                                 isMinInput ? (cutoff[1] !== undefined ? cutoff[1] : extent[1]) : val,
                                 extent[0], extent[1]
-                            ]
-                            .filter(function(v) {
-                                return v !== undefined;
-                            })
-                            .sort(function(a, b) {
-                                return a - b;
-                            });
-                        //console.log ("newVals", newVals);
-                        newVals = newVals.slice((newVals.length / 2) - 1, (newVals.length / 2) + 1);
+                        ]
+                        .filter(function(v) {
+                            return v !== undefined;
+                        })
+                        .sort(function(a, b) {
+                            return a - b;
+                        });
+                    //console.log ("newVals", newVals);
+                    newVals = newVals.slice((newVals.length / 2) - 1, (newVals.length / 2) + 1);
 
                         self.model.set (config.attr, newVals);
                     })
@@ -332,7 +332,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     sliderSection.select(".vmin input").property("value", val[0]); // min label
                     sliderSection.select(".vmax input").property("value", val[1]); // max label
                 });
-            }
+                    }
         }
 
 
@@ -508,7 +508,7 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
         if (id == "selfLinks") {
             d3.select("#aaApart").attr("disabled", target.checked ? null : "disabled");
         }
-        this.model.set (id, target.checked);
+        this.model.set(id, target.checked);
     },
 
     processTextFilter: function (evt) {

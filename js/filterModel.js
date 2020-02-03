@@ -200,7 +200,6 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 if (ambig && !this.get("ambig")) {
                     return false;
                 }
-
                 //self-links? - if self links's not selected and match is self link return false
                 // possible an ambiguous self link will still get displayed
 

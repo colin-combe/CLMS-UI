@@ -374,7 +374,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
         var count = 0;
         // add count metadata to matchCountIndices
-        this.matchCountIndices.forEach (function (selLinkMatchData) {
+        this.matchCountIndices.forEach(function(selLinkMatchData) {
             selLinkMatchData.runningTotalStart = count;
             count += selLinkMatchData.matches.length;
             selLinkMatchData.runningTotalEnd = count;
