@@ -89,9 +89,9 @@
         <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
-		<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
+	<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
+	<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
+	<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
         <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
@@ -109,11 +109,11 @@
         <script type="text/javascript" src="../vendor/js/jquery-3.4.1.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-		<script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
+	<script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
-		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
-		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
-		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
+	<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
+	<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
+	<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3-octree.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery-ui.js<?php echo $cacheBuster ?>"></script>
 
@@ -299,6 +299,7 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 			} catch (err) {
+                //console.log ("ERR", err);
 				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
 			}
 		};
@@ -314,18 +315,18 @@
             var newQueryString = d3.entries(phpProps).map(function (entry) { return entry.key+"="+entry.value; }).join("&");
             console.log ("ucm", urlChunkMap, newQueryString);
             var url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;
+            
+            d3.json (url, function (error, json) {
+                spinner.stop(); // stop spinner on request returning
 
-        d3.json (url, function (error, json) {
-            spinner.stop(); // stop spinner on request returning
-
-			if (!error) {
-				success (json);
-			} else {
-                CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
-				console.error ("Error", error);
-			}
-		});
-
+                if (!error) {
+                    success (json);
+                } else {
+                    CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
+                    console.error ("Error", error);
+                }
+            });
+            
         } else {
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches
@@ -340,7 +341,7 @@
                 CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
                 //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
                 allDataLoaded ();
-        }
+            }
         });
 
         // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation

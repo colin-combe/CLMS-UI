@@ -63,13 +63,14 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             .attr("class", "btn btn-1 btn-1a fakeButton")
             .append("span")
             //.attr("class", "noBreak")
-            .text("Select A Local PDB File")
+            .text("Select Local PDB Files")
             .append("input")
             .attr({
                 type: "file",
                 accept: ".txt,.cif,.pdb",
                 class: "selectPdbButton"
             })
+            .property("multiple", true)
         ;
 
 
@@ -96,34 +97,25 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
         pdbCodeSpan.append("span").text("& Press Enter");
 
-        /*
-        pdbCodeSpan.append("span").attr("class", "prompt").text("→");
-
-        pdbCodeSpan.append("button")
-            .attr("class", "PDBSubmit btn btn-1 btn-1a")
-            .text("Enter")
-            .property("disabled", true)
-        ;
-        */
-
-
+        
         var queryBox = box.append("div").attr("class", "verticalFlexContainer queryBox");
 
         queryBox.append("p").attr("class", "smallHeading").text("PDB Query Services");
 
-        queryBox.append("button")
-            .attr("class", "pdbWindowButton btn btn-1 btn-1a")
-            .text("Show PDBs Matching UniProt Accessions @ RCSB.org")
-            .attr("title", "Queries RCSB with Uniprot accession numbers of selected proteins (all if none selected)")
-        ;
-
-        queryBox.append("button")
-            .attr("class", "ebiPdbWindowButton btn btn-1 btn-1a")
-            .text("Show PDBs Matching a Protein Sequence @ EBI")
-            .attr("title", "Queries EBI with an individual protein sequence to find relevant PDBs")
+        var qButtonData = [
+            {class: "pdbWindowButton", text: "Show PDBs Matching UniProt Accessions @ RCSB.org", tooltip: "Queries RCSB with Uniprot accession numbers of selected proteins (all if none selected)"},
+            {class: "ebiPdbWindowButton", text: "Show PDBs Matching a Protein Sequence @ EBI", tooltip: "Queries EBI with an individual protein sequence to find relevant PDBs"}
+        ];
+        queryBox.selectAll("button").data(qButtonData, function (d) { return d.text; })
+            .enter()
+            .append("button")
+            .attr("class", function(d) { return d.class; })
+            .text(function(d) { return d.text; })
+            .attr("title", function(d) { return d.tooltip; })
         ;
 
         queryBox.selectAll("button")
+            .classed ("btn btn-1 btn-1a", true)
             .append("i").attr("class", "fa fa-xi fa-external-link")
         ;
 
@@ -145,15 +137,12 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             return str.replace(/[^a-z0-9 ,.?!]/ig, '');
         }
 
-        this.listenTo (this.model.get("clmsModel"), "change:matches", function() {
-            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
-        });
-        this.listenTo (this.model, "change:selectedProteins", function() {
-            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
-        });
-        this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", function() {
-            this.updateProteinDropdown(d3.select(this.el).select(".queryBox"));
-        });
+        function updatePD () {
+            this.updateProteinDropdown (d3.select(this.el).select(".queryBox"));
+        }
+        this.listenTo (this.model.get("clmsModel"), "change:matches", updatePD);
+        this.listenTo (this.model, "change:selectedProteins", updatePD);
+        this.listenTo (CLMSUI.vent, "proteinMetadataUpdated", updatePD);
 
         this.listenTo (this.model, "3dsync", function(newSequences) {
             var count = _.isEmpty(newSequences) ? 0 : newSequences.length;
@@ -176,9 +165,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
             this.setStatusText(msg, success);
         });
 
-        this.listenTo (CLMSUI.vent, "alignmentProgress", function(msg) {
-            this.setStatusText(msg);
-        });
+        this.listenTo (CLMSUI.vent, "alignmentProgress", this.setStatusText);
 
         // Pre-load pdb if requested
         if (viewOptions.initPDBs) {
@@ -267,27 +254,47 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
 
     selectPDBFile: function(evt) {
         this.setWaitingEffect();
+        this.loadRoute = "file";
         var self = this;
-        var fileObj = evt.target.files[0];
-        evt.target.value = null;    // reset value so same file can be chosen twice in succession
+        //console.log ("target files", evt.target.files, evt.target.value);
+        var pdbSettings = [];
+        var fileCount = evt.target.files.length;
 
-        CLMSUI.modelUtils.loadUserFile(fileObj, function(pdbFileContents) {
-            self.loadRoute = "file";
-            var blob = new Blob([pdbFileContents], {
-                type: 'application/text'
-            });
-            var fileExtension = fileObj.name.substr(fileObj.name.lastIndexOf('.') + 1);
-            CLMSUI.NGLUtils.repopulateNGL({
-                pdbFileContents: blob,
-                params: {
-                    ext: fileExtension,
-                    cAlphaOnly: self.cAlphaOnly,
+        var onLastLoad = _.after (fileCount, function() {
+                CLMSUI.NGLUtils.repopulateNGL({
+                    pdbSettings: pdbSettings,
+                    stage: self.stage,
+                    compositeModel: self.model
+                });
+            }
+        );
+
+        for (var n = 0; n < fileCount; n++) {
+            var fileObj = evt.target.files[n];
+
+            CLMSUI.modelUtils.loadUserFile (
+                fileObj,
+                function (fileContents, associatedData) {
+                    var blob = new Blob([fileContents], {
+                        type: 'application/text'
+                    });
+                    var name = associatedData.name;
+                    pdbSettings.push ({
+                        id: name,
+                        uri: blob,
+                        local: true,
+                        params: {
+                            ext: name.substr(name.lastIndexOf('.') + 1),
+                            cAlphaOnly: self.cAlphaOnly,
+                        }
+                    });
+                    onLastLoad();
                 },
-                name: fileObj.name,
-                stage: self.stage,
-                bbmodel: self.model
-            });
-        });
+                {name: fileObj.name}    // pass this associatedData in, so async loading doesn't break things i.e. if load A, B, and return order B, A
+            );
+        }
+
+        evt.target.value = null;    // reset value so same file can be chosen twice in succession
     },
 
     enteringPDBCode: function(evt) {
@@ -302,13 +309,15 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         var pdbCode = d3.select(this.el).select(".inputPDBCode").property("value");
         this.loadRoute = "pdb";
         this.setWaitingEffect();
+
+        var pdbSettings = pdbCode.match(CLMSUI.utils.commonRegexes.multiPdbSplitter).map (function (code) {
+            return {id: code, pdbCode: code, uri:"rcsb://"+code, local: false, params: {calphaOnly: this.cAlphaOnly}};
+        }, this);
+
         CLMSUI.NGLUtils.repopulateNGL({
-            pdbCode: pdbCode,
-            params: {
-                cAlphaOnly: this.cAlphaOnly,
-            },
+            pdbSettings: pdbSettings,
             stage: this.stage,
-            bbmodel: this.model
+            compositeModel: this.model
         });
     },
 

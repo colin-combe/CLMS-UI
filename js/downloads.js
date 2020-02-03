@@ -528,7 +528,7 @@ function getLinksCSV() {
 function getPPIsCSV() {
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
 
-    var headerArray = ["Protein1", "Protein2", "Unique Distance Restraints"];
+    var headerArray = ["Protein1", "Protein2", "Unique Distance Restraints", "DecoyType"];
     // var searchIDs = Array.from(clmsModel.get("searches").keys());
     // searchIDs.forEach(function(sid) {
     //     headerArray.push("Search_" + sid);
@@ -562,7 +562,28 @@ function getPPIsCSV() {
     for (let ppi of ppiMap.values()) {
         var aCrosslink = ppi[0];
         var linear = aCrosslink.isLinearLink();
-        rows.push([mostReadableId(aCrosslink.fromProtein), (linear ? "" : mostReadableId(aCrosslink.toProtein)), ppi.length].join(","))
+
+        var decoyType;
+        if (linear) {
+            if (aCrosslink.fromProtein.is_decoy) {
+                decoyType = "D";
+            }
+            else {
+                decoyType = "T";
+            }
+        } else {
+            var decoy1 = aCrosslink.fromProtein.is_decoy;
+            var decoy2 = aCrosslink.toProtein.is_decoy;
+            if (decoy1 && decoy2) {
+                decoyType = "DD";
+            } else if (decoy1 || decoy2) {
+                decoyType = "TD";
+            } else {
+                decoyType = "TT";
+            }
+        }
+
+        rows.push([mostReadableId(aCrosslink.fromProtein), (linear ? "" : mostReadableId(aCrosslink.toProtein)), ppi.length, decoyType].join(","))
     }
 
     /*    var ppiMap = crossLinks.map(function(crossLink, i) {

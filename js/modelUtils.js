@@ -67,9 +67,9 @@ CLMSUI.modelUtils = {
         },
 
         link: function(xlink, extras) {
-          var linear = xlink.isLinearLink();
-          var mono = xlink.isMonoLink();
-          var info = [
+            var linear = xlink.isLinearLink();
+            var mono = xlink.isMonoLink();
+            var info = [
                 ["From", xlink.fromProtein.name, xlink.fromResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, false))],
                 linear ? ["To", "Linear", "---", "---"] : mono ? ["To", "Monolink", "---", "---"] : ["To", xlink.toProtein.name, xlink.toResidue, CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getDirectionalResidueType(xlink, true))],
                 ["Matches", xlink.filteredMatches_pp.length],
@@ -114,35 +114,6 @@ CLMSUI.modelUtils = {
                 }
                 contents.push(["GO", goTermsText]);
             }
-            return contents;
-        },
-
-        complex: function(interactor) {
-            var contents = [
-                ["Complex", interactor.id],
-              //  ["Members", Array.from(goTerm.relationship.values()).join(", ")]
-                // ["Accession", interactor.accession],
-                // ["Size", interactor.size],
-                // ["Desc.", interactor.description]
-            ];
-
-            // d3.entries(interactor.getMeta()).forEach(function(entry) {
-            //     var val = entry.value;
-            //     var key = entry.key.toLocaleLowerCase();
-            //     if (val !== undefined && !_.isObject(val)) {
-            //         contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
-            //     }
-            // });
-            //
-            // if (interactor.go) {
-            //     var goTermsMap = CLMSUI.compositeModelInst.get("go");
-            //     var goTermsText = "";
-            //     for (var goId of interactor.go) {
-            //         var goTerm = goTermsMap.get(goId);
-            //         goTermsText += goTerm.name + "<br>";
-            //     }
-            //     contents.push(["GO", goTermsText]);
-            // }
             return contents;
         },
 
@@ -265,6 +236,35 @@ CLMSUI.modelUtils = {
                 // ["interactors", goTerm.getInteractors(false).size]
             ];
         },
+        
+        complex: function(interactor) {	
+            var contents = [	
+                ["Complex", interactor.id],	
+              //  ["Members", Array.from(goTerm.relationship.values()).join(", ")]	
+                // ["Accession", interactor.accession],	
+                // ["Size", interactor.size],	
+                // ["Desc.", interactor.description]	
+            ];	
+
+            // d3.entries(interactor.getMeta()).forEach(function(entry) {	
+            //     var val = entry.value;	
+            //     var key = entry.key.toLocaleLowerCase();	
+            //     if (val !== undefined && !_.isObject(val)) {	
+            //         contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);	
+            //     }	
+            // });	
+            //	
+            // if (interactor.go) {	
+            //     var goTermsMap = CLMSUI.compositeModelInst.get("go");	
+            //     var goTermsText = "";	
+            //     for (var goId of interactor.go) {	
+            //         var goTerm = goTermsMap.get(goId);	
+            //         goTermsText += goTerm.name + "<br>";	
+            //     }	
+            //     contents.push(["GO", goTermsText]);	
+            // }	
+            return contents;	
+        },
     },
 
     highestScore: function(crosslink) {
@@ -280,9 +280,6 @@ CLMSUI.modelUtils = {
         interactor: function(interactor) {
             return interactor.name.replace("_", " ");
         },
-        complex: function(interactor) {
-            return interactor.name.replace("_", " ");
-        },
         residue: function(interactor, residueIndex, residueExtraInfo) {
             return interactor.name + ":" + residueIndex + "" + (residueExtraInfo ? residueExtraInfo : "") + " " +
                 CLMSUI.modelUtils.makeTooltipContents.residueString(CLMSUI.modelUtils.getResidueType(interactor, residueIndex));
@@ -292,6 +289,9 @@ CLMSUI.modelUtils = {
         },
         linkList: function(linkCount) {
             return "Linked Residue Pair" + (linkCount > 1 ? "s" : "");
+        },
+        complex: function(interactor) {	
+            return interactor.name.replace("_", " ");	
         },
     },
 
@@ -529,14 +529,14 @@ CLMSUI.modelUtils = {
         }
     },
 
-    loadUserFile: function(fileObj, successFunc) {
+    loadUserFile: function (fileObj, successFunc, associatedData) {
         if (window.File && window.FileReader && window.FileList && window.Blob) {
             var reader = new FileReader();
 
             // Closure to capture the file information.
             reader.onload = (function() {
                 return function(e) {
-                    successFunc(e.target.result);
+                    successFunc(e.target.result, associatedData);
                 };
             })(fileObj);
 
@@ -600,7 +600,7 @@ CLMSUI.modelUtils = {
         return pkey;
     },
 
-    updateLinkMetadata: function(metaDataFileContents, clmsModel) {
+    updateLinkMetadata: function (metaDataFileContents, clmsModel) {
         var crossLinks = clmsModel.get("crossLinks");
         var crossLinksArr = CLMS.arrayFromMapValues (crossLinks);
         var protMap = CLMSUI.modelUtils.makeMultiKeyProteinMap(clmsModel);

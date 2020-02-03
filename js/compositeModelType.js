@@ -12,10 +12,9 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             annotationTypes: null,
             selectedProteins: [],
             highlightedProteins: [],
-            groupColours: null, // will be d3.scale for colouring by search/group,
             TTCrossLinkCount: 0,
             groupedGoTerms: [],
-            xinetPpiSteps: [2, 3]
+            xinetPpiSteps: [2, 3],
         });
 
         this.listenTo(this.get("clmsModel"), "change:matches", function() {
@@ -27,6 +26,13 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             if (!filterModel.get("fdrMode")) {
                 // Need to clear all crosslinks as they all get valued
                 CLMSUI.clearFdr(this.getAllCrossLinks());
+            }
+        });
+
+
+        this.listenTo (CLMSUI.vent, "recalcLinkDistances", function () {
+            if (this.get("clmsModel")) {    // bar the alternative model from doing this because it has no crosslinks and will crash
+                this.getCrossLinkDistances (this.getAllCrossLinks());
             }
         });
 
@@ -47,7 +53,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         return this;
     },
 
-    // Get distances if links are made homomultimr if possible, needed to generate initial distance range
+    // Get distances if links are made homomultimer if possible, needed to generate initial distance range
     getHomomDistances: function (crossLinkArr) {
         // Store current homo states
         var oldHom = _.pluck (crossLinkArr, "confirmedHomomultimer");

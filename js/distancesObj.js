@@ -36,7 +36,7 @@ CLMSUI.DistancesObj.prototype = {
         var self = this;
 
         nglLinkWrappers.forEach (function (linkWrapper) {
-            var distance = this.getXLinkDistanceFromChainCoords (
+            var distance = this.getXLinkDistanceFromPDBCoords (
                 this.matrices, linkWrapper.residueA.seqIndex, linkWrapper.residueB.seqIndex, linkWrapper.residueA.chainIndex, linkWrapper.residueB.chainIndex
             );
             linkWrapper.distance = CLMSUI.utils.toNearest (distance, angstromAccuracy);
@@ -119,7 +119,7 @@ CLMSUI.DistancesObj.prototype = {
                             //CLMSUI.utils.xilog ("alignid", alignId1, alignId2, pid1, pid2);
 
                             if (seqIndex2 >= 0 && CLMSUI.NGLUtils.not3DHomomultimeric(xlink, chainIndex1, chainIndex2)) {
-                                var dist = this.getXLinkDistanceFromChainCoords (matrices, seqIndex1, seqIndex2, chainIndex1, chainIndex2);
+                                var dist = this.getXLinkDistanceFromPDBCoords (matrices, seqIndex1, seqIndex2, chainIndex1, chainIndex2);
 
                                 if (dist !== undefined) {
                                     if (average) {
@@ -159,9 +159,9 @@ CLMSUI.DistancesObj.prototype = {
         } : distance;
     },
 
-    // Get cross-link distance between two particular chains
+    // Get cross-link distance between two residues based on PDB-indexed positions
     // seqIndex1 and 2 are 0-based
-    getXLinkDistanceFromChainCoords: function(matrices, seqIndex1, seqIndex2, chainIndex1, chainIndex2) {
+    getXLinkDistanceFromPDBCoords: function(matrices, seqIndex1, seqIndex2, chainIndex1, chainIndex2) {
         var dist;
         if (this.permittedChainIndicesSet.has(chainIndex1) && this.permittedChainIndicesSet.has(chainIndex2)) {
             var distanceMatrix = matrices[chainIndex1 + "-" + chainIndex2].distanceMatrix;
@@ -264,7 +264,7 @@ CLMSUI.DistancesObj.prototype = {
                 }, this) // remove chains that are currently distance barred
                 .map(function(chain) {
                     var alignID = CLMSUI.NGLUtils.make3DAlignID(this.structureName, chain.name, chain.index);
-                    var range = alignCollBB.getSearchRangeIndexOfMatches(protID, alignID);
+                    var range = alignCollBB.getRangeAsSearchSeq(protID, alignID);
                     $.extend(range, {
                         chainIndex: chain.index,
                         modelIndex: chain.modelIndex,
@@ -472,7 +472,7 @@ CLMSUI.DistancesObj.prototype = {
                 var res1 = rowMap[rri];
                 residueColumnIndices.forEach(function(rci) {
                     var res2 = columnMap[rci];
-                    var dist = self.getXLinkDistanceFromChainCoords(self.matrices, res1.seqIndex - 1, res2.seqIndex - 1, res1.chainIndex, res2.chainIndex);
+                    var dist = self.getXLinkDistanceFromPDBCoords(self.matrices, res1.seqIndex - 1, res2.seqIndex - 1, res1.chainIndex, res2.chainIndex);
                     if (!isNaN(dist) && dist > 0) {
                         randDists.push(dist);
                     }

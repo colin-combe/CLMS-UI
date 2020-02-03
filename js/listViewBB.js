@@ -920,7 +920,7 @@ CLMSUI.ListViewBB = CLMSUI.utils.BaseFrameView.extend({
             accessor: accessor,
         };
 
-        var clusterResults = CLMSUI.modelUtils.metaClustering(filteredCrossLinks, CLMSUI.compositeModelInst.getAllTTCrossLinks(), options);
+        var clusterResults = CLMSUI.modelUtils.metaClustering(filteredCrossLinks, self.model.getAllTTCrossLinks(), options);
         this.stats.clusterDistances = clusterResults.cfk_distances;
 
         //console.log ("stat", stats);

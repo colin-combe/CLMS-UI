@@ -57,28 +57,28 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                 {
                     label: "Between",
                     id: "betweenLinks",
-                    tooltip: "Show cross-links between different proteins",
+                    tooltip: "Show crosslinks between different proteins",
                 },
                 {
                     label: "Self",
                     id: "selfLinks",
-                    tooltip: "Show cross-links between the same protein",
+                    tooltip: "Show crosslinks between the same protein",
                 },
                 {
                     label: "Homomult.",
                     id: "homomultimericLinks",
-                    tooltip: "Show cross-links with overlapping linked peptides",
+                    tooltip: "Show crosslinks with overlapping linked peptides",
                 },
                 {
                     label: "AA apart",
                     id: "aaApart",
-                    tooltip: "Only show cross-links separated by at least N amino acids e.g. 10",
+                    tooltip: "Only show crosslinks separated by at least N amino acids e.g. 10",
                     inequality: "&ge;",
                 },
                 {
                     label: "Pep. length",
                     id: "pepLength",
-                    tooltip: "Only show cross-links where both linked peptides are at least N amino acids long e.g. 4",
+                    tooltip: "Only show crosslinks where both linked peptides are at least N amino acids long e.g. 4",
                     inequality: "&ge;",
                 },
                 {
@@ -98,41 +98,41 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     label: "Pep Seq",
                     id: "pepSeq",
                     chars: 7,
-                    tooltip: "Filter to cross-links with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE",
+                    tooltip: "Filter to crosslinks with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE",
                 },
                 {
                     label: "Name",
                     id: "protNames",
                     chars: 7,
-                    tooltip: "Filter to cross-links involving a protein name/identifier including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
+                    tooltip: "Filter to crosslinks involving a protein name/identifier including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
                 {
                     label: "Description",
                     id: "protDesc",
                     chars: 7,
-                    tooltip: "Filter to cross-links involving a protein with a description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
+                    tooltip: "Filter to crosslinks involving a protein with a description including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
                 {
                     label: "PDB?",
                     id: "protPDB",
-                    tooltip: "Filter to cross-links where the proteins at both ends are in the current PDB file (if one chosen)"
+                    tooltip: "Filter to crosslinks where the proteins at both ends are in the current PDB file (if one chosen)"
                 },
                 {
                     label: "Run",
                     id: "runName",
                     chars: 5,
-                    tooltip: "Filter to cross-links with matches whose run name includes this text e.g. 07_Lumos"
+                    tooltip: "Filter to crosslinks with matches whose run name includes this text e.g. 07_Lumos"
                 },
                 {
                     label: "Scan",
                     id: "scanNumber",
                     chars: 5,
-                    tooltip: "Filter to cross-links with matches with this scan number e.g. 44565",
+                    tooltip: "Filter to crosslinks with matches with this scan number e.g. 44565",
                 },
                 {
                     label: "Multi",
                     id: "multipleGroup",
-                    tooltip: "Pass cross-links with matches from more than one group"
+                    tooltip: "Pass crosslinks with matches from more than one group"
                 },
                 {
                     label: "Residue Pairs per PPI",

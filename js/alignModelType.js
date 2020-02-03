@@ -82,7 +82,7 @@
 		
         // find the first and last residues in a sequence that map to existing residues in the search sequence (i.e aren't
         // opening or trailing gaps), and return these coordinates in terms of the search sequence
-        getSearchRangeIndexOfMatches: function () {
+        getRangeAsSearchSeq: function () {
             var compSeq = this.get("compAlignment");
             var nonNegative = function (num) { return num >= 0; };
             // _.find gets value of first nonNegative element, but _.findLastIndex gets the index, so we have to then get the value
@@ -123,11 +123,11 @@
         getAlignedIndex: function (seqIndex, toSearchSeq, keepNegativeValue) {
             // seqLength attribution NOT wrong way round.
             // we use seqLength to determine whether a negative (no direct match) index is somewhere within the matched-to sequence or outside of it altogether
-            // e.g. pairing sequences, ref = ABCDEFGHI, nonRef = CDFG
+            // e.g. pairing sequences, search = ABCDEFGHI, uniprot = CDFG
             // cfr = [-1, -1, 0, 1, -2, 2, 3, -5, -5]    
             // ctr = [2, 3, 5, 6]
-            // when say going from 'E' in ref to nonref (fromSearch, cfr to ctr) , value for cfr index is -2, which is bigger than -4 (neg length of ctr) so value is within
-            // when say going from 'H' in ref to nonref (fromSearch, cfr to ctr) , value for cfr index is -5, which is smaller than/equal to -4 (neg length of ctr) so value is outside
+            // when say going from 'E' in search to uniprot (fromSearch, cfr to ctr) , value for cfr index is -2, which is bigger than -4 (neg length of ctr) so value is within
+            // when say going from 'H' in search to uniprot (fromSearch, cfr to ctr) , value for cfr index is -5, which is smaller than/equal to -4 (neg length of ctr) so value is outside
             var seqLength = this.get("compAlignment")[toSearchSeq ? "convertFromRef" : "convertToRef"].length;
             var alignPos = toSearchSeq ? this.mapToSearch (seqIndex) : this.mapFromSearch (seqIndex);
             //console.log (seqIndex, "->", alignPos, "toSearch: ", toSearchSeq, seqLength);
@@ -341,9 +341,9 @@
 		
         // find the first and last residues in a sequence that map to existing residues in the search sequence (i.e aren't
         // opening or trailing gaps), and return these coordinates in terms of the search sequence
-        getSearchRangeIndexOfMatches: function (seqName) {
+        getRangeAsSearchSeq: function (seqName) {
             var seqModel = this.getSequenceModel (seqName);
-            return seqModel.getSearchRangeIndexOfMatches();
+            return seqModel.getRangeAsSearchSeq();
         },
 
         // For a given sequence return a list of the sequential indices
@@ -420,7 +420,7 @@
 
         nonTrivialChange: undefined,
          
-        addSeq: function (proteinID, seqID, seq, otherSettingsObj) {
+        addSequence: function (proteinID, seqID, seq, otherSettingsObj) {
             var model = this.get (proteinID);
             if (model) {
                 //console.log ("entry", modelId, seqId, seq, otherSettingsObj);
@@ -440,7 +440,7 @@
                         refSeq: prot.sequence,
                     }]);
                     if (prot.uniprot){
-                        this.addSeq (prot.id, "Canonical", prot.uniprot.sequence);
+                        this.addSequence (prot.id, "Canonical", prot.uniprot.sequence);
                     }
             }, this);
             
@@ -485,9 +485,9 @@
             return protAlignModel ? protAlignModel.getAlignedIndex (seqIndex, toSearchSeq, sequenceID, keepNegativeValue) : seqIndex;   // this will be 1-indexed or null
         },
 
-        getSearchRangeIndexOfMatches: function(proteinID, sequenceID) {
+        getRangeAsSearchSeq: function(proteinID, sequenceID) {
             var protAlignModel = this.get(proteinID);
-            return protAlignModel ? protAlignModel.getSearchRangeIndexOfMatches(sequenceID) : [undefined, undefined];
+            return protAlignModel ? protAlignModel.getRangeAsSearchSeq(sequenceID) : [undefined, undefined];
         },
         
         getAlignmentsAsFeatures: function (protID, includeCanonical) {

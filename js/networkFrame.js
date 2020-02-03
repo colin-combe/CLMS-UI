@@ -47,14 +47,14 @@ CLMSUI.init.postDataLoaded = function() {
         // }),
         // new CLMSUI.BackboneModelTypes.AnnotationType({
         // category: "AA",
-        // type: "Cross-linkable-1",
-        // tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
+        // type: "Crosslinkable-1",
+        // tooltip: "Mark CrossLinkable residues (first or only reactive gruop)",
         // source: "Search",
         //     colour: "#a6cee3",
         // }),
         // new CLMSUI.BackboneModelTypes.AnnotationType({
         // category: "AA",
-        // type: "Cross-linkable-2",
+        // type: "Crosslinkable-2",
         //     tooltip: "Mark Cross-Linkable residues (second reactive group if heterobifunctional cross-linker)",
         // source: "Search",
         //     colour: "#a6cee3",
@@ -85,7 +85,7 @@ CLMSUI.init.postDataLoaded = function() {
                     uniprotFeatureTypes.set(key, annotationType);
                 }
             });
-            }
+        }
     });
 
     // add uniprot feature types
@@ -157,7 +157,7 @@ CLMSUI.init.models = function(options) {
                 }, this);
             }
             sequences.forEach(function(entry) {
-                this.addSeq(entry.id, entry.name, entry.data, entry.otherAlignSettings);
+                this.addSequence (entry.id, entry.name, entry.data, entry.otherAlignSettings);
             }, this);
             // this triggers an event to say loads has changed in the alignment collection
             // more efficient to listen to that then redraw/recalc for every seq addition
@@ -459,10 +459,10 @@ CLMSUI.init.views = function() {
             sectionEnd: true
         },
         {
-           id: "goTermsChkBxPlaceholder",
-           label: "GO Terms",
+            id: "goTermsChkBxPlaceholder",
+            label: "GO Terms",
             eventName: "goTermsViewShow",
-           tooltip: "Browse Gene Ontology terms"
+            tooltip: "Browse Gene Ontology terms"
         },
     ];
     checkBoxData.forEach(function(cbdata) {
@@ -492,13 +492,13 @@ CLMSUI.init.views = function() {
             }
         })
         // hide/disable view choices that depend on certain data being present until that data arrives
-        .enableItemsByID (maybeViews, false)
-        .enableItemsByID (mostViews, matchesFound)
+        .enableItemsByID(maybeViews, false)
+        .enableItemsByID(mostViews, matchesFound)
         .listenTo(compModel.get("clmsModel"), "change:distancesObj", function(model, newDistancesObj) {
-            this.enableItemsByID (maybeViews, !!newDistancesObj);
+            this.enableItemsByID(maybeViews, !!newDistancesObj);
         })
-        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
-            this.enableItemsByID (mostViews, true);
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() {
+            this.enableItemsByID(mostViews, true);
         });
 
 
@@ -518,10 +518,10 @@ CLMSUI.init.views = function() {
                         tooltip: "Hide selected proteins"
                     },
                     {
-                            name: "Hide Unselected",
-                            func: compModel.hideUnselectedProteins,
+                        name: "Hide Unselected",
+                        func: compModel.hideUnselectedProteins,
                         context: compModel,
-                            tooltip: "Hide unselected proteins"
+                        tooltip: "Hide unselected proteins"
                     },
                     {
                         name: "+Neighbours",
@@ -537,12 +537,12 @@ CLMSUI.init.views = function() {
                         label: "Protein Selection by Description",
                         tooltip: "Select proteins whose descriptions include input text"
                     },
-                    {
-                       name: "Group",
-                       func: compModel.groupSelectedProteins,
-                       context: compModel,
-                       tooltip: "Put selected proteins in a group"
-                    }
+                    // {
+                    //     name: "Group",
+                    //     func: compModel.groupSelectedProteins,
+                    //     context: compModel,
+                    //     tooltip: "Put selected proteins in a group"
+                    // }
                 ],
                 tooltipModel: compModel.get("tooltipModel")
             }
@@ -564,7 +564,7 @@ CLMSUI.init.views = function() {
             tooltip: "Load STRING data from the STRING server. Note: limited to <2,000 proteins, for more generate a CSV file for import as PPI Metadata"
         },
 //        {
-//            name: "Cross-Links (CSV)",
+//            name: "CrossLinks (CSV)",
 //            eventName: "csvShow",
 //            tooltip: "Load Cross-Links from a local CSV File"
 //        },
@@ -771,7 +771,7 @@ CLMSUI.init.viewsEssential = function(options) {
         knownModificationsURL: false,//CLMSUI.xiAnnotRoot + "annotate/knownModifications",
         showCustomConfig: true,
         showQualityControl: "min",
-	      colorScheme: colorbrewer.PRGn[8],
+	colorScheme: colorbrewer.PRGn[8],
     }
 
     xiSPEC.init(xiSPEC_options);
@@ -866,9 +866,9 @@ CLMSUI.init.viewsEssential = function(options) {
                 },
             }
         })
-        .wholeMenuEnabled (!_.isEmpty(compModel.get("clmsModel").get("matches")))
-        .listenTo(compModel.get("clmsModel"), "change:matches", function () {
-            this.wholeMenuEnabled (true);
+        .wholeMenuEnabled(!_.isEmpty(compModel.get("clmsModel").get("matches")))
+        .listenTo(compModel.get("clmsModel"), "change:matches", function() {
+            this.wholeMenuEnabled(true);
         });
 
     // Generate help drop down
@@ -886,10 +886,11 @@ CLMSUI.init.viewsEssential = function(options) {
             }, {
                 name: "Online Videos",
                 func: function() {
-                    window.open("https://vimeo.com/user64900020", "_blank");
-                },
-                tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage",
-                sectionEnd: true,
+//                    window.open("https://vimeo.com/user64900020", "_blank");
+                    window.open("https://rappsilberlab.org/software/xiview/", "_blank");
+                 },
+                tooltip: "A number of how-to videos are available via this link to the lab homepage",
+/*                sectionEnd: true,
             }, {
                 name: "Report Issue on Github",
                 func: function() {
@@ -908,7 +909,7 @@ CLMSUI.init.viewsEssential = function(options) {
                 func: function() {
                     window.open("https://rappsilberlab.org/software/xiview/", "_blank");
                 },
-                tooltip: "About Xi View (opens external web page)"
+                tooltip: "About Xi View (opens external web page)" */
             }, ],
             tooltipModel: compModel.get("tooltipModel"),
         }

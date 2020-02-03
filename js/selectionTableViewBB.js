@@ -47,7 +47,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "autovalidated", "validated", "homom", "group", "searchId", "runName", "scanNumber",
             "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
             "precursorIntensity", "elutionStart", "elutionEnd", // "expMissedCleavages",
-            //"searchMissedCleavages",
+            //"searchMissedCleavages", "modificationCount",
         ];
 
         this.headerLabels = {
@@ -83,6 +83,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             elutionEnd: "Elut. End",
             // expMissedCleavages: "Experimental Max. Missed Cleavages",
             // searchMissedCleavages: "Search Max. Missed Cleavages",
+            // modificationCount: "Modification Count",
         };
 
         this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorItensity", /*"expMissedCleavages", "searchMissedCleavages",*/ "elutionStart", "elutionEnd"]);
@@ -92,6 +93,8 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.minWidthColumns = d3.set(["massError", "searchMissedCleavages"]);
         this.emphasiseColumns = d3.set(["pos1", "pos2"]);
         this.changeableColumns = d3.set(["ambiguity", "autovalidated", "validated", "homom"]);   // values that can change in situ i.e. aren't fixed
+
+        var self = this;
 
         // entries commented out until a replacement is found for xlv
         var headerFilterFuncs = {
@@ -126,7 +129,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             }
         );
 
-        var self = this;
         var twoZeroPadder = d3.format(".2f");
         var massZeroPadder = d3.format(".6f");
         var scientific = d3.format(".4e");
@@ -232,6 +234,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             },
             searchMissedCleavages: function(d) {
                 return d.searchMissedCleavageCount();
+            },
+            modificationCount: function(d) {
+                return d.modificationCount();
             },
         };
 
