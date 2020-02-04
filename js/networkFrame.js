@@ -850,15 +850,15 @@ CLMSUI.init.viewsEssential = function(options) {
                         sectionBegin: true,
                         sectionEnd: true
                     },
-                    {
-                        name: "Make Filtered XI URL",
-                        func: function() {
-                            CLMSUI.vent.trigger("shareURLViewShow", true);
-                        },
-                        tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility",
-                        categoryTitle: "As a URL",
-                        sectionBegin: true,
-                    },
+                    // {
+                    //     name: "Make Filtered XI URL",
+                    //     func: function() {
+                    //         CLMSUI.vent.trigger("shareURLViewShow", true);
+                    //     },
+                    //     tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility",
+                    //     categoryTitle: "As a URL",
+                    //     sectionBegin: true,
+                    // },
                 ],
                 tooltipModel: compModel.get("tooltipModel"),
                 sectionHeader: function(d) {
