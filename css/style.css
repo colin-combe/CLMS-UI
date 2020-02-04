@@ -863,62 +863,6 @@ div.validationControls{
   display: none;
 }
 
-#surveyPlaceholder a {
-    color: yellow;
-}
-@keyframes changeColor {
-  0% {
-    background-color: #900;
-  }
-  16% {
-    background-color: #990;
-  }
-  33% {
-    background-color: #090;
-  }
-  50% {
-    background-color: #099;
-  }
-  66% {
-    background-color: #009;
-  }
-  83% {
-    background-color: #909;
-      transform: scale (1.2)
-  }
-  100% {
-    background-color: #900;
-  }
-}
-#surveyPlaceholder:hover a {
-    animation-name: changeColor;
-    animation-iteration-count: infinite;
-    animation-duration: 0.5s;
-}
-@keyframes wiggleButton {
-  0% {
-    transform: rotate(0);
-  }
-  25% {
-    transform:rotate(20deg);
-  }
-  50% {
-    transform: rotate(0);
-  }
-  75% {
-   transform: rotate(-20deg);
-  }
-  100% {
-    transform: rotate(0);
-  }
-}
-#surveyPlaceholder:hover {
-    animation-name: wiggleButton;
-    animation-iteration-count: infinite;
-    animation-duration: 0.3s;
-    transform: scale(2);
-}
-
 .btn-1a.irreversible:hover {
     color: red;
     border-color: red;

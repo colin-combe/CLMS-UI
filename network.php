@@ -208,7 +208,6 @@
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
                     <p id="helpDropdownPlaceholder"></p>
-                <p id="surveyPlaceholder"><a href="https://edinburgh.onlinesurveys.ac.uk/xiview-usability" target="_blank" class="btn btn-1 btn-1a btn-tight" title="Click to do the xiView Survey!!!">* Survey *</a></p>
                     <div id="xiNetButtonBar"></div>
             </div>
 
