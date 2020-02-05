@@ -430,13 +430,13 @@ CLMSUI.init.views = function() {
             eventName: "scatterplotViewShow",
             tooltip: "Configurable view for comparing two Cross-Link/Match properties",
         },
-        {
-            id: "listChkBxPlaceholder",
-            label: "List",
-            eventName: "listViewShow",
-            tooltip: "Sortable list of cross-links, can convert to heatmap",
-            sectionEnd: true
-        },
+        // {
+        //     id: "listChkBxPlaceholder",
+        //     label: "List",
+        //     eventName: "listViewShow",
+        //     tooltip: "Sortable list of cross-links, can convert to heatmap",
+        //     sectionEnd: true
+        // },
         {
             id: "alignChkBxPlaceholder",
             label: "Alignment",
@@ -770,7 +770,7 @@ CLMSUI.init.viewsEssential = function(options) {
         knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
         showCustomConfig: true,
         showQualityControl: "min",
-	colorScheme: colorbrewer.PRGn[8],
+	      colorScheme: colorbrewer.PRGn[8],
     }
 
     xiSPEC.init(xiSPEC_options);
@@ -779,22 +779,6 @@ CLMSUI.init.viewsEssential = function(options) {
     xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
         xiSPEC.vent.trigger('resize:spectrum');
     });
-
-    // xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.resize();
-    // });
-    // xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.resize();
-    // });
-    // xiSPEC.FragmentationKey.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.resize();
-    // });
-    // xiSPEC.ErrorIntensityPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.render();
-    // });
-    // xiSPEC.ErrorMzPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.render();
-    // });
 
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
@@ -845,7 +829,7 @@ CLMSUI.init.viewsEssential = function(options) {
                         name: "Filtered Matches ",  // extra space to differentiate from first entry in menu
                         func: downloadSSL,
                         tooltip: "Produces an SSL file for quantitation in SkyLine",
-                        categoryTitle: "As an SSL File",
+                        categoryTitle: "As an SSL File (needs fixed)",
                         sectionBegin: true,
                         sectionEnd: true
                     },
@@ -889,27 +873,7 @@ CLMSUI.init.viewsEssential = function(options) {
                     window.open("https://rappsilberlab.org/software/xiview/", "_blank");
                  },
                 tooltip: "A number of how-to videos are available via this link to the lab homepage",
-/*                sectionEnd: true,
-            }, {
-                name: "Report Issue on Github",
-                func: function() {
-                    window.open("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank");
-                },
-                tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"
-            }, {
-                name: "Report Issue via Form",
-                func: function() {
-                    window.open("githubForm.html", "_blank");
-                },
-                tooltip: "Opens a form to report an issue which will be forwarded to GitHub. Plain text only.",
-                sectionEnd: true,
-            }, {
-                name: "About Xi View",
-                func: function() {
-                    window.open("https://rappsilberlab.org/software/xiview/", "_blank");
-                },
-                tooltip: "About Xi View (opens external web page)" */
-            }, ],
+            }],
             tooltipModel: compModel.get("tooltipModel"),
         }
     });
