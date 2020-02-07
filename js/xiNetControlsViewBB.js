@@ -28,18 +28,18 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 CLMSUI.vent.trigger("xiNetAutoLayout", true);
             },
             "click .saveLayoutButton": "saveLayout",
-            "change .showXiNetLabels": function() {
-                CLMSUI.vent.trigger("xiNetShowLabels", d3.select(".showXiNetLabels").property("checked"));
-            },
-            "change .fixedSize": function() {
-                CLMSUI.vent.trigger("xiNetFixedSize", d3.select(".fixedSize").property("checked"));
-            },
-            "change .xinetPpiStep1": function() {
-                this.updatePpiSteps();
-            },
-            "change .xinetPpiStep2": function() {
-                this.updatePpiSteps();
-            },
+            // "change .showXiNetLabels": function() {
+            //     CLMSUI.vent.trigger("xiNetShowLabels", d3.select(".showXiNetLabels").property("checked"));
+            // },
+            // "change .fixedSize": function() {
+            //     CLMSUI.vent.trigger("xiNetFixedSize", d3.select(".fixedSize").property("checked"));
+            // },
+            // "change .xinetPpiStep1": function() {
+            //     this.updatePpiSteps();
+            // },
+            // "change .xinetPpiStep2": function() {
+            //     this.updatePpiSteps();
+            // },
         });
 
     },
@@ -105,11 +105,12 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
         buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
             "</span>" +
-            "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>";
+            "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>"
+            +   "<p id='displayOptionsPlaceholder' class='btn btn-1 btn-1a'></p>";
 
-        buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXiNetLabels' checked></label>"
-        buttonHtml += "&nbsp;<label>Fixed size<input type='checkbox' class='fixedSize'></label>"
-        buttonHtml += "&nbsp;<label>PPI width steps:<input type='number' step='1' min='1' max='10' value='2' class='xinetPpiStep1' ><input type='number' step='1' min='1' max='100' value='3' class='xinetPpiStep2' ></label>"
+        // buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXiNetLabels' checked></label>"
+        // buttonHtml += "&nbsp;<label>Fixed size<input type='checkbox' class='fixedSize'></label>"
+        // buttonHtml += "&nbsp;<label>PPI width steps:<input type='number' step='1' min='1' max='10' value='2' class='xinetPpiStep1' ><input type='number' step='1' min='1' max='100' value='3' class='xinetPpiStep2' ></label>"
 
         mainDivSel.html(
             buttonHtml
@@ -149,17 +150,85 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             }
         });
 
-        // this.listenTo(this.model, "change:xiNetLinkWidthScale", function() {
-        //     var linkWidthScale = this.model.get("xiNetLinkWidthScale");
-        //     d3.select(".xiNetLinkWidth").property("value", linkWidthScale);
-        // });
-        //
-        // this.listenTo(this.model, "change:xiNetLinkWidthAuto", function() {
-        //     var linkWidthAuto = this.model.get("xiNetLinkWidthAuto");
-        //     d3.select(".xiNetLinkWidth").style("color", linkWidthAuto? "#cccccc" : "#091d42" );
-        // });
+        var checkBoxData = [{
+                id: "xinetLabels",
+                label: "Labels",
+                //func: this.setXinetShowLabels,
+                toggleAttribute: "xinetShowLabels",
+                tooltip: "Show Labels in xiNET",
+                sectionEnd: true
+            },
+            // {
+            //     name: "Filtered Cross-Links",
+            //     func: downloadLinks,
+            //     tooltip: "Produces a CSV File of Filtered Cross-Link data"
+            // },
+            // {
+            //     name: "Filtered PPI",
+            //     func: downloadPPIs,
+            //     tooltip: "Produces a CSV File of Filtered Protein-Protein Interaction data"
+            // },
+            // {
+            //     name: "Filtered Residues",
+            //     func: downloadResidueCount,
+            //     tooltip: "Produces a CSV File of Count of Filtered Residues ",
+            // },
+            // {
+            //     name: "Protein Accession list",
+            //     func: downloadProteinAccessions,
+            //     tooltip: "Produces a single row CSV File of visible Proteins' Accession numbers",
+            //     sectionEnd: true
+            // },
+            // {
+            //     name: "Filtered Matches ",  // extra space to differentiate from first entry in menu
+            //     func: downloadSSL,
+            //     tooltip: "Produces an SSL file for quantitation in SkyLine",
+            //     categoryTitle: "As an SSL File",
+            //     sectionBegin: true,
+            //     sectionEnd: true
+            // },
+            // {
+            //     name: "Make Filtered XI URL",
+            //     func: function() {
+            //         CLMSUI.vent.trigger("shareURLViewShow", true);
+            //     },
+            //     tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility",
+            //     categoryTitle: "As a URL",
+            //     sectionBegin: true,
+            // },
+        ];
+
+
+        checkBoxData.forEach(function(cbdata) {
+            var options = $.extend({
+                labelFirst: false
+            }, cbdata);
+            var cbView = new CLMSUI.utils.checkBoxView({
+              model: CLMSUI.compositeModelInst,
+
+                myOptions: options
+            });
+            $("#displayOptionsPlaceholder").append(cbView.$el);
+        }, this);
+
+        new CLMSUI.DropDownMenuViewBB({
+                el: "#displayOptionsPlaceholder",
+                model: CLMSUI.compositeModelInst,
+                myOptions: {
+                    title: "Display Options",
+                    menu: checkBoxData,
+                }
+            });
 
     },
+
+    // setXinetShowLabels: function () {
+    //     //alert("!");
+    //     var checkbox = d3.select("#xinetLabelsChkBx");
+    //     var checked = checkbox.property("checked");
+    //     console.log("!"+checked);
+    //     this.model.set("xinetShowLabels", d3.select("#xinetLabelsChkBx").property("checked"));
+    // },
 
     updatePpiSteps: function () {
         var steps = [];
