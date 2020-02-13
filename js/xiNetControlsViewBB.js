@@ -28,6 +28,24 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 CLMSUI.vent.trigger("xiNetAutoLayout", true);
             },
             "click .saveLayoutButton": "saveLayout",
+
+
+            // "click .centreButton": "centerView",
+            // "click .downloadButton": "downloadImage",
+            // "click .savePDBButton": "savePDB",
+            // "click .exportPymolButton": "exportPymol",
+            // "click .exportHaddockButton": "exportHaddock",
+            // "click .distanceLabelCB": "toggleLabels",
+            // "click .selectedOnlyCB": "toggleNonSelectedLinks",
+            // "click .showResiduesCB": "toggleResidues",
+            // "click .shortestLinkCB": "toggleShortestLinksOnly",
+            // "click .allowInterModelDistancesCB": "toggleAllowInterModelDistances",
+            // "click .showAllProteinsCB": "toggleShowAllProteins",
+            // "click .chainLabelLengthRB": "setChainLabelLength",
+            // "click .chainLabelFixedSizeCB": "setChainLabelFixedSize",
+
+
+
             // "change .showXiNetLabels": function() {
             //     CLMSUI.vent.trigger("xiNetShowLabels", d3.select(".showXiNetLabels").property("checked"));
             // },
@@ -92,21 +110,23 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
         var mainDivSel = d3.select(this.el);
 
-        buttonHtml = "<span class='noBreak panOrSelect'>" +
-            "<span>Drag To </span>" +
-            "<label>Pan<input type='radio' name='clickMode' class='clickToPan' checked></label>" +
-            "<label>Or Select<input type='radio' name='clickMode' class='clickToSelect'></label>" +
-            "</span>" +
-            "<span class='layoutLabel noBreak sectionDividerLeft sectionDividerRight'>Layout:" +
-            "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
+        var buttonHtml = "<p id='displayOptionsPlaceholder' class='btn btn-1 btn-1a'></p>" +
+            // "<span class='noBreak panOrSelect'>" +
+            // "<span>Drag To </span>" +
+            // "<label>Pan<input type='radio' name='clickMode' class='clickToPan' checked></label>" +
+            // "<label>Or Select<input type='radio' name='clickMode' class='clickToSelect'></label>" +
+            // "</span>" +
+            "<span class='layoutLabel noBreak sectionDividerLeft' >Layout:</span>"
+            + "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>";
+            // buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
+            //     "</span>";
 
         buttonHtml += "<input type='text' name='name' id='name' class='savedLayoutName' value='' placeholder='Enter Save Layout Name'>" +
-                "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>"; // +
+                "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p><button class='btn btn-1 btn-1a saveLayoutButton'>Save</button> " +
+                    ""; // +
 
-        buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
-            "</span>" +
-            "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>"
-            +   "<p id='displayOptionsPlaceholder' class='btn btn-1 btn-1a'></p>";
+            // + "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>"
+            // +   "<p id='displayOptionsPlaceholder' class='btn btn-1 btn-1a'></p>";
 
         // buttonHtml += "&nbsp;<label>Labels<input type='checkbox' class='showXiNetLabels' checked></label>"
         // buttonHtml += "&nbsp;<label>Fixed size<input type='checkbox' class='fixedSize'></label>"
@@ -149,7 +169,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 title: "Load ▼",
             }
         });
-
+/*
         var checkBoxData = [{
                 id: "xinetLabels",
                 label: "Labels",
@@ -158,44 +178,6 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 tooltip: "Show Labels in xiNET",
                 sectionEnd: true
             },
-            // {
-            //     name: "Filtered Cross-Links",
-            //     func: downloadLinks,
-            //     tooltip: "Produces a CSV File of Filtered Cross-Link data"
-            // },
-            // {
-            //     name: "Filtered PPI",
-            //     func: downloadPPIs,
-            //     tooltip: "Produces a CSV File of Filtered Protein-Protein Interaction data"
-            // },
-            // {
-            //     name: "Filtered Residues",
-            //     func: downloadResidueCount,
-            //     tooltip: "Produces a CSV File of Count of Filtered Residues ",
-            // },
-            // {
-            //     name: "Protein Accession list",
-            //     func: downloadProteinAccessions,
-            //     tooltip: "Produces a single row CSV File of visible Proteins' Accession numbers",
-            //     sectionEnd: true
-            // },
-            // {
-            //     name: "Filtered Matches ",  // extra space to differentiate from first entry in menu
-            //     func: downloadSSL,
-            //     tooltip: "Produces an SSL file for quantitation in SkyLine",
-            //     categoryTitle: "As an SSL File",
-            //     sectionBegin: true,
-            //     sectionEnd: true
-            // },
-            // {
-            //     name: "Make Filtered XI URL",
-            //     func: function() {
-            //         CLMSUI.vent.trigger("shareURLViewShow", true);
-            //     },
-            //     tooltip: "Produces a URL that embeds the current filter state within it for later reproducibility",
-            //     categoryTitle: "As a URL",
-            //     sectionBegin: true,
-            // },
         ];
 
 
@@ -219,6 +201,124 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                     menu: checkBoxData,
                 }
             });
+    */
+
+    // Various view options set up...
+    var toggleButtonData = [
+      // {
+        //     initialState: this.options.selectedOnly,
+        //     class: "selectedOnlyCB",
+        //     label: "Selected Cross-Links Only",
+        //     id: "selectedOnly",
+        //     d3tooltip: "Only show selected cross-links"
+        // },
+        // {
+        //     initialState: this.options.shortestLinksOnly,
+        //     class: "shortestLinkCB",
+        //     label: "Shortest Possible Cross-Links Only",
+        //     id: "shortestOnly",
+        //     d3tooltip: "Only show shortest possible cross-links: complexes with multiple (N) copies of a protein can have multiple possible alternatives for cross-links - N x N for self links, N x M for between links"
+        // },
+        // {
+        //     initialState: this.options.allowInterModelDistances,
+        //     class: "allowInterModelDistancesCB",
+        //     label: "Inter-Model Distances",
+        //     id: "allowInterModelDistances",
+        //     d3tooltip: "Allow Inter-Model Distances - Warning: Different Models may not be correctly spatially aligned"
+        // },
+        // {
+        //     initialState: this.options.showResidues,
+        //     class: "showResiduesCB",
+        //     label: "Cross-Linked Residues",
+        //     id: "showResidues",
+        //     d3tooltip: "Show cross-linked residues on protein representations"
+        // },
+        // {
+        //     initialState: this.options.showAllProteins,
+        //     class: "showAllProteinsCB",
+        //     label: "All Proteins",
+        //     id: "showAllProteins",
+        //     d3tooltip: "Keep showing proteins with no current cross-links (within available PDB structure)"
+        // },
+        // {
+        //     initialState: this.options.labelVisible,
+        //     class: "distanceLabelCB",
+        //     label: "Distance Labels",
+        //     id: "visLabel",
+        //     d3tooltip: "Show distance labels on displayed cross-links"
+        // },
+        {
+            class: "chainLabelLengthRB",
+            label: "Long",
+            id: "showLongChainLabels",
+            tooltip: "Show protein chain labels with more verbose content if available",
+            group: "chainLabelSetting",
+            type: "radio",
+            value: "Verbose",
+            header: "Protein Chain Label Style"
+        },
+        {
+            class: "chainLabelLengthRB",
+            label: "Short",
+            id: "showShortChainLabels",
+            tooltip: "Show protein chain labels with shorter content",
+            group: "chainLabelSetting",
+            type: "radio",
+            value: "Short"
+        },
+        {
+            class: "chainLabelLengthRB",
+            label: "None",
+            id: "showNoChainLabels",
+            tooltip: "Show no protein chain labels",
+            group: "chainLabelSetting",
+            type: "radio",
+            value: "None"
+        },
+        {
+            initialState: true,
+            class: "chainLabelFixedSizeCB",
+            label: "Fixed Size",
+            id: "showFixedSizeChainLabels",
+            d3tooltip: "Show fixed size protein chain labels",
+        },
+    ];
+
+    var self = this;
+    toggleButtonData
+        .forEach(function(d) {
+            d.type = d.type || "checkbox";
+            d.value = d.value || d.label;
+            d.inputFirst = true;
+            if (d.initialState === undefined && d.group && d.value) { // set initial values for radio button groups
+            //     d.initialState = (d.value === this.options[d.group]);
+            }
+        }, this);
+
+
+    CLMSUI.utils.makeBackboneButtons(mainDivSel, self.el.id, toggleButtonData);
+
+    // ...then moved to a dropdown menu
+    // var optid = this.el.id + "Options";
+    // toolbar.append("p").attr("id", optid);
+    new CLMSUI.DropDownMenuViewBB({
+      el: "#displayOptionsPlaceholder",
+      model: CLMSUI.compositeModelInst,
+        myOptions: {
+            title: "Display ▼",
+            menu: toggleButtonData.map(function(d) {
+                d.id = self.el.id + d.id;
+                //d.tooltip = d.d3tooltip;
+                return d;
+            }),
+            closeOnClick: false,
+            tooltip: "Display options for xiNET (centre view)"
+            // tooltipMoSel: self.model.get("tooltipModel"),
+        }
+    });
+
+
+
 
     },
 
