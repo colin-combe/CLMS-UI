@@ -100,11 +100,32 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             xmlhttp.send();
     },
 
+
+    defaultOptions: {
+        labelVisible: false,
+        selectedOnly: false,
+        showResidues: true,
+        shortestLinksOnly: true,
+        chainRep: "cartoon",
+        initialColourScheme: "uniform",
+        showAllProteins: false,
+        chainLabelSetting: "Short",
+        fixedLabelSize: false,
+        defaultAssembly: "default",
+        allowInterModelDistances: false,
+        exportKey: true,
+        exportTitle: true,
+        canHideToolbarArea: true,
+        canTakeImage: true,
+    },
+
     initialize: function(viewOptions) {
-        var myDefaults = {};
-        viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
+
+//this.options = _.extend(globalOptions, this.defaultOptions, viewOptions.myOptions);
+        // var myDefaults = {};
+        // viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
         // viewOptions.myOptions = _.extend (myDefaults, viewOptions.myOptions);
-        CLMSUI.xiNetControlsViewBB.__super__.initialize.apply(this, arguments);
+        //CLMSUI.xiNetControlsViewBB.__super__.initialize.apply(this, arguments);
 
         var self = this;
 
@@ -121,9 +142,8 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             // buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
             //     "</span>";
 
-        buttonHtml += "<input type='text' name='name' id='name' class='savedLayoutName' value='' placeholder='Enter Save Layout Name'>" +
-                "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p><button class='btn btn-1 btn-1a saveLayoutButton'>Save</button> " +
-                    ""; // +
+        buttonHtml += "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p><input type='text' name='name' id='name' class='savedLayoutName' value='' placeholder='Enter Save Layout Name'>" +
+                "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>";
 
             // + "<button class='btn btn-1 btn-1a downloadButton'>" + CLMSUI.utils.commonLabels.downloadImg + "SVG</button>"
             // +   "<p id='displayOptionsPlaceholder' class='btn btn-1 btn-1a'></p>";
@@ -248,40 +268,40 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         //     d3tooltip: "Show distance labels on displayed cross-links"
         // },
         {
-            class: "chainLabelLengthRB",
-            label: "Long",
-            id: "showLongChainLabels",
-            tooltip: "Show protein chain labels with more verbose content if available",
-            group: "chainLabelSetting",
+            class: "xinetDrag",
+            label: "Pan",
+            id: "dragToPan",
+            // tooltip: "Show protein chain labels with more verbose content if available",
+            group: "dragTo",
             type: "radio",
-            value: "Verbose",
-            header: "Protein Chain Label Style"
+            value: "Pan",
+            header: "Drag to"
         },
         {
-            class: "chainLabelLengthRB",
-            label: "Short",
-            id: "showShortChainLabels",
-            tooltip: "Show protein chain labels with shorter content",
-            group: "chainLabelSetting",
+            class: "xinetDrag",
+            label: "Select",
+            id: "dragToSelect",
+            // tooltip: "Show protein chain labels with shorter content",
+            group: "dragTo",
             type: "radio",
             value: "Short"
         },
-        {
-            class: "chainLabelLengthRB",
-            label: "None",
-            id: "showNoChainLabels",
-            tooltip: "Show no protein chain labels",
-            group: "chainLabelSetting",
-            type: "radio",
-            value: "None"
-        },
-        {
-            initialState: true,
-            class: "chainLabelFixedSizeCB",
-            label: "Fixed Size",
-            id: "showFixedSizeChainLabels",
-            d3tooltip: "Show fixed size protein chain labels",
-        },
+        // {
+        //     class: "chainLabelLengthRB",
+        //     label: "None",
+        //     id: "showNoChainLabels",
+        //     tooltip: "Show no protein chain labels",
+        //     group: "chainLabelSetting",
+        //     type: "radio",
+        //     value: "None"
+        // },
+        // {
+        //     initialState: true,
+        //     class: "chainLabelFixedSizeCB",
+        //     label: "Fixed Size",
+        //     id: "showFixedSizeChainLabels",
+        //     d3tooltip: "Show fixed size protein chain labels",
+        // },
     ];
 
     var self = this;
@@ -291,7 +311,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             d.value = d.value || d.label;
             d.inputFirst = true;
             if (d.initialState === undefined && d.group && d.value) { // set initial values for radio button groups
-            //     d.initialState = (d.value === this.options[d.group]);
+                 //d.initialState = (d.value === this.options[d.group]);
             }
         }, this);
 
@@ -313,7 +333,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             }),
             closeOnClick: false,
             tooltip: "Display options for xiNET (centre view)"
-            // tooltipMoSel: self.model.get("tooltipModel"),
+            // tooltipModel: self.model.get("tooltipModel"),
         }
     });
 
