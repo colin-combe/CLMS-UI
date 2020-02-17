@@ -15,19 +15,22 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             parentEvents = parentEvents();
         }
         return _.extend({}, parentEvents, {
-            "change .clickToSelect": function() {
-                CLMSUI.vent.trigger("xiNetDragToSelect", true);
-            },
-            "change .clickToPan": function() {
-                CLMSUI.vent.trigger("xiNetDragToPan", true);
-            },
-            "click .downloadButton": function() {
-                CLMSUI.vent.trigger("xiNetSvgDownload", true);
+            // "change .clickToSelect": function() {
+            //     CLMSUI.vent.trigger("xiNetDragToSelect", true);
+            // },
+            // "change .clickToPan": function() {
+            //     CLMSUI.vent.trigger("xiNetDragToPan", true);
+            // },
+            "click .xinetSvgDownload": function() {
+                CLMSUI.vent.trigger("xinetSvgDownload", true);
             },
             "click .autoLayoutButton": function() {
                 CLMSUI.vent.trigger("xiNetAutoLayout", true);
             },
             "click .saveLayoutButton": "saveLayout",
+
+            "change .xinetDragToPan": "dragActionChanged",
+            "change .xinetDragToSelect": "dragActionChanged",
 
 
             // "click .centreButton": "centerView",
@@ -102,29 +105,27 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
 
     defaultOptions: {
+        dragTo: "Pan",
         labelVisible: false,
-        selectedOnly: false,
-        showResidues: true,
-        shortestLinksOnly: true,
-        chainRep: "cartoon",
-        initialColourScheme: "uniform",
-        showAllProteins: false,
-        chainLabelSetting: "Short",
-        fixedLabelSize: false,
-        defaultAssembly: "default",
-        allowInterModelDistances: false,
-        exportKey: true,
-        exportTitle: true,
-        canHideToolbarArea: true,
-        canTakeImage: true,
+        // selectedOnly: false,
+        // showResidues: true,
+        // shortestLinksOnly: true,
+        // chainRep: "cartoon",
+        // initialColourScheme: "uniform",
+        // showAllProteins: false,
+        // chainLabelSetting: "Short",
+        // fixedLabelSize: false,
+        // defaultAssembly: "default",
+        // allowInterModelDistances: false,
+        // exportKey: true,
+        // exportTitle: true,
+        // canHideToolbarArea: true,
+        // canTakeImage: true,
     },
 
     initialize: function(viewOptions) {
 
-//this.options = _.extend(globalOptions, this.defaultOptions, viewOptions.myOptions);
-        // var myDefaults = {};
-        // viewOptions.myOptions = _.extend(myDefaults, viewOptions.myOptions);
-        // viewOptions.myOptions = _.extend (myDefaults, viewOptions.myOptions);
+        this.options = _.extend(this.defaultOptions, viewOptions.myOptions);
         //CLMSUI.xiNetControlsViewBB.__super__.initialize.apply(this, arguments);
 
         var self = this;
@@ -225,83 +226,33 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
     // Various view options set up...
     var toggleButtonData = [
-      // {
-        //     initialState: this.options.selectedOnly,
-        //     class: "selectedOnlyCB",
-        //     label: "Selected Cross-Links Only",
-        //     id: "selectedOnly",
-        //     d3tooltip: "Only show selected cross-links"
-        // },
-        // {
-        //     initialState: this.options.shortestLinksOnly,
-        //     class: "shortestLinkCB",
-        //     label: "Shortest Possible Cross-Links Only",
-        //     id: "shortestOnly",
-        //     d3tooltip: "Only show shortest possible cross-links: complexes with multiple (N) copies of a protein can have multiple possible alternatives for cross-links - N x N for self links, N x M for between links"
-        // },
-        // {
-        //     initialState: this.options.allowInterModelDistances,
-        //     class: "allowInterModelDistancesCB",
-        //     label: "Inter-Model Distances",
-        //     id: "allowInterModelDistances",
-        //     d3tooltip: "Allow Inter-Model Distances - Warning: Different Models may not be correctly spatially aligned"
-        // },
-        // {
-        //     initialState: this.options.showResidues,
-        //     class: "showResiduesCB",
-        //     label: "Cross-Linked Residues",
-        //     id: "showResidues",
-        //     d3tooltip: "Show cross-linked residues on protein representations"
-        // },
-        // {
-        //     initialState: this.options.showAllProteins,
-        //     class: "showAllProteinsCB",
-        //     label: "All Proteins",
-        //     id: "showAllProteins",
-        //     d3tooltip: "Keep showing proteins with no current cross-links (within available PDB structure)"
-        // },
-        // {
-        //     initialState: this.options.labelVisible,
-        //     class: "distanceLabelCB",
-        //     label: "Distance Labels",
-        //     id: "visLabel",
-        //     d3tooltip: "Show distance labels on displayed cross-links"
-        // },
         {
-            class: "xinetDrag",
+            class: "xinetDragToPan",
             label: "Pan",
             id: "dragToPan",
-            // tooltip: "Show protein chain labels with more verbose content if available",
+            tooltip: "Show protein chain labels with more verbose content if available",
             group: "dragTo",
             type: "radio",
             value: "Pan",
             header: "Drag to"
         },
         {
-            class: "xinetDrag",
+            class: "xinetDragToSelect",
             label: "Select",
             id: "dragToSelect",
-            // tooltip: "Show protein chain labels with shorter content",
+            tooltip: "Show protein chain labels with shorter content",
             group: "dragTo",
             type: "radio",
-            value: "Short"
+            value: "Select",
+            sectionEnd: true,
         },
-        // {
-        //     class: "chainLabelLengthRB",
-        //     label: "None",
-        //     id: "showNoChainLabels",
-        //     tooltip: "Show no protein chain labels",
-        //     group: "chainLabelSetting",
-        //     type: "radio",
-        //     value: "None"
-        // },
-        // {
-        //     initialState: true,
-        //     class: "chainLabelFixedSizeCB",
-        //     label: "Fixed Size",
-        //     id: "showFixedSizeChainLabels",
-        //     d3tooltip: "Show fixed size protein chain labels",
-        // },
+        {
+              initialState: this.options.selectedOnly,
+              class: "selectedOnlyCB",
+              label: "Selected Cross-Links Only",
+              id: "selectedOnly",
+              d3tooltip: "Only show selected cross-links"
+          },
     ];
 
     var self = this;
@@ -311,13 +262,18 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             d.value = d.value || d.label;
             d.inputFirst = true;
             if (d.initialState === undefined && d.group && d.value) { // set initial values for radio button groups
-                 //d.initialState = (d.value === this.options[d.group]);
+                 d.initialState = (d.value === this.options[d.group]);
             }
         }, this);
 
 
     CLMSUI.utils.makeBackboneButtons(mainDivSel, self.el.id, toggleButtonData);
-
+    toggleButtonData.splice(0,0,{
+            name: CLMSUI.utils.commonLabels.downloadImg + "SVG",
+            tooltip: "Download image from xiNET as SVG; a vector format that can be edited in InkScape or Illustrator",
+            class: "xinetSvgDownload",
+            sectionEnd: true,
+        });
     // ...then moved to a dropdown menu
     // var optid = this.el.id + "Options";
     // toolbar.append("p").attr("id", optid);
@@ -342,6 +298,13 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
     },
 
+    dragActionChanged: function () {
+       // var checkbox = d3.select(".xinetDragToPan");
+       // var checked = checkbox.property("checked");
+       this.model.set("xinetDragToPan", d3.select(".xinetDragToPan").property("checked"));
+   },
+
+
     // setXinetShowLabels: function () {
     //     //alert("!");
     //     var checkbox = d3.select("#xinetLabelsChkBx");
@@ -357,7 +320,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         this.model.set("xinetPpiSteps", steps);
     },
 
-    identifier: "xiNet Controls",
+    identifier: "xiNET Controls",
 });
 
 

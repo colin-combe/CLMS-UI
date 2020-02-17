@@ -496,7 +496,7 @@ CLMSUI.utils = {
             })
             .enter()
             .append("label")
-            .attr("class", "btn noBreak")
+            .attr("class", "noBreak")
             .attr("title", function(d) {
                 return d.tooltip;
             })
