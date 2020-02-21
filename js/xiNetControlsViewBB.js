@@ -27,13 +27,14 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "change .xinetDragToSelect": "dragActionChanged",
             "change .showLabels": "setShowLabels",
             "change .fixedSize": "setFixedSize",
+            "change .thickLinks": "setThickLinksShown",
 
             "change .xinetPpiStep": function() {
                 this.updatePpiSteps();
             },
-            "change .xinetPpiStep2": function() {
-                this.updatePpiSteps();
-            },
+            // "change .xinetPpiStep2": function() {
+            //     this.updatePpiSteps();
+            // },
         });
 
     },
@@ -80,6 +81,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         dragTo: "Pan",
         showLabels: true,
         fixedSize: false,
+        thickLinks: true,
     },
 
     initialize: function(viewOptions) {
@@ -171,6 +173,15 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 label: "Fized Size",
                 id: "fixedSize",
                 tooltip: "Make nodes fixed size (don't vary size by sequence length)",
+                sectionEnd: true,
+            },
+            {
+                initialState: this.options.thickLinks,
+                class: "thickLinks",
+                label: "Background PPI Links",
+                id: "thickLinks",
+                tooltip: "Show thicker background links representing count of unique distance restaints per PPI",
+                header: "Links"
             },
         ];
 
@@ -185,18 +196,29 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 }
             }, this);
 
-        d3.select("body").append("input")
+        d3.select("body")
+            .append("label")
+            .attr("id", "xiNetButtonBarppiStep1")
+            .text("Step 1 ")
+            .append("input")
             .attr("type", "number")
             .attr("step", 1)
-            .attr("type", 10)
+            .attr("max", 10)
             .attr("value", 2)
-            .attr("id", "xiNetButtonBarppiStep")
+            .attr("id", "xiNetButtonBarppiStep1")
             .classed('xinetPpiStep', true);
 
-
-        // <input type='number' step='1' min='1' max='10' value='2' class='xinetPpiStep1' >
-        // <input type='number' step='1' min='1' max='100' value='3' class='xinetPpiStep2' ></label>"
-
+        d3.select("body")
+            .append("label")
+            .attr("id", "xiNetButtonBarppiStep2")
+            .text("Step 2 ")
+            .append("input")
+            .attr("type", "number")
+            .attr("step", 1)
+            .attr("max", 100)
+            .attr("value", 3)
+            .attr("id", "xiNetButtonBarppiStep2")
+            .classed('xinetPpiStep', true);4
 
         CLMSUI.utils.makeBackboneButtons(mainDivSel, self.el.id, toggleButtonData);
         toggleButtonData.splice(0, 0, {
@@ -205,11 +227,13 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             class: "xinetSvgDownload",
             sectionEnd: true,
         });
-
         toggleButtonData.push({
-            // tooltip: "Download image from xiNET as SVG; a vector format that can be edited in InkScape or Illustrator",
             class: "xinetPpiStep",
-            id: "ppiStep",
+            id: "ppiStep1",
+        });
+        toggleButtonData.push({
+            class: "xinetPpiStep",
+            id: "ppiStep2",
         });
         // ...then moved to a dropdown menu
         new CLMSUI.DropDownMenuViewBB({
@@ -238,16 +262,22 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
     },
 
     setFixedSize: function() {
-        var checkbox = d3.select("input.fixedSize");
-        var checked = checkbox.property("checked");
-        console.log("!" + checked);
         this.model.set("xinetFixedSize", d3.select("input.fixedSize").property("checked"));
+    },
+
+    setThickLinksShown: function() {
+        var checkbox = d3.select("input.thickLinks");
+        var checked = checkbox.property("checked");
+        // console.log("!" + checked);
+        d3.select("input#xiNetButtonBarppiStep1").property("disabled", !checked);
+        d3.select("input#xiNetButtonBarppiStep2").property("disabled", !checked);
+        this.model.set("xinetThickLinks", checked);
     },
 
     updatePpiSteps: function() {
         var steps = [];
-        steps[0] = d3.select(".xinetPpiStep1").property("value");
-        steps[1] = d3.select(".xinetPpiStep2").property("value");
+        steps[0] = d3.select("input#xiNetButtonBarppiStep1").property("value");
+        steps[1] = d3.select("input#xiNetButtonBarppiStep2").property("value");
         this.model.set("xinetPpiSteps", steps);
     },
 
