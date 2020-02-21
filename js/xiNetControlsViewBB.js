@@ -28,12 +28,12 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "change .showLabels": "setShowLabels",
             "change .fixedSize": "setFixedSize",
 
-            // "change .xinetPpiStep1": function() {
-            //     this.updatePpiSteps();
-            // },
-            // "change .xinetPpiStep2": function() {
-            //     this.updatePpiSteps();
-            // },
+            "change .xinetPpiStep": function() {
+                this.updatePpiSteps();
+            },
+            "change .xinetPpiStep2": function() {
+                this.updatePpiSteps();
+            },
         });
 
     },
@@ -97,8 +97,6 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
             "<input type='text' name='name' id='name' class='savedLayoutName' value='' placeholder='Enter Save Layout Name'>" +
             "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>";
-
-        // buttonHtml += "&nbsp;<label>PPI width steps:<input type='number' step='1' min='1' max='10' value='2' class='xinetPpiStep1' ><input type='number' step='1' min='1' max='100' value='3' class='xinetPpiStep2' ></label>"
 
         mainDivSel.html(
             buttonHtml
@@ -187,6 +185,18 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 }
             }, this);
 
+        d3.select("body").append("input")
+            .attr("type", "number")
+            .attr("step", 1)
+            .attr("type", 10)
+            .attr("value", 2)
+            .attr("id", "xiNetButtonBarppiStep")
+            .classed('xinetPpiStep', true);
+
+
+        // <input type='number' step='1' min='1' max='10' value='2' class='xinetPpiStep1' >
+        // <input type='number' step='1' min='1' max='100' value='3' class='xinetPpiStep2' ></label>"
+
 
         CLMSUI.utils.makeBackboneButtons(mainDivSel, self.el.id, toggleButtonData);
         toggleButtonData.splice(0, 0, {
@@ -195,10 +205,16 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             class: "xinetSvgDownload",
             sectionEnd: true,
         });
+
+        toggleButtonData.push({
+            // tooltip: "Download image from xiNET as SVG; a vector format that can be edited in InkScape or Illustrator",
+            class: "xinetPpiStep",
+            id: "ppiStep",
+        });
         // ...then moved to a dropdown menu
         new CLMSUI.DropDownMenuViewBB({
             el: "#displayOptionsPlaceholder",
-            model: CLMSUI.compositeModelInst,
+            model: this.model,
             myOptions: {
                 title: "Display ▼",
                 menu: toggleButtonData.map(function(d) {
