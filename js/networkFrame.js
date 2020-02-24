@@ -433,8 +433,8 @@ CLMSUI.init.views = function() {
         },
         // {
         //     id: "listChkBxPlaceholder",
-        //     label: "List / HeatMap",
-        //     eventName: "listShow",
+        //     label: "List",
+        //     eventName: "listViewShow",
         //     tooltip: "Sortable list of cross-links, can convert to heatmap",
         //     sectionEnd: true
         // },
@@ -564,12 +564,12 @@ CLMSUI.init.views = function() {
             tooltip: "Load STRING data from the STRING server. Note: limited to <2,000 proteins, for more generate a CSV file for import as PPI Metadata"
         },
 //        {
-//            name: "CrossLinks (CSV)",
-//            eventName: "csvShow",
-//            tooltip: "Load Cross-Links from a local CSV File"
-//        },
+        //     name: "Crosslinks (CSV)",
+        //     eventName: "csvFileChooserShow",
+        //     tooltip: "Load Cross-Links from a local CSV File"
+        // },
         {
-            name: "Cross-Link or PPI Metadata",
+            name: "Crosslink or PPI Metadata",
             eventName: "linkMetaDataFileChooserShow",
             tooltip: "Load Cross-Link or PPI Meta-Data from a local CSV file"
         },
@@ -781,22 +781,6 @@ CLMSUI.init.viewsEssential = function(options) {
         xiSPEC.vent.trigger('resize:spectrum');
     });
 
-    // xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.resize();
-    // });
-    // xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.resize();
-    // });
-    // xiSPEC.FragmentationKey.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.resize();
-    // });
-    // xiSPEC.ErrorIntensityPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.render();
-    // });
-    // xiSPEC.ErrorMzPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.render();
-    // });
-
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
     xiSPEC.Spectrum.listenTo(CLMSUI.vent, "individualMatchSelected", function(match) {
@@ -890,27 +874,7 @@ CLMSUI.init.viewsEssential = function(options) {
                     window.open("https://rappsilberlab.org/software/xiview/", "_blank");
                  },
                 tooltip: "A number of how-to videos are available via this link to the lab homepage",
-/*                sectionEnd: true,
-            }, {
-                name: "Report Issue on Github",
-                func: function() {
-                    window.open("https://github.com/Rappsilber-Laboratory/xiView_container/issues", "_blank");
-                },
-                tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"
-            }, {
-                name: "XiView Survey",
-                func: function() {
-                    window.open("https://edinburgh.onlinesurveys.ac.uk/xiview-usability", "_blank");
-                },
-                tooltip: "We want your feedback",
-                sectionEnd: true,
-            }, {
-                name: "About Xi View",
-                func: function() {
-                    window.open("https://rappsilberlab.org/software/xiview/", "_blank");
-                },
-                tooltip: "About Xi View (opens external web page)" */
-            }, ],
+            }],
             tooltipModel: compModel.get("tooltipModel"),
         }
     });
