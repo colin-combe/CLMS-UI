@@ -218,7 +218,8 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             .attr("max", 100)
             .attr("value", 3)
             .attr("id", "xiNetButtonBarppiStep2")
-            .classed('xinetPpiStep', true);4
+            .classed('xinetPpiStep', true);
+        4
 
         CLMSUI.utils.makeBackboneButtons(mainDivSel, self.el.id, toggleButtonData);
         toggleButtonData.splice(0, 0, {
@@ -301,8 +302,9 @@ CLMSUI.xiNetLayoutListViewBB = CLMSUI.DropDownMenuViewBB.extend({
     },
 
     setVis: function(show) {
+        var self = this;
+        CLMSUI.xiNetLayoutListViewBB.__super__.setVis.call(self, show);
         if (show) {
-            var self = this;
             var xmlhttp = new XMLHttpRequest();
             var url = "./php/loadLayout.php";
             xmlhttp.open("POST", url, true);
@@ -318,15 +320,16 @@ CLMSUI.xiNetLayoutListViewBB = CLMSUI.DropDownMenuViewBB.extend({
                     self.options.menu = menu;
                     CLMSUI.xiNetLayoutListViewBB.__super__.render.call(self);
                 }
-                CLMSUI.xiNetLayoutListViewBB.__super__.setVis.call(self, show);
+                // CLMSUI.xiNetLayoutListViewBB.__super__.setVis.call(self, show);
             };
             var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
             var params = "sid=" + sid;
             xmlhttp.send(params);
             return this;
-        } else {
-            CLMSUI.xiNetLayoutListViewBB.__super__.setVis.call(this, show);
         }
+        // else {
+        //     CLMSUI.xiNetLayoutListViewBB.__super__.setVis.call(this, show);
+        // }
 
         function menuItem(layouts, selectedKey) {
             return {

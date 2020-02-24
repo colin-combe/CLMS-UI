@@ -15,13 +15,15 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
         var defaultOptions = {
             title: "A DD Menu",
             closeOnClick: true,
-            menu: [{
-                name: "Wazzup",
-                func: emptyFunc
-            }, {
-                name: "Buddy",
-                func: emptyFunc
-            }],
+            menu: [ // emptying this coz you may now breifly see it in load layout menu 
+            //   {
+            //     name: "Wazzup",
+            //     func: emptyFunc
+            // }, {
+            //     name: "Buddy",
+            //     func: emptyFunc
+            // }
+            ],
             groupByAttribute: "group",
             labelByAttribute: "name",
             toggleAttribute: "state",

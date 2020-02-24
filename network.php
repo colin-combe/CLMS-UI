@@ -271,7 +271,7 @@
 				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
 				document.title = CLMS.arrayFromMapKeys(searches).join();
 
-				Split (["#topDiv", "#bottomDiv"],
+				CLMSUI.split = Split(["#topDiv", "#bottomDiv"],
 					{ direction: "vertical", sizes: [80,20], minSize: [200,10],
 						onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
 					}
