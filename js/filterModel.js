@@ -168,6 +168,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 });
                 this.preprocessedInputValues.set("pepSeq", splitPepSeq);
 
+                this.preprocessedInputValues.set("runName", this.get("runName").toLowerCase());
                 this.preprocessedInputValues.set("scanNumber", parseInt(this.get("scanNumber")));
 
                 // Search group pre calculations
