@@ -20,8 +20,10 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.listenTo(this.model, "filteringDone matchValidationStateUpdated selectionMatchesLinksChanged", function() {
             this.render();
             if (this.model.get("selection").length > 0) {
+              d3.select(".gutter").style("display", null);
               CLMSUI.split.setSizes(CLMSUI.oldSplitterProportions);
             } else {
+              d3.select(".gutter").style("display", "none");
               CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes();
               CLMSUI.split.setSizes([100, 0]);
             }
@@ -87,7 +89,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             elutionEnd: "Elut. End",
             expMissedCleavages: "Experimental Max. Missed Cleavages",
             searchMissedCleavages: "Search Max. Missed Cleavages",
-            modificationCount: "Modification Count",
+            modificationCount: "Max. Mod. Count",
         };
 
         this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorIntensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd", "modificationCount"]);

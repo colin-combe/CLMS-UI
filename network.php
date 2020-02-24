@@ -273,7 +273,7 @@
 
 				CLMSUI.split = Split(["#topDiv", "#bottomDiv"],
 					{ direction: "vertical", sizes: [80,20], minSize: [200,10],
-						onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
+						onDragEnd: function () { CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes(); }
 					}
 				);
                 d3.select(".gutter").attr("title", "Drag to change space available to selection table");
