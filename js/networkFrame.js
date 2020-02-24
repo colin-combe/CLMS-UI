@@ -36,7 +36,7 @@ CLMSUI.init.postDataLoaded = function() {
         protAlignModel.set("scoreMatrix", CLMSUI.blosumCollInst.get("Blosum100"));
     });
 
-    // init annotation types
+    //init annotation types
     var annotationTypes = [
         new CLMSUI.BackboneModelTypes.AnnotationType({
             category: "AA",
@@ -47,15 +47,15 @@ CLMSUI.init.postDataLoaded = function() {
         }),
         new CLMSUI.BackboneModelTypes.AnnotationType({
             category: "AA",
-            type: "Cross-linkable-1",
-            tooltip: "Mark Cross-Linkable residues (first or only reactive gruop)",
+            type: "Crosslinkable-1",
+            tooltip: "Mark CrossLinkable residues (first or only reactive gruop)",
             source: "Search",
             colour: "#a6cee3",
         }),
         new CLMSUI.BackboneModelTypes.AnnotationType({
             category: "AA",
             type: "Cross-linkable-2",
-            tooltip: "Mark Cross-Linkable residues (second reactive group if heterobifunctional cross-linker)",
+            tooltip: "Mark CrossLinkable residues (second reactive group if heterobifunctional cross-linker)",
             source: "Search",
             colour: "#a6cee3",
         }),
@@ -118,7 +118,7 @@ CLMSUI.init.blosumLoading = function (options) {
     CLMSUI.blosumCollInst = new CLMSUI.BackboneModelTypes.BlosumCollection (options); // options if we want to override defaults
 
     // when the blosum Collection is fetched (an async process), we select one of its models as being selected
-    CLMSUI.blosumCollInst.listenToOnce (CLMSUI.blosumCollInst, "sync", function() {
+    CLMSUI.blosumCollInst.listenToOnce(CLMSUI.blosumCollInst, "sync", function() {
         console.log("ASYNC. blosum models loaded");
         allDataLoaded();
     });
@@ -144,7 +144,7 @@ CLMSUI.init.models = function(options) {
     // following listeners require compositeModelInst etc to be set up in modelsEssential() so placed afterwards
 
     // this listener adds new sequences obtained from pdb files to existing alignment sequence models
-    alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst, "3dsync", function(sequences, removeThese) {
+    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst, "3dsync", function(sequences, removeThese) {
         if (!_.isEmpty(sequences)) { // if sequences passed and it has a non-zero length...
             console.log("3dsync", arguments);
             // remove before add so if someone decides to reload the same file/code (why, but possible) we don't end up removing what we've just added
@@ -171,7 +171,7 @@ CLMSUI.init.models = function(options) {
 
     // this listener makes new alignment sequence models based on the current participant set (this usually gets called after a csv file is loaded)
     // it uses the same code as that used when a xi search is the source of data, see earlier in this code (roughly line 96'ish)
-    alignmentCollectionInst.listenTo (CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
+    alignmentCollectionInst.listenTo(CLMSUI.compositeModelInst.get("clmsModel"), "change:matches", function() {
         this.addNewProteins(CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants")));
         // this triggers an event to say loads has changed in the alignment collection
         // more efficient to listen to that then redraw/recalc for every seq addition
@@ -245,7 +245,7 @@ CLMSUI.init.modelsEssential = function(options) {
         prot.size = prot.size || 1;
     });
 
-    var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
+    var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString(window.location.search.slice(1));
 
     // Anonymiser for screen shots / videos. MJG 17/05/17, add &anon to url for this
     if (urlChunkMap.anon) {
@@ -430,13 +430,13 @@ CLMSUI.init.views = function() {
             eventName: "scatterplotViewShow",
             tooltip: "Configurable view for comparing two Cross-Link/Match properties",
         },
-        {
-            id: "listChkBxPlaceholder",
-            label: "List",
-            eventName: "listViewShow",
-            tooltip: "Sortable list of cross-links, can convert to heatmap",
-            sectionEnd: true
-        },
+        // {
+        //     id: "listChkBxPlaceholder",
+        //     label: "List",
+        //     eventName: "listViewShow",
+        //     tooltip: "Sortable list of cross-links, can convert to heatmap",
+        //     sectionEnd: true
+        // },
         {
             id: "alignChkBxPlaceholder",
             label: "Alignment",
@@ -517,10 +517,10 @@ CLMSUI.init.views = function() {
                         tooltip: "Hide selected proteins"
                     },
                     {
-                            name: "Hide Unselected",
-                            func: compModel.hideUnselectedProteins,
-                            context: compModel,
-                            tooltip: "Hide unselected proteins"
+                        name: "Hide Unselected",
+                        func: compModel.hideUnselectedProteins,
+                        context: compModel,
+                        tooltip: "Hide unselected proteins"
                     },
                     {
                         name: "+Neighbours",
@@ -562,13 +562,13 @@ CLMSUI.init.views = function() {
             eventName: "stringDataChooserShow",
             tooltip: "Load STRING data from the STRING server. Note: limited to <2,000 proteins, for more generate a CSV file for import as PPI Metadata"
         },
+        // {
+        //     name: "Crosslinks (CSV)",
+        //     eventName: "csvFileChooserShow",
+        //     tooltip: "Load Cross-Links from a local CSV File"
+        // },
         {
-            name: "Cross-Links (CSV)",
-            eventName: "csvFileChooserShow",
-            tooltip: "Load Cross-Links from a local CSV File"
-        },
-        {
-            name: "Cross-Link or PPI Metadata",
+            name: "Crosslink or PPI Metadata",
             eventName: "linkMetaDataFileChooserShow",
             tooltip: "Load Cross-Link or PPI Meta-Data from a local CSV file"
         },
@@ -770,6 +770,7 @@ CLMSUI.init.viewsEssential = function(options) {
         knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
         showCustomConfig: true,
         showQualityControl: "min",
+	      colorScheme: colorbrewer.PRGn[8],
     }
 
     xiSPEC.init(xiSPEC_options);
@@ -778,22 +779,6 @@ CLMSUI.init.viewsEssential = function(options) {
     xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
         xiSPEC.vent.trigger('resize:spectrum');
     });
-
-    // xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.resize();
-    // });
-    // xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.resize();
-    // });
-    // xiSPEC.FragmentationKey.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.resize();
-    // });
-    // xiSPEC.ErrorIntensityPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.render();
-    // });
-    // xiSPEC.ErrorMzPlot.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function() {
-    //     this.render();
-    // });
 
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
@@ -844,7 +829,7 @@ CLMSUI.init.viewsEssential = function(options) {
                         name: "Filtered Matches ",  // extra space to differentiate from first entry in menu
                         func: downloadSSL,
                         tooltip: "Produces an SSL file for quantitation in SkyLine",
-                        categoryTitle: "As an SSL File",
+                        categoryTitle: "As an SSL File (needs fixed)",
                         sectionBegin: true,
                         sectionEnd: true
                     },
@@ -884,30 +869,11 @@ CLMSUI.init.viewsEssential = function(options) {
             }, {
                 name: "Online Videos",
                 func: function() {
-                    window.open("https://vimeo.com/user64900020", "_blank");
-                },
-                tooltip: "A number of how-to videos are available on Vimeo, accessible via this link to the lab homepage",
-                sectionEnd: true,
-            }, {
-                name: "Report Issue on Github",
-                func: function() {
-                    window.open("https://github.com/Rappsilber-Laboratory/xi3-issue-tracker/issues", "_blank");
-                },
-                tooltip: "Opens a new browser tab for the GitHub issue tracker (You must be logged in to GitHub to view and add issues.)"
-            }, {
-                name: "Report Issue via Form",
-                func: function() {
-                    window.open("githubForm.html", "_blank");
-                },
-                tooltip: "Opens a form to report an issue which will be forwarded to GitHub. Plain text only.",
-                sectionEnd: true,
-            }, {
-                name: "About Xi View",
-                func: function() {
+//                    window.open("https://vimeo.com/user64900020", "_blank");
                     window.open("https://rappsilberlab.org/software/xiview/", "_blank");
-                },
-                tooltip: "About Xi View (opens external web page)"
-            }, ],
+                 },
+                tooltip: "A number of how-to videos are available via this link to the lab homepage",
+            }],
             tooltipModel: compModel.get("tooltipModel"),
         }
     });

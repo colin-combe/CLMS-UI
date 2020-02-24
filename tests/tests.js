@@ -1361,7 +1361,21 @@ function testSetupNew (cbfunc) {
             });
 
             var stage = new NGL.Stage ("ngl", {tooltip: false});
-            CLMSUI.NGLUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, compositeModel: CLMSUI.compositeModelInst});
+
+            //CLMSUI.NGLUtils.repopulateNGL ({pdbCode: "1AO6", stage: stage, compositeModel: CLMSUI.compositeModelInst});
+
+            var pdbCode = "1AO6";
+
+            var pdbSettings = pdbCode.match(CLMSUI.utils.commonRegexes.multiPdbSplitter).map (function (code) {
+                return {id: code, pdbCode: code, uri:"rcsb://"+code, local: false, params: {calphaOnly: this.cAlphaOnly}};
+            }, this);
+
+            CLMSUI.NGLUtils.repopulateNGL({
+                pdbSettings: pdbSettings,
+                stage: stage,
+                compositeModel: CLMSUI.compositeModelInst
+            });
+
             console.log ("here");
         });
 

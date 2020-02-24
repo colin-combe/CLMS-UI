@@ -79,9 +79,9 @@
         <link rel="stylesheet" href="./css/urlSearchBoxViewBB.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/jquery.jsonview.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="../vendor/css/d3table.css<?php echo $cacheBuster ?>">
-    		<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
-    		<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
-    		<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
+      	<link rel="stylesheet" href="../vendor/css/multiple-select.css<?php echo $cacheBuster ?>">
+      	<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
+      	<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
         <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script> <!-- IE11 Promise Polyfill -->
 
@@ -97,11 +97,11 @@
         <script type="text/javascript" src="../vendor/js/jquery-3.4.1.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-		    <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
+	      <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
-    		<script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
-    		<script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
-    		<script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
+	      <script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
+	      <script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
+	      <script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3-octree.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery-ui.js<?php echo $cacheBuster ?>"></script>
 
@@ -208,7 +208,6 @@
                     <p id="annotationsDropdownPlaceholder"></p>
                     <p id="expDropdownPlaceholder"></p>
                     <p id="helpDropdownPlaceholder"></p>
-                <p id="surveyPlaceholder"><a href="https://edinburgh.onlinesurveys.ac.uk/xiview-usability" target="_blank" class="btn btn-1 btn-1a btn-tight" title="Click to do the xiView Survey!!!">* Survey *</a></p>
                     <div id="xiNetButtonBar"></div>
             </div>
 
@@ -272,9 +271,9 @@
 				var searches = CLMSUI.compositeModelInst.get("clmsModel").get("searches");
 				document.title = CLMS.arrayFromMapKeys(searches).join();
 
-				Split (["#topDiv", "#bottomDiv"],
+				CLMSUI.split = Split(["#topDiv", "#bottomDiv"],
 					{ direction: "vertical", sizes: [80,20], minSize: [200,10],
-						onDragEnd: function () { CLMSUI.vent.trigger ("splitPanelDragEnd"); }
+						onDragEnd: function () { CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes(); }
 					}
 				);
                 d3.select(".gutter").attr("title", "Drag to change space available to selection table");
@@ -304,7 +303,7 @@
             var newQueryString = d3.entries(phpProps).map(function (entry) { return entry.key+"="+entry.value; }).join("&");
             console.log ("ucm", urlChunkMap, newQueryString);
             var url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;
-            
+
             d3.json (url, function (error, json) {
                 spinner.stop(); // stop spinner on request returning
 
@@ -315,7 +314,7 @@
                     console.error ("Error", error);
                 }
             });
-            
+
         } else {
             spinner.stop(); // stop spinner
             success ({times:{}});   // bug fix for empty searches

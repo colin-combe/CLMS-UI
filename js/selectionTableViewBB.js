@@ -18,9 +18,15 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
         // redraw table on filter change if any of 1) filtering done, 2) match validation state updated, or 3) crosslinks selected (matches may have changed)
         this.listenTo(this.model, "filteringDone matchValidationStateUpdated selectionMatchesLinksChanged", function() {
-            //~ if (this.model.get("selection").length > 0) {
             this.render();
-            //~ }
+            if (this.model.get("selection").length > 0) {
+              d3.select(".gutter").style("display", null);
+              CLMSUI.split.setSizes(CLMSUI.oldSplitterProportions);
+            } else {
+              d3.select(".gutter").style("display", "none");
+              CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes();
+              CLMSUI.split.setSizes([100, 0]);
+            }
         });
         this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", this.updateSwatchesOnly);
         // redraw datable on protein metadata change (possible protein name change)
@@ -83,7 +89,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             elutionEnd: "Elut. End",
             expMissedCleavages: "Experimental Max. Missed Cleavages",
             searchMissedCleavages: "Search Max. Missed Cleavages",
-            modificationCount: "Modification Count",
+            modificationCount: "Max. Mod. Count",
         };
 
         this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorIntensity", "expMissedCleavages", "searchMissedCleavages", "elutionStart", "elutionEnd", "modificationCount"]);
@@ -101,10 +107,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             ambiguity: function() {
                 return false;
             },
-            //~ "protein1": function () { return false; },
-            //~ "protein2": function () { return false; },
-            //~ "pepPos1": function () { return false; },
-            //~ "pepPos2": function () { return false; },
             autovalidated: function() {
                 return CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");
             },
@@ -374,7 +376,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
 
         var count = 0;
         // add count metadata to matchCountIndices
-        this.matchCountIndices.forEach (function (selLinkMatchData) {
+        this.matchCountIndices.forEach(function(selLinkMatchData) {
             selLinkMatchData.runningTotalStart = count;
             count += selLinkMatchData.matches.length;
             selLinkMatchData.runningTotalEnd = count;
