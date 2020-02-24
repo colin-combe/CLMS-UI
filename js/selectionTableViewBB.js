@@ -107,10 +107,6 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             ambiguity: function() {
                 return false;
             },
-            //~ "protein1": function () { return false; },
-            //~ "protein2": function () { return false; },
-            //~ "pepPos1": function () { return false; },
-            //~ "pepPos2": function () { return false; },
             autovalidated: function() {
                 return CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");
             },
