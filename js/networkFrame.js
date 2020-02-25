@@ -514,19 +514,23 @@ CLMSUI.init.views = function() {
                         name: "Hide Selected",
                         func: compModel.hideSelectedProteins,
                         context: compModel,
-                        tooltip: "Hide selected proteins"
+                        tooltip: "Hide selected proteins",
+                        categoryTitle: "Hide",
                     },
                     {
                         name: "Hide Unselected",
                         func: compModel.hideUnselectedProteins,
                         context: compModel,
-                        tooltip: "Hide unselected proteins"
+                        tooltip: "Hide unselected proteins",
+                        sectionEnd: true
                     },
                     {
                         name: "+Neighbours",
                         func: compModel.stepOutSelectedProteins,
                         context: compModel,
-                        tooltip: "Select proteins which are crosslinked to already selected proteins"
+                        tooltip: "Select proteins which are crosslinked to already selected proteins",
+                        categoryTitle: "Change Selection",
+                        sectionBegin: true
                     },
                     {
                         id: "proteinSelectionFilter",
@@ -544,6 +548,9 @@ CLMSUI.init.views = function() {
                     // }
                 ],
                 //tooltipModel: compModel.get("tooltipModel")
+                sectionHeader: function(d) {
+                    return (d.categoryTitle ? d.categoryTitle.replace(/_/g, " ") : "");
+                },
             }
         })
         .wholeMenuEnabled(matchesFound)
@@ -819,6 +826,11 @@ CLMSUI.init.viewsEssential = function(options) {
                         func: downloadResidueCount,
                         tooltip: "Produces a CSV File of Count of Filtered Residues ",
                     },
+                    // {
+                    //     name: "Filtered Modification Count",
+                    //     func: downloadModificationCount,
+                    //     tooltip: "Produces a CSV File of Count of Modifications (after filtering)",
+                    // },
                     {
                         name: "Protein Accession list",
                         func: downloadProteinAccessions,

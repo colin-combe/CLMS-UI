@@ -19,16 +19,18 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         // redraw table on filter change if any of 1) filtering done, 2) match validation state updated, or 3) crosslinks selected (matches may have changed)
         this.listenTo(this.model, "filteringDone matchValidationStateUpdated selectionMatchesLinksChanged", function() {
             this.render();
-            if (this.model.get("selection").length > 0) {
-              if (!CLMSUI.oldSplitterProportions || CLMSUI.oldSplitterProportions[1] == 0) {
-                  CLMSUI.oldSplitterProportions = [80,20];
+            if (window.location.pathname.indexOf("validate.php") == -1) { //nice
+              if (this.model.get("selection").length > 0) {
+                if (!CLMSUI.oldSplitterProportions || CLMSUI.oldSplitterProportions[1] == 0) {
+                    CLMSUI.oldSplitterProportions = [80,20];
+                }
+                d3.select(".gutter").style("display", null);
+                CLMSUI.split.setSizes(CLMSUI.oldSplitterProportions);
+              } else {
+                d3.select(".gutter").style("display", "none");
+                CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes();
+                CLMSUI.split.setSizes([100, 0]);
               }
-              d3.select(".gutter").style("display", null);
-              CLMSUI.split.setSizes(CLMSUI.oldSplitterProportions);
-            } else {
-              d3.select(".gutter").style("display", "none");
-              CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes();
-              CLMSUI.split.setSizes([100, 0]);
             }
         });
         this.listenTo(this.model, "change:linkColourAssignment currentColourModelChanged", this.updateSwatchesOnly);
