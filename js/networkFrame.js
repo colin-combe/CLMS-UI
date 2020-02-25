@@ -827,11 +827,11 @@ CLMSUI.init.viewsEssential = function(options) {
                         func: downloadResidueCount,
                         tooltip: "Produces a CSV File of Count of Filtered Residues ",
                     },
-                    // {
-                    //     name: "Filtered Modification Count",
-                    //     func: downloadModificationCount,
-                    //     tooltip: "Produces a CSV File of Count of Modifications (after filtering)",
-                    // },
+                    {
+                        name: "Filtered Modification Count",
+                        func: downloadModificationCount,
+                        tooltip: "Produces a CSV File of Count of Modifications (after filtering)",
+                    },
                     {
                         name: "Protein Accession list",
                         func: downloadProteinAccessions,

@@ -685,53 +685,64 @@ function getResidueCount() {
 }
 
 function getModificationCount() {
-    var csv = '"Modification(s)","Occurences"\r\n';
+    var csv = '"Modification(s)","Match Count"\r\n';
     var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
 
-    var modifcationCountMap = d3.map();
+    var modCountMap = new Map();
+    var modByResCountMap = new Map();
+    var regex = /[A-Z]([a-z0-9]+)/g;
 
     for (var match of matches) {
-        var pep1 = match.matchedPeptides[0];
-        var regex = /[A-Z](![A-Z])[A-Z]?/g;
-        var result = regex.exec(pep1);
-        for (var m of result) {
-            console.log(m);
+        countMods(match.matchedPeptides[0].seq_mods);
+        if (match.matchedPeptides[1]) {
+            countMods(match.matchedPeptides[1].seq_mods)
+        }
         }
 
+    function countMods(pep) {
+        var result = pep.matchAll(regex);
+        if (result) {
+            var modSet = new Set();
+            var modByResSet = new Set();
+            for (var m of result) {
+                //console.log(pep, "::", m);
+                modSet.add(m[1]);
+                modByResSet.add(m[0]);
+            }
+            for (var mod of modSet) {
+                var modCount = modCountMap.get(mod);
+                if (typeof modCount == "undefined") {
+                    modCountMap.set(mod, 1);
+                } else {
+                    modCountMap.set(mod, ++modCount);
+                }
+            }
+            for (var modByRes of modByResSet) {
+                var modByResCount = modByResCountMap.get(modByRes);
+                if (!modByResCount) {
+                    modByResCountMap.set(modByRes, 1);
+                } else {
+                    modByResCountMap.set(modByRes, ++modByResCount);
+                }
+            }
+        }
     }
 
-    //~ var matchCount = matches.length;
-    // var residuePairCountMap = d3.map();
-    //
-    // var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks("all"); // already pre-filtered
-    // crossLinks.forEach(function(residueLink) {
-    //     var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1] || "";
-    //     var linkedRes2 = residueLink.isLinearLink() ? "" : residueLink.toProtein.sequence[residueLink.toResidue - 1];
-    //     incrementCount(residueCountMap, linkedRes1);
-    //     incrementCount(residueCountMap, linkedRes2);
-    //
-    //     var pairId = (linkedRes1 > linkedRes2) ? linkedRes2 + "-" + linkedRes1 : linkedRes1 + "-" + linkedRes2;
-    //     incrementCount(residuePairCountMap, pairId);
-    // });
-    //
-    // residuePairCountMap.forEach(function(k, v) {
-    //     csv += '"' + k + '","' +
-    //         v + '"\r\n';
-    // });
-    // residueCountMap.forEach(function(k, v) {
-    //     csv += '"' + k + '","' +
-    //         v + '"\r\n';
-    // });
-    //
-    // function incrementCount(map, res) {
-    //     var c = parseInt(map.get(res));
-    //     if (isNaN(c)) {
-    //         map.set(res, 1);
-    //     } else {
-    //         c++;
-    //         map.set(res, c);
-    //     }
-    // }
+    var mapSort1 = new Map([...modCountMap.entries()].sort((a, b) => b[1] - a[1]));
+    var mapSort2 = new Map([...modByResCountMap.entries()].sort((a, b) => b[1] - a[1]));
+
+    for (var e of mapSort1.entries()) {
+        csv += '"' + e[0] + '","' +
+            e[1] + '"\r\n';
+    };
+
+    csv += '"",""\r\n"",""\r\n"",""\r\n';
+
+    for (var e of mapSort2.entries()) {
+        csv += '"' + e[0] + '","' +
+            e[1] + '"\r\n';
+    };
+
     return csv;
 }
 
