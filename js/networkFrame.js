@@ -391,13 +391,13 @@ CLMSUI.init.views = function() {
             id: "circularChkBxPlaceholder",
             label: "Circular",
             eventName: "circularViewShow",
-            tooltip: "Proteins are arranged circumferentially, with Cross-Links drawn in-between",
+            tooltip: "Proteins are arranged in a circle, with crosslinks drawn in-between",
         },
         {
             id: "nglChkBxPlaceholder",
             label: "3D (NGL)",
             eventName: "nglViewShow",
-            tooltip: "Spatial view of protein complexes and Cross-Links. Requires a relevant PDB File to be loaded [Load > PDB Data]"
+            tooltip: "Spatial view of protein complexes and crosslinks. Requires a relevant PDB File to be loaded [Load > PDB Data]"
         },
         {
             id: "matrixChkBxPlaceholder",
@@ -409,7 +409,7 @@ CLMSUI.init.views = function() {
             id: "proteinInfoChkBxPlaceholder",
             label: "Protein Info",
             eventName: "proteinInfoViewShow",
-            tooltip: "Shows metadata and Cross-Link annotated sequences for currently selected proteins"
+            tooltip: "Shows metadata and crosslink annotated sequences for currently selected proteins"
         },
         {
             id: "spectrumChkBxPlaceholder",
@@ -422,13 +422,13 @@ CLMSUI.init.views = function() {
             id: "distoChkBxPlaceholder",
             label: "Histogram",
             eventName: "distoViewShow",
-            tooltip: "Configurable view for showing distribution of one Cross-Link/Match property"
+            tooltip: "Configurable view for showing distribution of one crosslink/match property"
         },
         {
             id: "scatterplotChkBxPlaceholder",
             label: "Scatterplot",
             eventName: "scatterplotViewShow",
-            tooltip: "Configurable view for comparing two Cross-Link/Match properties",
+            tooltip: "Configurable view for comparing two crosslink/match properties",
         },
         // {
         //     id: "listChkBxPlaceholder",
@@ -487,7 +487,7 @@ CLMSUI.init.views = function() {
             myOptions: {
                 title: "Views",
                 menu: checkBoxData,
-                tooltipModel: compModel.get("tooltipModel")
+                //tooltipModel: compModel.get("tooltipModel")
             }
         })
         // hide/disable view choices that depend on certain data being present until that data arrives
@@ -526,7 +526,7 @@ CLMSUI.init.views = function() {
                         name: "+Neighbours",
                         func: compModel.stepOutSelectedProteins,
                         context: compModel,
-                        tooltip: "Select proteins which are cross-linked to already selected proteins"
+                        tooltip: "Select proteins which are crosslinked to already selected proteins"
                     },
                     {
                         id: "proteinSelectionFilter",
@@ -543,7 +543,7 @@ CLMSUI.init.views = function() {
                     //     tooltip: "Put selected proteins in a group"
                     // }
                 ],
-                tooltipModel: compModel.get("tooltipModel")
+                //tooltipModel: compModel.get("tooltipModel")
             }
         })
         .wholeMenuEnabled(matchesFound)
@@ -570,7 +570,7 @@ CLMSUI.init.views = function() {
         {
             name: "Crosslink or PPI Metadata",
             eventName: "linkMetaDataFileChooserShow",
-            tooltip: "Load Cross-Link or PPI Meta-Data from a local CSV file"
+            tooltip: "Load crosslink or PPI Meta-Data from a local CSV file"
         },
         {
             name: "Protein Metadata",
@@ -594,7 +594,7 @@ CLMSUI.init.views = function() {
             myOptions: {
                 title: "Load",
                 menu: loadButtonData,
-                tooltipModel: compModel.get("tooltipModel"),
+                //tooltipModel: compModel.get("tooltipModel"),
             }
         }) // hide/disable view choices that depend on certain data being present until that data arrives
         .enableItemsByIndex([0, 2, 3], matchesFound)
@@ -843,7 +843,7 @@ CLMSUI.init.viewsEssential = function(options) {
                         sectionBegin: true,
                     },
                 ],
-                tooltipModel: compModel.get("tooltipModel"),
+                //tooltipModel: compModel.get("tooltipModel"),
                 sectionHeader: function(d) {
                     return (d.categoryTitle ? d.categoryTitle.replace(/_/g, " ") : "");
                 },
@@ -865,7 +865,7 @@ CLMSUI.init.viewsEssential = function(options) {
                 func: function() {
                     window.open("../xidocs/html/xiview.html", "_blank");
                 },
-                tooltip: "Documentation for Xi View"
+                tooltip: "Documentation for xiVIEW"
             }, {
                 name: "Online Videos",
                 func: function() {
@@ -874,7 +874,7 @@ CLMSUI.init.viewsEssential = function(options) {
                  },
                 tooltip: "A number of how-to videos are available via this link to the lab homepage",
             }],
-            tooltipModel: compModel.get("tooltipModel"),
+            //tooltipModel: compModel.get("tooltipModel"),
         }
     });
     d3.select("#helpDropdownPlaceholder > div").append("img")
@@ -930,7 +930,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
                 groupByAttribute: "category",
                 labelByAttribute: "type",
                 toggleAttribute: "shown",
-                tooltipModel: compModel.get("tooltipModel"),
+                //tooltipModel: compModel.get("tooltipModel"),
                 sectionHeader: function(d) {
                     return (d.category ? d.category.replace(/_/g, " ") : "Uncategorised") +
                         (d.source ? " (" + d.source + ")" : "");
@@ -1000,12 +1000,12 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
     });
 
     // This makes a list viewer
-    new CLMSUI.ListViewBB({
-        el: "#listPanel",
-        model: compModel,
-        colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
-        displayEventName: "listViewShow",
-    });
+    // new CLMSUI.ListViewBB({
+    //     el: "#listPanel",
+    //     model: compModel,
+    //     colourScaleModel: CLMSUI.linkColour.distanceColoursBB,
+    //     displayEventName: "listViewShow",
+    // });
 
     // Make new ngl view with pdb dataset
     // In a horrific misuse of the MVC pattern, this view actually generates the 3dsync
@@ -1037,11 +1037,11 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         displayEventName: "scatterplotViewShow",
     });
 
-    new CLMSUI.CSVFileChooserBB({
-        el: "#csvPanel",
-        model: compModel,
-        displayEventName: "csvFileChooserShow",
-    });
+    // new CLMSUI.CSVFileChooserBB({
+    //     el: "#csvPanel",
+    //     model: compModel,
+    //     displayEventName: "csvFileChooserShow",
+    // });
 
     new CLMSUI.LinkMetaDataFileChooserBB({
         el: "#linkMetaLoadPanel",
