@@ -285,7 +285,7 @@
 
 				CLMSUI.init.views();
 				allDataLoaded ();
-        CLMSUI.oldSplitterProportions = [80,20];
+
   	} catch (err) {
                 //console.log ("ERR", err);
 				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
