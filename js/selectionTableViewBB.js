@@ -107,12 +107,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             ambiguity: function() {
                 return false;
             },
-            //~ "protein1": function () { return false; },
-            //~ "protein2": function () { return false; },
-            //~ "pepPos1": function () { return false; },
-            //~ "pepPos2": function () { return false; },
+
             "autovalidated": function() {
-                return false; //CLMSUI.compositeModelInst.get("clmsModel").get("autoValidatedPresent");
+                return false;
             },
             "validated": function() {
                 return false;
@@ -408,7 +405,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         // draw if selected crosslink count > 0 or is 'freshly' zero
         if (selectedXLinkCount > 0 || this.lastCount > 0) {
             this.lastCount = selectedXLinkCount;
-            console.log("rendering table view of selected crosslinks", this, this.model);
+            //console.log("rendering table view of selected crosslinks", this, this.model);
 
             var headerRow = d3.select(this.el).select("THEAD TR");
             var headerJoin = headerRow.selectAll("TH").data(this.filteredProps, function(d) {

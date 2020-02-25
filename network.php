@@ -153,7 +153,7 @@
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/STRINGFileChooser.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/CSVFileChooserViewBB.js<?php echo $cacheBuster ?>"></script>
+        <!-- <script type="text/javascript" src="./js/CSVFileChooserViewBB.js<?php echo $cacheBuster ?>"></script> -->
         <script type="text/javascript" src="./js/metaDataFileChoosers.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/bioseq32.js<?php echo $cacheBuster ?>"></script>
@@ -173,7 +173,7 @@
         <script type="text/javascript" src="./js/searchSummaryViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script>
+        <!-- <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script> -->
         <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script>
@@ -247,7 +247,6 @@
     <script>
     //<![CDATA[
 
-        //~ var windowLoaded = function () {
         var CLMSUI = CLMSUI || {};
         <?php
             if (isset($_SESSION['session_name'])) {
@@ -283,7 +282,7 @@
 				document.title = CLMS.arrayFromMapKeys(searches).join();
 
 				CLMSUI.split = Split(["#topDiv", "#bottomDiv"],
-					{ direction: "vertical", sizes: [80,20], minSize: [200,10],
+					{ direction: "vertical", sizes: [80,20], minSize: [200,0],
 						onDragEnd: function () { CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes(); }
 					}
 				);
@@ -297,6 +296,7 @@
 
 				CLMSUI.init.views();
 				allDataLoaded ();
+        CLMSUI.oldSplitterProportions = [80,20];
 			} catch (err) {
                 //console.log ("ERR", err);
 				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
