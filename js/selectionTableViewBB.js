@@ -20,6 +20,9 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         this.listenTo(this.model, "filteringDone matchValidationStateUpdated selectionMatchesLinksChanged", function() {
             this.render();
             if (this.model.get("selection").length > 0) {
+              if (!CLMSUI.oldSplitterProportions || CLMSUI.oldSplitterProportions[1] == 0) {
+                  CLMSUI.oldSplitterProportions = [80,20];
+              }
               d3.select(".gutter").style("display", null);
               CLMSUI.split.setSizes(CLMSUI.oldSplitterProportions);
             } else {
