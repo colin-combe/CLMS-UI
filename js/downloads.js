@@ -683,7 +683,6 @@ function getResidueCount() {
     }
     return csv;
 }
-
 function getModificationCount() {
     var csv = '"Modification(s)","Match Count"\r\n';
     var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
@@ -691,13 +690,20 @@ function getModificationCount() {
     var modCountMap = new Map();
     var modByResCountMap = new Map();
     var regex = /[A-Z]([a-z0-9]+)/g;
+    var filterModel = CLMSUI.compositeModelInst.get("filterModel");
 
     for (var match of matches) {
+        var pass = filterModel.subsetFilter(match) &&
+            filterModel.validationStatusFilter(match) &&
+            filterModel.scoreFilter(match) &&
+            filterModel.decoyFilter(match);
+        if (pass) {
         countMods(match.matchedPeptides[0].seq_mods);
         if (match.matchedPeptides[1]) {
             countMods(match.matchedPeptides[1].seq_mods)
         }
         }
+    }
 
     function countMods(pep) {
         var result = pep.matchAll(regex);
