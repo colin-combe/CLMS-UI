@@ -57,6 +57,10 @@ function downloadResidueCount() {
     download(getResidueCount(), 'text/csv', downloadFilename("residueCount"));
 }
 
+function downloadModificationCount() {
+    download(getModificationCount(), 'text/csv', downloadFilename("modificationCount"));
+}
+
 function downloadProteinAccessions() {
     download(getProteinAccessions(), 'text/csv', downloadFilename("proteinAccessions"));
 }
@@ -677,6 +681,57 @@ function getResidueCount() {
             map.set(res, c);
         }
     }
+    return csv;
+}
+
+function getModificationCount() {
+    var csv = '"Modification(s)","Occurences"\r\n';
+    var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
+
+    var modifcationCountMap = d3.map();
+
+    for (var match of matches) {
+        var pep1 = match.matchedPeptides[0];
+        var regex = /[A-Z](![A-Z])[A-Z]?/g;
+        var result = regex.exec(pep1);
+        for (var m of result) {
+            console.log(m);
+        }
+
+    }
+
+    //~ var matchCount = matches.length;
+    // var residuePairCountMap = d3.map();
+    //
+    // var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks("all"); // already pre-filtered
+    // crossLinks.forEach(function(residueLink) {
+    //     var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1] || "";
+    //     var linkedRes2 = residueLink.isLinearLink() ? "" : residueLink.toProtein.sequence[residueLink.toResidue - 1];
+    //     incrementCount(residueCountMap, linkedRes1);
+    //     incrementCount(residueCountMap, linkedRes2);
+    //
+    //     var pairId = (linkedRes1 > linkedRes2) ? linkedRes2 + "-" + linkedRes1 : linkedRes1 + "-" + linkedRes2;
+    //     incrementCount(residuePairCountMap, pairId);
+    // });
+    //
+    // residuePairCountMap.forEach(function(k, v) {
+    //     csv += '"' + k + '","' +
+    //         v + '"\r\n';
+    // });
+    // residueCountMap.forEach(function(k, v) {
+    //     csv += '"' + k + '","' +
+    //         v + '"\r\n';
+    // });
+    //
+    // function incrementCount(map, res) {
+    //     var c = parseInt(map.get(res));
+    //     if (isNaN(c)) {
+    //         map.set(res, 1);
+    //     } else {
+    //         c++;
+    //         map.set(res, c);
+    //     }
+    // }
     return csv;
 }
 
