@@ -233,6 +233,7 @@ function getMatchesCSV() {
         var lp2 = CLMSUI.utils.fullPosConcat(match, 1);
 
         var decoy1 = participants.get(peptides1.prt[0]).is_decoy;
+        // TODO: looks to rely on "" == false, prob doesn't give right result for linears
         var decoy2 = peptides2 ? participants.get(peptides2.prt[0]).is_decoy : "";
 
         // Work out distances for this match - ambiguous matches will have >1 crosslink
@@ -354,6 +355,7 @@ function getSSL(sslOption) {
         var peptide2 = match.matchedPeptides[1];
 
         var decoy1 = clmsModel.get("participants").get(peptide1.prt[0]).is_decoy;
+        // TODO: looks to rely on "" == false, prob doesn't give right result for linears
         var decoy2 = peptide2 ? clmsModel.get("participants").get(peptide2.prt[0]).is_decoy : "";
 
         var decoyType;
@@ -684,28 +686,46 @@ function getResidueCount() {
     return csv;
 }
 function getModificationCount() {
-    var csv = '"Modification(s)","Match Count"\r\n';
+    var csv = '"Modification(s)","TT","TD","DD"\r\n';
     var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
 
     var modCountMap = new Map();
     var modByResCountMap = new Map();
     var regex = /[A-Z]([a-z0-9]+)/g;
     var filterModel = CLMSUI.compositeModelInst.get("filterModel");
+    var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
 
     for (var match of matches) {
         var pass = filterModel.subsetFilter(match) &&
             filterModel.validationStatusFilter(match) &&
             filterModel.scoreFilter(match) &&
             filterModel.decoyFilter(match);
+
         if (pass) {
-            countMods(match.matchedPeptides[0].seq_mods);
+
+          var peptide1 = match.matchedPeptides[0];
+          var peptide2 = match.matchedPeptides[1];
+
+          var decoy1 = clmsModel.get("participants").get(peptide1.prt[0]).is_decoy;
+          var decoy2 = peptide2 ? clmsModel.get("participants").get(peptide2.prt[0]).is_decoy : false;
+
+          var decoyTypeIndex;
+          if (decoy1 && decoy2) {
+              decoyTypeIndex = 2;
+          } else if (decoy1 || decoy2) {
+              decoyTypeIndex = 1;
+          } else {
+              decoyTypeIndex = 0;
+          }
+
+          countMods(match.matchedPeptides[0].seq_mods, decoyTypeIndex);
             if (match.matchedPeptides[1]) {
-                countMods(match.matchedPeptides[1].seq_mods)
+                countMods(match.matchedPeptides[1].seq_mods, decoyTypeIndex)
             }
         }
     }
 
-    function countMods(pep) {
+    function countMods(pep, decoyIndex) {
         var result = pep.matchAll(regex);
         if (result) {
             var modSet = new Set();
@@ -718,36 +738,38 @@ function getModificationCount() {
             for (var mod of modSet) {
                 var modCount = modCountMap.get(mod);
                 if (typeof modCount == "undefined") {
-                    modCountMap.set(mod, 1);
+                    var counts = [0, 0, 0];
+                    modCountMap.set(mod, counts);
+                    counts[decoyIndex] = counts[decoyIndex] + 1;
                 } else {
-                    modCountMap.set(mod, ++modCount);
+                    ++modCount[decoyIndex];
                 }
             }
             for (var modByRes of modByResSet) {
                 var modByResCount = modByResCountMap.get(modByRes);
                 if (!modByResCount) {
-                    modByResCountMap.set(modByRes, 1);
-                } else {
-                    modByResCountMap.set(modByRes, ++modByResCount);
+                    var counts = [0, 0, 0];
+                    modByResCountMap.set(modByRes, counts);
+                    ++counts[decoyIndex];
+                 } else {
+                    ++modByResCount[decoyIndex];
                 }
             }
         }
     }
 
-    var mapSort1 = new Map([...modCountMap.entries()].sort((a, b) => b[1] - a[1]));
-    var mapSort2 = new Map([...modByResCountMap.entries()].sort((a, b) => b[1] - a[1]));
+    // var mapSort1 = new Map([...modCountMap.entries()].sort((a, b) => b[1] - a[1]));
+    // var mapSort2 = new Map([...modByResCountMap.entries()].sort((a, b) => b[1] - a[1]));
 
-    for (var e of mapSort1.entries()) {
-        csv += '"' + e[0] + '","' +
-            e[1] + '"\r\n';
+    for (var e of modCountMap.entries()) {
+        csv += '"' + e[0] + '","' + e[1][0] + '","' + e[1][1] + '","' + e[1][2] + '"\r\n';
     };
 
-    csv += '"",""\r\n"",""\r\n"",""\r\n';
+    csv += '"",,,""\r\n"",,,""\r\n"",,,""\r\n';
 
-    for (var e of mapSort2.entries()) {
-        csv += '"' + e[0] + '","' +
-            e[1] + '"\r\n';
-    };
+    for (var e of modByResCountMap.entries()) {
+      csv += '"' + e[0] + '","' + e[1][0] + '","' + e[1][1] + '","' + e[1][2] + '"\r\n';
+  };
 
     return csv;
 }
