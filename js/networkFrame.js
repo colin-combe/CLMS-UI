@@ -516,6 +516,8 @@ CLMSUI.init.views = function() {
                         context: compModel,
                         tooltip: "Hide selected proteins",
                         categoryTitle: "Hide",
+                        categoryTitle: "Manually Hide",
+                        sectionBegin: true
                     },
                     {
                         name: "Hide Unselected",
