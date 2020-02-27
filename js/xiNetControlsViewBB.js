@@ -30,7 +30,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "change .showLabels": "setShowLabels",
             "change .fixedSize": "setFixedSize",
             "change .thickLinks": "setThickLinksShown",
-            "change .xinetPpiStep": "this.updatePpiSteps",
+            "change .xinetPpiStep": "updatePpiSteps",
         });
 
     },
