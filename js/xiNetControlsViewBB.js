@@ -25,16 +25,11 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
             "change .xinetDragToPan": "dragActionChanged",
             "change .xinetDragToSelect": "dragActionChanged",
+            "change .fixSelected": "setFixSelected",
             "change .showLabels": "setShowLabels",
             "change .fixedSize": "setFixedSize",
             "change .thickLinks": "setThickLinksShown",
-
-            "change .xinetPpiStep": function() {
-                this.updatePpiSteps();
-            },
-            // "change .xinetPpiStep2": function() {
-            //     this.updatePpiSteps();
-            // },
+            "change .xinetPpiStep": "this.updatePpiSteps",
         });
 
     },
@@ -79,9 +74,6 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
     defaultOptions: {
         dragTo: "Pan",
-        showLabels: true,
-        fixedSize: false,
-        thickLinks: true,
     },
 
     initialize: function(viewOptions) {
@@ -160,15 +152,25 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 sectionEnd: true,
             },
             {
-                initialState: this.options.showLabels,
+                initialState: this.model.get("xinetFixSelected"),
+                class: "fixSelected",
+                label: "Fix Selected",
+                id: "fixSelected",
+                tooltip: "Fix selected nodes in place during auto-layout.",
+                header: "Auto Layout",
+                sectionEnd: true,
+            },
+            {
+                initialState: this.model.get("xinetShowLabels"),
                 class: "showLabels",
                 label: "Show Labels",
                 id: "showLabels",
                 tooltip: "Show labels in xiNET",
-                header: "Nodes"
+                header: "Nodes",
+                sectionBegin: true,
             },
             {
-                initialState: this.options.fixedSize,
+                initialState: this.model.get("xinetFixedSize"),
                 class: "fixedSize",
                 label: "Fized Size",
                 id: "fixedSize",
@@ -176,7 +178,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 sectionEnd: true,
             },
             {
-                initialState: this.options.thickLinks,
+                initialState: this.model.get("xinetThickLinks"),
                 class: "thickLinks",
                 label: "Background PPI Links",
                 id: "thickLinks",
@@ -206,6 +208,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             .attr("max", 10)
             .attr("value", 2)
             .attr("id", "xiNetButtonBarppiStep1")
+            .attr("disabled", self.model.get("xinetThickLinks"))
             .classed('xinetPpiStep', true);
 
         d3.select("body")
@@ -218,8 +221,8 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             .attr("max", 100)
             .attr("value", 3)
             .attr("id", "xiNetButtonBarppiStep2")
+            .attr("disabled", self.model.get("xinetThickLinks"))
             .classed('xinetPpiStep', true);
-        4
 
         CLMSUI.utils.makeBackboneButtons(mainDivSel, self.el.id, toggleButtonData);
         toggleButtonData.splice(0, 0, {
@@ -260,6 +263,10 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
 
     setShowLabels: function() {
         this.model.set("xinetShowLabels", d3.select("input.showLabels").property("checked"));
+    },
+
+    setFixSelected: function() {
+        this.model.set("xinetFixSelected", d3.select("input.fixSelected").property("checked"));
     },
 
     setFixedSize: function() {
