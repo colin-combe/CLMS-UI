@@ -13,8 +13,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             selectedProteins: [],
             highlightedProteins: [],
             TTCrossLinkCount: 0,
-            xinetShowLabels: true,
             xinetDragToPan: true,
+            xinetFixSelected: false,
+            xinetShowLabels: true,
+            xinetFixedSize: false,
+            xinetThickLinks: false,
             xinetPpiSteps: [2, 3],
         });
 
