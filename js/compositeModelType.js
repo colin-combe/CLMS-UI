@@ -16,7 +16,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             xinetDragToPan: true,
             xinetFixSelected: false,
             xinetShowLabels: true,
-            xinetFixedSize: false,
+            xinetFixedSize: true,
             xinetThickLinks: false,
             xinetPpiSteps: [2, 3],
         });

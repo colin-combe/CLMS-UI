@@ -159,8 +159,14 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 id: "fixSelected",
                 tooltip: "Fix selected nodes in place during auto-layout.",
                 header: "Auto Layout",
-                sectionEnd: true,
             },
+            // {
+            //     class: "autoGroupButton",
+            //     label: "Autogroup",
+            //     id: "autoGroupButton",
+            //     //tooltip: "Fix selected nodes in place during auto-layout.",
+            //     sectionEnd: true,
+            // },
             {
                 initialState: this.model.get("xinetShowLabels"),
                 class: "showLabels",
