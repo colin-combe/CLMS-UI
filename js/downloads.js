@@ -719,9 +719,9 @@ function getModificationCount() {
           }
 
           countMods(match.matchedPeptides[0].seq_mods, decoyTypeIndex);
-        if (match.matchedPeptides[1]) {
+            if (match.matchedPeptides[1]) {
                 countMods(match.matchedPeptides[1].seq_mods, decoyTypeIndex)
-        }
+            }
         }
     }
 

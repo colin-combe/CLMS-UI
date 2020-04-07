@@ -572,7 +572,7 @@ CLMSUI.init.views = function() {
             eventName: "stringDataChooserShow",
             tooltip: "Load STRING data from the STRING server. Note: limited to <2,000 proteins, for more generate a CSV file for import as PPI Metadata"
         },
-//        {
+        // {
         //     name: "Crosslinks (CSV)",
         //     eventName: "csvFileChooserShow",
         //     tooltip: "Load Cross-Links from a local CSV File"

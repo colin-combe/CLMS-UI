@@ -376,7 +376,7 @@ CLMSUI.xiNetLayoutListViewBB = CLMSUI.DropDownMenuViewBB.extend({
     },
 
     setVis: function(show) {
-            var self = this;
+        var self = this;
         CLMSUI.xiNetLayoutListViewBB.__super__.setVis.call(self, show);
         if (show) {
             var xmlhttp = new XMLHttpRequest();
