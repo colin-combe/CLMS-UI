@@ -136,8 +136,10 @@ span, label {
 
 #networkDiv {
     width:100%;
-    height:100%;
     display:block;
+    position: absolute;
+    top: 37px;
+    bottom:0px;
 }
 
 #spectrumDiv {

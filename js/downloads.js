@@ -751,7 +751,7 @@ function getModificationCount() {
                     var counts = [0, 0, 0];
                     modByResCountMap.set(modByRes, counts);
                     ++counts[decoyIndex];
-                 } else {
+                } else {
                     ++modByResCount[decoyIndex];
                 }
             }
@@ -769,7 +769,7 @@ function getModificationCount() {
 
     for (var e of modByResCountMap.entries()) {
       csv += '"' + e[0] + '","' + e[1][0] + '","' + e[1][1] + '","' + e[1][2] + '"\r\n';
-  };
+    };
 
     return csv;
 }

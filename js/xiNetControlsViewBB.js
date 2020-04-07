@@ -21,6 +21,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "click .autoLayoutButton": function() {
                 CLMSUI.vent.trigger("xinetAutoLayout", true);
             },
+            "click .autoGroupButton": "autoGroup",
             "click .saveLayoutButton": "saveLayout",
 
             "change .xinetDragToPan": "dragActionChanged",
@@ -288,6 +289,66 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         steps[1] = d3.select("input#xiNetButtonBarppiStep2").property("value");
         this.model.set("xinetPpiSteps", steps);
     },
+
+    autoGroup: function() {
+        var groupMap = new Map();
+        var uncharacterised = new Set();
+        var periphery = new Set();
+        //groupMap.set("uncharacterised", uncharacterised);
+
+        var periphery = new Set();
+        groupMap.set("periphery", periphery);
+
+        var intracellular = new Set();
+        groupMap.set("intracellular", intracellular);
+
+        var both = new Set();
+        groupMap.set("periphery_intracellular", both);
+
+        /* // not gonna work
+        var characterised = new Set();
+        groupMap.set("characterised", characterised);
+        characterised.add("periphery");
+        characterised.add("intracellular");
+        characterised.add("periphery_intracellular");
+        */
+
+        var go = this.model.get("go");
+        var proteins = this.model.get("clmsModel").get("participants").values();
+        for (var protein of proteins) {
+
+            if (protein.uniprot) {
+                var peri = false;
+                var intr = false;
+                for (var goId of protein.uniprot.go) {
+                    var goTerm = go.get(goId);
+                    if (goTerm) {
+                        //GO0071944
+                        if (goTerm.isDescendantOf("GO0071944") == true) {
+                            peri = true;
+                        } //GO0071944
+                        if (goTerm.isDescendantOf("GO0005622") == true) {
+                            intr = true;
+                        }
+                    }
+
+                }
+
+                if (peri == true && intr == true) {
+                    both.add(protein.id);
+                } else if (peri == true) {
+                    periphery.add(protein.id);
+                } else if (intr == true) {
+                    intracellular.add(protein.id);
+                } else {
+                    uncharacterised.add(protein.id);
+                }
+            }
+
+        }
+        this.model.set("groups", groupMap);
+    },
+
 
     identifier: "xiNET Controls",
 });

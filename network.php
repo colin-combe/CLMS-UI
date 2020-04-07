@@ -271,7 +271,7 @@
 				document.title = CLMS.arrayFromMapKeys(searches).join();
 
 				CLMSUI.split = Split(["#topDiv", "#bottomDiv"],
-					{ direction: "vertical", sizes: [80,20], minSize: [200,10],
+					{ direction: "vertical", sizes: [80,20], minSize: [200,0],
 						onDragEnd: function () { CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes(); }
 					}
 				);
