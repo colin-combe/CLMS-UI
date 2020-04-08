@@ -65,7 +65,7 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend({
                     if ($.isArray(entry.value)) {
                         entry.value = entry.value.length;
                     } else if (entry.key === "sequence") {
-                        entry.value = self.makeInteractiveSeqString(d, d.sequence, d.crossLinks, true);
+                        entry.value = d.sequence; //self.makeInteractiveSeqString(d, d.sequence, d.crossLinks, true);
                     }
                     return !($.isFunction(entry.value) || (badKeys && badKeys.has(entry.key)));
                 });
