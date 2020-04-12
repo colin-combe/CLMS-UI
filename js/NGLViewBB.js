@@ -16,9 +16,10 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         return _.extend({}, parentEvents, {
             "click .centreButton": "centerView",
             "click .downloadButton": "downloadImage",
-            "click .savePDBButton": "savePDB",
-            "click .exportPymolButton": "exportPymol",
-            "click .exportHaddockButton": "exportHaddock",
+            "click #nglPanelsavePDB": "savePDB", // hacked to stop it firing twice (when it was on class)
+            "click #nglPanelpymolExport": "exportPymol",
+            "click #nglPanellinksCSVExport": "export3dLinksCSV",
+            "click #nglPanelhaddockExport": "exportHaddock",
             "click .distanceLabelCB": "toggleLabels",
             "click .selectedOnlyCB": "toggleNonSelectedLinks",
             "click .showResiduesCB": "toggleResidues",
@@ -90,6 +91,12 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 label: "Pymol Command File",
                 id: "pymolExport",
                 d3tooltip: "Export a Pymol command script for recreating this pdb and complete filtered cross-links"
+            },
+            {
+                class: "export3dLinksCSV",
+                label: "3D Links CSV",
+                id: "linksCSVExport",
+                d3tooltip: "Export a CSV file of the links currently displayed in NGL"
             },
             {
                 class: "exportHaddockButton",
@@ -691,6 +698,19 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     exportPymol: function () {
         var stageModel = this.model.get("stageModel");
         CLMSUI.NGLUtils.exportPymolCrossLinkSyntax (
+            stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(),
+                ["PDB ID: "+stageModel.getStructureName(),
+                "Exported by "+this.identifier+" and XiView",
+                 "Search ID: "+CLMSUI.utils.searchesToString(),
+                 "Filter: "+CLMSUI.utils.filterStateToString()
+                ]
+        );
+        return this;
+    },
+
+    export3dLinksCSV: function () {
+        var stageModel = this.model.get("stageModel");
+        CLMSUI.NGLUtils.export3dLinksCSV (
             stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(),
                 ["PDB ID: "+stageModel.getStructureName(),
                 "Exported by "+this.identifier+" and XiView",

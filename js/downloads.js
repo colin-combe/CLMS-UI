@@ -433,7 +433,7 @@ function getLinksCSV() {
     var validatedTypes = ["A", "B", "C", "?", "R"]; //todo - what is this for - cc
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
 
-    var headerArray = ["Protein1", "SeqPos1", "LinkedRes1", "Protein2", "SeqPos2", "LinkedRes2", "Highest Score", "Match Count", "DecoyType", "AutoValidated", "Validated", "Link FDR", "3D Distance", "From Chain", "To Chain", "PDB SeqPos 1", "PDB SeqPos 2"];
+    var headerArray = ["Protein1", "SeqPos1", "LinkedRes1", "Protein2", "SeqPos2", "LinkedRes2", "Highest Score", "Match Count", "DecoyType", "AutoValidated", "Validated", "Link FDR", "3D Distance", "From Chain", "To Chain"];//, "PDB SeqPos 1", "PDB SeqPos 2"];
     var searchIDs = Array.from(clmsModel.get("searches").keys());
     searchIDs.forEach(function(sid) {
         headerArray.push("Search_" + sid);
@@ -507,7 +507,7 @@ function getLinksCSV() {
         var pDist = physicalDistances[i];
         if (pDist && pDist.distance) {
             var chain = pDist.chainInfo;
-            row.push(distance2dp(pDist.distance), chain.from, chain.to, chain.fromRes + 1, chain.toRes + 1); // +1 to return to 1-INDEXED
+            row.push(distance2dp(pDist.distance), chain.from, chain.to);//, chain.fromRes + 1, chain.toRes + 1); // +1 to return to 1-INDEXED
         } else {
             row.push("", "", "", "", "");
         }
