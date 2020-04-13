@@ -116,12 +116,6 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             }
         }, this);
 
-        //hack to take out pan/select option in firefox TODO - change to detecting relevant feature (getIntersectionList)
-        if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
-            // Do Firefox-related activities
-            d3.selectAll(".panOrSelect").style("display", "none");
-        };
-
         // Generate load layout drop down
         new CLMSUI.xiNetLayoutListViewBB({
             el: "#loadLayoutButton",
@@ -256,6 +250,13 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 // tooltipModel: self.model.get("tooltipModel"),
             }
         });
+
+        //hack to take out pan/select option in firefox TODO - change to detecting relevant feature (getIntersectionList)
+        if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+            // Do Firefox-related activities
+            d3.selectAll(".xinetDragToPan").style("display", "none");
+            d3.selectAll(".xinetDragToSelect").style("display", "none");
+        };
     },
 
     dragActionChanged: function() {
