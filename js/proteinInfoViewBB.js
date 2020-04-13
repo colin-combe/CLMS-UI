@@ -92,16 +92,17 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend({
                     var d3sel = d3.select(this);
                     var idArray = self.splitDataAttr(d3sel, "data-linkids");
                     var crossLinks = self.getCrossLinksFromIDs(idArray, true);
-                    var posData = self.splitDataAttr(d3sel, "data-pos", "_");
-                    var interactor = self.model.get("clmsModel").get("participants").get(posData[0]);
-
-                    self.model.get("tooltipModel")
-                        .set("header", "Cross-Linked with " + CLMSUI.modelUtils.makeTooltipTitle.residue(interactor, +posData[1]))
-                        .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks(crossLinks, posData[0], +posData[1]))
-                        .set("location", {
-                            pageX: d3.event.pageX,
-                            pageY: d3.event.pageY
-                        });
+                    // following breaks things if proteins have underscores in name
+                    // var posData = self.splitDataAttr(d3sel, "data-pos", "_");
+                    // var interactor = self.model.get("clmsModel").get("participants").get(posData[0]);
+                    //
+                    // self.model.get("tooltipModel")
+                    //     .set("header", "Cross-Linked with " + CLMSUI.modelUtils.makeTooltipTitle.residue(interactor, +posData[1]))
+                    //     .set("contents", CLMSUI.modelUtils.makeTooltipContents.multilinks(crossLinks, posData[0], +posData[1]))
+                    //     .set("location", {
+                    //         pageX: d3.event.pageX,
+                    //         pageY: d3.event.pageY
+                    //     });
                     self.model.setMarkedCrossLinks("highlights", crossLinks, true, false);
                 })
                 .on("mouseout", function() {
