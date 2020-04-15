@@ -310,6 +310,9 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                                     for (var p = 0; p < pidCount; p++) {
                                         var interactor = participants.get(pids[p]);
                                         var toSearch = interactor[dataField];// + " " + interactor.description;
+                                        if (dataField == "name" && interactor.accession) {  // hacky nevermind
+                                            toSearch = toSearch + " " + interactor.accession;
+                                        }
                                         if (toSearch.toLowerCase().indexOf(partString) != -1) {
                                             found = true;
                                             used[i] = true; // so can't match two strings to same peptide e.g. "dog-cat" to protein associated with same peptide

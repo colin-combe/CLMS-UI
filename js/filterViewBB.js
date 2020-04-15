@@ -101,10 +101,10 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     tooltip: "Filter to crosslinks with matches whose linked peptides include this AA sequence at either end e.g. FAKR, or define both ends e.g. FAKR-KKE",
                 },
                 {
-                    label: "Name",
+                    label: "Name / Acc.",
                     id: "protNames",
                     chars: 7,
-                    tooltip: "Filter to crosslinks involving a protein name/identifier including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
+                    tooltip: "Filter to crosslinks involving a protein name/accession number including this text. Separate with commas, specify both linked proteins with hyphens e.g. RAT3, RAT1-RAT2"
                 },
                 {
                     label: "Description",
