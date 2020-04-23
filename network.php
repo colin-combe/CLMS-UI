@@ -226,8 +226,8 @@
                 <button class='btn btn-1 btn-1a showHidden' onclick="CLMSUI.compositeModelInst.showHiddenProteins()">Show</button>
             </div>"
 
-            <div id='sslOption'>
-                <form><input type="text" style="z-index:10000" name="sslOption" value="L" size=1><br></form>
+            <div id='newGroupName'  title="Enter group name">
+                <input type="text" style="z-index:10000" name="newGroupName" value="" size=20><br>
             </div>"
 
             <div class="controls">

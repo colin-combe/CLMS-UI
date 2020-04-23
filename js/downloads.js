@@ -27,13 +27,13 @@ function downloadMatches() {
 
 function downloadSSL() {
 
-// $("#sslOption").dialog({
+// $("#newGroupName").dialog({
 //   modal: true,
 //   buttons: {
 //     'OK': function () {
-//       var sslOption = $('input[name="sslOption"]').val();
+//       var newGroupName = $('input[name="newGroupName"]').val();
 //       alert(name);
-      download(getSSL(sslOption), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
+      download(getSSL(newGroupName), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
 //       // storeData(name);
 //       $(this).dialog('close');
 //     },
@@ -281,7 +281,7 @@ function getMatchesCSV() {
     return csv;
 }
 
-function getSSL(sslOption) {
+function getSSL(newGroupName) {
     var csv = 'file\tscan\tcharge\tsequence\tscore-type\tscore\tId\tProtein1\tSeqPos1\tPepPos1\tPepSeq1\tLinkPos1\tProtein2\tSeqPos2\tPepPos2\tPepSeq2\tLinkPos2\tCharge\tExpMz\tExpMass\tCalcMz\tCalcMass\tMassError\tAutoValidated\tValidated\tSearch\tRawFileName\tPeakListFileName\tScanNumber\tScanIndex\tCrossLinkerModMass\tFragmentTolerance\tIonTypes\r\n';
     var clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     //var mass6dp = d3.format(".6f");
