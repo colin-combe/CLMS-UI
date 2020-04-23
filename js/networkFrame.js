@@ -540,14 +540,15 @@ CLMSUI.init.views = function() {
                         closeOnClick: false,
                         context: compModel,
                         label: "Protein Selection by Description",
-                        tooltip: "Select proteins whose descriptions include input text"
+                        tooltip: "Select proteins whose descriptions include input text",
+                        sectionEnd: true
                     },
-                    // {
-                    //     name: "Group",
-                    //     func: compModel.groupSelectedProteins,
-                    //     context: compModel,
-                    //     tooltip: "Put selected proteins in a group"
-                    // }
+                    {
+                        name: "Group",
+                        func: compModel.groupSelectedProteins,
+                        context: compModel,
+                        tooltip: "Put selected proteins in a group"
+                    }
                 ],
                 //tooltipModel: compModel.get("tooltipModel")
                 sectionHeader: function(d) {

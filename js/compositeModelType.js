@@ -623,51 +623,41 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     },
 
     groupSelectedProteins: function() {
-        var groups = this.get("groups");
-        if (!groups){
-          groups = new d3.map();;
-        }
-        // var group = [];
-        // var selectedArr = this.get("selectedProteins");
-        // var selectedCount = selectedArr.length;
-        // for (var s = 0; s < selectedCount; s++) {
-        //     var participant = selectedArr[s];
-        //     group.push(participant);
-        // }
-        // groups.push(group);
-    //    this.setSelectedProteins([]);
+        var self = this;
+        $("#newGroupName").dialog({
+            modal: true,
+            buttons: {
+                'OK': function() {
+                    var name = $('input[name="newGroupName"]').val();
+                    //alert(newGroupName);
 
 
-    var groupMap = new d3.map();
-    //var participantsArr = [];//CLMS.arrayFromMapValues(meta.items); // its not a d3 map so we need to use this shim
-    var participantsArr = this.get("selectedProteins");
-    // var selectedCount = selectedArr.length;
-    // for (var s = 0; s < selectedCount; s++) {
-    //     var participant = selectedArr[s];
-    //     group.push(participant);
-    // }
+
+                    var groups = self.get("groups");
+                    if (!groups) {
+                        groups = new Map();
+                        self.set("groups", groups);
+                    }
+                    var groupMap = new d3.map();
+                    var participantIdArr = []; //this.get("selectedProteins");
+                    for (var p of self.get("selectedProteins")) {
+                        participantIdArr.push(p.id);
+                    }
+                    groups.set(name, participantIdArr);
+                    self.trigger("change:groups");
 
 
-    var pCount = participantsArr.length;
-    for (var p = 0; p < pCount; p++) {
-        var participant = participantsArr[p];
-        // if (participant.meta && participant.meta.complex) {
-            group = participantsArr.sort().join('-');//participant.meta.complex;
-            if (groupMap.get(group)) {
-                groupMap.get(group).add(participant.id);
-            } else {
-                var groupParticipants = new d3.set();
-                groupParticipants.add(participant.id);
-                groupMap.set(group, groupParticipants)
+
+
+                    //  download(getSSL(newGroupName), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
+                    // storeData(name);
+                    $(this).dialog('close');
+                },
+                'Cancel': function() {
+                    $(this).dialog('close');
+                }
             }
-        // }
-    }
-
-    // init n-ary link
-    //this.groupsChanged();
-
-        this.set("groups", groupMap.entries());
-        this.trigger("groupsChanged");
+        });
 
     },
 
