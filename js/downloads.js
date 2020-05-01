@@ -509,7 +509,7 @@ function getLinksCSV() {
             var chain = pDist.chainInfo;
             row.push(distance2dp(pDist.distance), chain.from, chain.to);//, chain.fromRes + 1, chain.toRes + 1); // +1 to return to 1-INDEXED
         } else {
-            row.push("", "", "", "", "");
+            row.push("", "", "");//, "", "");
         }
 
         // Add presence in searches
