@@ -19,6 +19,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             xinetFixedSize: true,
             xinetThickLinks: false,
             xinetPpiSteps: [2, 3],
+            groups: new Map (),
         });
 
         this.listenTo(this.get("clmsModel"), "change:matches", function() {
@@ -622,43 +623,31 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.setSelectedProteins(toSelect);
     },
 
-    groupSelectedProteins: function() {
+    groupSelectedProteins: function(d3target, evt) {
         var self = this;
-        $("#newGroupName").dialog({
-            modal: true,
-            buttons: {
-                'OK': function() {
-                    var name = $('input[name="newGroupName"]').val();
-                    //alert(newGroupName);
-
-
-
-                    var groups = self.get("groups");
-                    if (!groups) {
-                        groups = new Map();
-                        self.set("groups", groups);
-                    }
-                    var groupMap = new d3.map();
-                    var participantIdArr = []; //this.get("selectedProteins");
+        evt = evt.originalEvent;
+        if (evt.key == "Enter"){
+            var groups = self.get("groups");
+            var groupName = d3.select("#groupSelected").property("value").trim();
+            if (groupName){
+                if (groups.has(groupName)){
+                    alert("Cannot group - duplicate group name");
+                } else {
+                    var participantIds = new Set();
                     for (var p of self.get("selectedProteins")) {
-                        participantIdArr.push(p.id);
+                        participantIds.add(p.id);
                     }
-                    groups.set(name, participantIdArr);
+                    groups.set(groupName, participantIds);
                     self.trigger("change:groups");
-
-
-
-
-                    //  download(getSSL(newGroupName), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
-                    // storeData(name);
-                    $(this).dialog('close');
-                },
-                'Cancel': function() {
-                    $(this).dialog('close');
+                    d3.select("#groupSelected").property("value", "");
                 }
             }
-        });
+        }
+    },
 
+
+    clearGroups: function() {
+        this.set("groups", new Set());
     },
 
     // Things that can cause a cross-link's minimum distance to change:

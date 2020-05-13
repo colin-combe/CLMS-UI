@@ -505,6 +505,10 @@ CLMSUI.init.views = function() {
     d3.select("body").append("input")
         .attr("type", "text")
         .attr("id", "proteinSelectionFilter");
+    d3.select("body").append("input")
+        .attr("type", "text")
+        .attr("id", "groupSelected");
+
     new CLMSUI.DropDownMenuViewBB({
             el: "#proteinSelectionDropdownPlaceholder",
             model: compModel.get("clmsModel"),
@@ -515,9 +519,6 @@ CLMSUI.init.views = function() {
                         func: compModel.hideSelectedProteins,
                         context: compModel,
                         tooltip: "Hide selected proteins",
-                        categoryTitle: "Hide",
-                        categoryTitle: "Manually Hide",
-                        sectionBegin: true
                     },
                     {
                         name: "Hide Unselected",
@@ -539,15 +540,23 @@ CLMSUI.init.views = function() {
                         func: compModel.proteinSelectionTextFilter,
                         closeOnClick: false,
                         context: compModel,
-                        label: "Protein Selection by Description",
                         tooltip: "Select proteins whose descriptions include input text",
                         sectionEnd: true
                     },
                     {
-                        name: "Group",
+                        sectionBegin: true,
+                        categoryTitle: "Group Selected",
+                        id: "groupSelected",
                         func: compModel.groupSelectedProteins,
+                        closeOnClick: false,
                         context: compModel,
-                        tooltip: "Put selected proteins in a group"
+                        tooltip: "Enter group name",
+                    },
+                    {
+                        name: "Clear Groups",
+                        func: compModel.clearGroups,
+                        context: compModel,
+                        tooltip: "Clears all groups"
                     }
                 ],
                 //tooltipModel: compModel.get("tooltipModel")
@@ -977,7 +986,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         label: "Choose Protein Colour Scheme"
     });
 
-    new CLMS.xiNET.CrosslinkViewer({
+    new CLMSUI.CrosslinkViewer({
         el: "#networkDiv",
         model: compModel,
         //     myOptions: {layout: storedLayout}

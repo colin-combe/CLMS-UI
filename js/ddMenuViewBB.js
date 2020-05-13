@@ -15,7 +15,7 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
         var defaultOptions = {
             title: "A DD Menu",
             closeOnClick: true,
-            menu: [ // emptying this coz you may now breifly see it in load layout menu 
+            menu: [ // emptying this coz you may now breifly see it in load layout menu
             //   {
             //     name: "Wazzup",
             //     func: emptyFunc
@@ -299,7 +299,7 @@ CLMSUI.DropDownMenuViewBB = Backbone.View.extend({
             var datum = d3target.datum();
             if (datum && datum.func) {
                 var context = datum.context || this;
-                (datum.func).call(context, d3target); // as value holds function reference
+                (datum.func).call(context, d3target, evt); // as value holds function reference
             }
 
             if (this.options.closeOnClick) {
