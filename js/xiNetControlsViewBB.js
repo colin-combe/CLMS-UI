@@ -140,7 +140,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                 class: "xinetDragToSelect",
                 label: "Select",
                 id: "dragToSelect",
-                tooltip: "drga to select in xiNET",
+                tooltip: "drag to select in xiNET",
                 group: "dragTo",
                 type: "radio",
                 value: "Select",

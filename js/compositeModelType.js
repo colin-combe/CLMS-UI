@@ -535,20 +535,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.set("selectedProteins", toSelect); //the array.slice() clones the array so this triggers a change
     },
 
-    // invertSelectedProteins: function() {
-    //     var toSelect = [];
-    //     var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
-    //     var participantCount = participantsArr.length;
-    //     var selected = this.get("selectedProteins");
-    //     for (var p = 0; p < participantCount; p++) {
-    //         var participant = participantsArr[p];
-    //         if (selected.indexOf(participant) == -1) {
-    //             toSelect.push(participant);
-    //         }
-    //     }
-    //     this.setSelectedProteins(toSelect);
-    // },
-
     hideSelectedProteins: function() {
         var selectedArr = this.get("selectedProteins");
         var selectedCount = selectedArr.length;
@@ -647,7 +633,8 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
 
 
     clearGroups: function() {
-        this.set("groups", new Set());
+        this.set("groups", new Map());
+        this.trigger("change:groups");
     },
 
     // Things that can cause a cross-link's minimum distance to change:
