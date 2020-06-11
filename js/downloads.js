@@ -183,7 +183,7 @@ function download(content, contentType, fileName) {
 
 
 function mostReadableId(protein) {
-    if (protein.accession && protein.name) {
+    if (protein.accession && protein.name && (protein.accession != protein.name)) {
         return "sp|" + protein.accession + "|" + protein.name;
     } else if (protein.name) {
         return protein.name;
