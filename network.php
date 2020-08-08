@@ -1,25 +1,6 @@
-<!--
-//  CLMS-UI
-//  Copyright 2015 Colin Combe, Rappsilber Laboratory, Edinburgh University
-//
-//  This file is part of CLMS-UI.
-//
-//  CLMS-UI is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  CLMS-UI is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
--->
 <?php
     session_start();
-    $cacheBuster = '';//?v='.microtime(true);
+    $cacheBuster = '?v='.microtime(true);
 ?>
 
 <!DOCTYPE html>
@@ -83,7 +64,7 @@
       	<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
       	<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
-        <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
+       <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
         <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script> <!-- IE11 Promise Polyfill -->
 
@@ -162,9 +143,9 @@
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
         <!-- <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script> -->
-        <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script>
+        <!-- <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script> -->
+        <!-- <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script> -->
+        <!-- <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script> -->
 
         <!-- Spectrum view files -->
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
@@ -249,7 +230,7 @@
         var z;
 
 		var success = function (json) {
-// 			try {
+			try {
                 if (json.error) {
                     throw "Error from server";
                 }
@@ -285,10 +266,10 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 
-// 			} catch (err) {
-//                 //console.log ("ERR", err);
-// 				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
-// 			}
+  	} catch (err) {
+                //console.log ("ERR", err);
+				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
+			}
 		};
 
 
@@ -320,16 +301,16 @@
         }
 
         // 2. Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
-        url = "./go.obo";
-        d3.text (url, function(error, txt) {
-            if (error) {
-                console.log("error", error, "for", url, arguments);
-            } else {
-                CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
-                //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
-                allDataLoaded ();
-            }
-        });
+//         url = "./go.obo";
+//         d3.text (url, function(error, txt) {
+//             if (error) {
+//                 console.log("error", error, "for", url, arguments);
+//             } else {
+//                 CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+//                 //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
+//                 allDataLoaded ();
+//             }
+//         });
 
         // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation
         CLMSUI.init.blosumLoading ();
