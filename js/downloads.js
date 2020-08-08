@@ -1,21 +1,3 @@
-//  CLMS-UI
-//  Copyright 2015 Colin Combe, Rappsilber Laboratory, Edinburgh University
-//
-//  This file is part of CLMS-UI.
-//
-//  CLMS-UI is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  CLMS-UI is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
-
 function downloadFilename(type, suffix) {
     suffix = suffix || "csv";
     return CLMSUI.utils.makeLegalFileName(CLMSUI.utils.searchesToString() + "--" + type + "--" + CLMSUI.utils.filterStateToString()) + "." + suffix;
@@ -33,7 +15,7 @@ function downloadSSL() {
 //     'OK': function () {
 //       var newGroupName = $('input[name="newGroupName"]').val();
 //       alert(name);
-      download(getSSL(newGroupName), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
+    download(getSSL(newGroupName), 'text/csv', "test.ssl"); //downloadFilename("ssl"));
 //       // storeData(name);
 //       $(this).dialog('close');
 //     },
@@ -195,12 +177,14 @@ function mostReadableId(protein) {
 }
 
 
-function mostReadableMultipleId (match, matchedPeptideIndex, clmsModel) {
+function mostReadableMultipleId(match, matchedPeptideIndex, clmsModel) {
     var mpeptides = match.matchedPeptides[matchedPeptideIndex];
-    var proteins = mpeptides ? mpeptides.prt.map(function(pid) {
+    var proteins = mpeptides ? mpeptides.prt.map(function (pid) {
         return clmsModel.get("participants").get(pid);
     }) : [];
-    return proteins.map (function (prot) { return mostReadableId (prot); }, this).join(";");
+    return proteins.map(function (prot) {
+        return mostReadableId(prot);
+    }, this).join(";");
 }
 
 
@@ -214,17 +198,17 @@ function getMatchesCSV() {
     var matchMap = d3.map();
 
     // do it like this so ambiguous matches (belonging to >1 crosslink) aren't repeated
-    console.log ("start map");
+    console.log("start map");
     var zz = performance.now();
-    crossLinks.forEach(function(crossLink) {
-        crossLink.filteredMatches_pp.forEach(function(match) {
+    crossLinks.forEach(function (crossLink) {
+        crossLink.filteredMatches_pp.forEach(function (match) {
             matchMap.set(match.match.id, match.match);
         });
     });
-    console.log ("finish map", performance.now() - zz, "ms.");
+    console.log("finish map", performance.now() - zz, "ms.");
     zz = performance.now();
 
-    matchMap.values().forEach(function(match) {
+    matchMap.values().forEach(function (match) {
         var peptides1 = match.matchedPeptides[0];
         var peptides2 = match.matchedPeptides[1];
         var pp1 = CLMSUI.utils.pepPosConcat(match, 0);
@@ -243,11 +227,11 @@ function getMatchesCSV() {
             returnChainInfo: true,
             calcDecoyProteinDistances: true
         });
-        var distances2DArr = distances.map(function(dist) {
+        var distances2DArr = distances.map(function (dist) {
             return dist && dist.distance ? [distance2dp(dist.distance), dist.chainInfo.from, dist.chainInfo.to, dist.chainInfo.fromRes, dist.chainInfo.toRes] : ["", "", "", "", ""];
         });
         var distancesTransposed = d3.transpose(distances2DArr); // transpose so distance data now grouped in array by field (distance, tores, etc)
-        var distancesJoined = distancesTransposed.map(function(arr) {
+        var distancesJoined = distancesTransposed.map(function (arr) {
             return arr.join(", ");
         });
 
@@ -275,7 +259,7 @@ function getMatchesCSV() {
 	*/
     });
 
-    console.log ("build string", performance.now() - zz, "ms.");
+    console.log("build string", performance.now() - zz, "ms.");
 
     //console.log ("MCSV", count, matchMap.values().length);
     return csv;
@@ -317,19 +301,18 @@ function getSSL(newGroupName) {
     console.log("modDeltas", modificationDeltasMap);
 
 
-
     var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks("all");
     var matchMap = d3.map();
 
     // do it like this so ambiguous matches (belonging to >1 crosslink) aren't repeated
-    crossLinks.forEach(function(crossLink) {
-        crossLink.filteredMatches_pp.forEach(function(match) {
+    crossLinks.forEach(function (crossLink) {
+        crossLink.filteredMatches_pp.forEach(function (match) {
             matchMap.set(match.match.id, match.match);
         });
     });
 
     var notUpperCase = /[^A-Z]/g;
-    var makeSslPepSeq = function(seq, linkPos) {
+    var makeSslPepSeq = function (seq, linkPos) {
         notUpperCase.lastIndex = 0;
         if (notUpperCase.test(seq)) {
             for (var modInfo of modificationDeltasMap.entries()) {
@@ -339,7 +322,7 @@ function getSSL(newGroupName) {
         var sslSeqLinkIndex = findIndexofNthUpperCaseLetter(seq, linkPos);
         return seq.slice(0, sslSeqLinkIndex + 1) + "[+1.008]" + seq.slice(sslSeqLinkIndex + 1, seq.length);
     };
-    var findIndexofNthUpperCaseLetter = function(str, n) { // n is 1-indexed here
+    var findIndexofNthUpperCaseLetter = function (str, n) { // n is 1-indexed here
         str = str || "";
         var i = -1;
         while (n > 0 && i < str.length) {
@@ -350,7 +333,7 @@ function getSSL(newGroupName) {
         return i === str.length ? undefined : i;
     };
 
-    matchMap.values().forEach(function(match) {
+    matchMap.values().forEach(function (match) {
         var peptide1 = match.matchedPeptides[0];
         var peptide2 = match.matchedPeptides[1];
 
@@ -372,7 +355,7 @@ function getSSL(newGroupName) {
             var pep2sslSeq = makeSslPepSeq(peptide2.seq_mods, match.linkPos2);
             var crosslinkerModMass = match.crossLinkerModMass();
             //var sequence = pep1sslSeq + "K[+" + (crosslinkerModMass - 112.099857) + "]" + pep2sslSeq;
-	    var joiningAAModMass = (crosslinkerModMass - 112.099857);
+            var joiningAAModMass = (crosslinkerModMass - 112.099857);
             var sequence = pep1sslSeq;
             if (joiningAAModMass > 0) {
                 sequence = sequence + "K[+" + joiningAAModMass + "]" + pep2sslSeq;
@@ -435,7 +418,7 @@ function getLinksCSV() {
 
     var headerArray = ["Protein1", "SeqPos1", "LinkedRes1", "Protein2", "SeqPos2", "LinkedRes2", "Highest Score", "Match Count", "DecoyType", "AutoValidated", "Validated", "Link FDR", "3D Distance", "From Chain", "To Chain"];//, "PDB SeqPos 1", "PDB SeqPos 2"];
     var searchIDs = Array.from(clmsModel.get("searches").keys());
-    searchIDs.forEach(function(sid) {
+    searchIDs.forEach(function (sid) {
         headerArray.push("Search_" + sid);
     });
     console.log("searchIds", searchIDs);
@@ -455,7 +438,7 @@ function getLinksCSV() {
     //console.log ("pd", physicalDistances);
     var distance2dp = d3.format(".2f");
 
-    var rows = crossLinks.map(function(crossLink, i) {
+    var rows = crossLinks.map(function (crossLink, i) {
         var row = [];
         var linear = crossLink.isLinearLink();
         var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
@@ -485,8 +468,7 @@ function getLinksCSV() {
         if (linear) {
             if (crossLink.fromProtein.is_decoy) {
                 decoyType = "D";
-            }
-            else {
+            } else {
                 decoyType = "T";
             }
         } else {
@@ -573,8 +555,7 @@ function getPPIsCSV() {
         if (linear) {
             if (aCrosslink.fromProtein.is_decoy) {
                 decoyType = "D";
-            }
-            else {
+            } else {
                 decoyType = "T";
             }
         } else {
@@ -655,7 +636,7 @@ function getResidueCount() {
     var residuePairCountMap = d3.map();
 
     var crossLinks = CLMSUI.compositeModelInst.getFilteredCrossLinks("all"); // already pre-filtered
-    crossLinks.forEach(function(residueLink) {
+    crossLinks.forEach(function (residueLink) {
         var linkedRes1 = residueLink.fromProtein.sequence[residueLink.fromResidue - 1] || "";
         var linkedRes2 = residueLink.isLinearLink() ? "" : residueLink.toProtein.sequence[residueLink.toResidue - 1];
         incrementCount(residueCountMap, linkedRes1);
@@ -665,11 +646,11 @@ function getResidueCount() {
         incrementCount(residuePairCountMap, pairId);
     });
 
-    residuePairCountMap.forEach(function(k, v) {
+    residuePairCountMap.forEach(function (k, v) {
         csv += '"' + k + '","' +
             v + '"\r\n';
     });
-    residueCountMap.forEach(function(k, v) {
+    residueCountMap.forEach(function (k, v) {
         csv += '"' + k + '","' +
             v + '"\r\n';
     });
@@ -683,8 +664,10 @@ function getResidueCount() {
             map.set(res, c);
         }
     }
+
     return csv;
 }
+
 function getModificationCount() {
     var csv = '"Modification(s)","TT","TD","DD"\r\n';
     var matches = CLMSUI.compositeModelInst.get("clmsModel").get("matches");
@@ -703,22 +686,22 @@ function getModificationCount() {
 
         if (pass) {
 
-          var peptide1 = match.matchedPeptides[0];
-          var peptide2 = match.matchedPeptides[1];
+            var peptide1 = match.matchedPeptides[0];
+            var peptide2 = match.matchedPeptides[1];
 
-          var decoy1 = clmsModel.get("participants").get(peptide1.prt[0]).is_decoy;
-          var decoy2 = peptide2 ? clmsModel.get("participants").get(peptide2.prt[0]).is_decoy : false;
+            var decoy1 = clmsModel.get("participants").get(peptide1.prt[0]).is_decoy;
+            var decoy2 = peptide2 ? clmsModel.get("participants").get(peptide2.prt[0]).is_decoy : false;
 
-          var decoyTypeIndex;
-          if (decoy1 && decoy2) {
-              decoyTypeIndex = 2;
-          } else if (decoy1 || decoy2) {
-              decoyTypeIndex = 1;
-          } else {
-              decoyTypeIndex = 0;
-          }
+            var decoyTypeIndex;
+            if (decoy1 && decoy2) {
+                decoyTypeIndex = 2;
+            } else if (decoy1 || decoy2) {
+                decoyTypeIndex = 1;
+            } else {
+                decoyTypeIndex = 0;
+            }
 
-          countMods(match.matchedPeptides[0].seq_mods, decoyTypeIndex);
+            countMods(match.matchedPeptides[0].seq_mods, decoyTypeIndex);
             if (match.matchedPeptides[1]) {
                 countMods(match.matchedPeptides[1].seq_mods, decoyTypeIndex)
             }
@@ -763,13 +746,15 @@ function getModificationCount() {
 
     for (var e of modCountMap.entries()) {
         csv += '"' + e[0] + '","' + e[1][0] + '","' + e[1][1] + '","' + e[1][2] + '"\r\n';
-    };
+    }
+    ;
 
     csv += '"",,,""\r\n"",,,""\r\n"",,,""\r\n';
 
     for (var e of modByResCountMap.entries()) {
-      csv += '"' + e[0] + '","' + e[1][0] + '","' + e[1][1] + '","' + e[1][2] + '"\r\n';
-    };
+        csv += '"' + e[0] + '","' + e[1][0] + '","' + e[1][1] + '","' + e[1][2] + '"\r\n';
+    }
+    ;
 
     return csv;
 }
