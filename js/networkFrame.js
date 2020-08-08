@@ -545,10 +545,19 @@ CLMSUI.init.views = function() {
                         sectionEnd: true
                     },
                     {
-                        name: "Group",
+                        sectionBegin: true,
+                        categoryTitle: "Group Selected",
+                        id: "groupSelected",
                         func: compModel.groupSelectedProteins,
+                        closeOnClick: false,
                         context: compModel,
-                        tooltip: "Put selected proteins in a group"
+                        tooltip: "Enter group name",
+                    },
+                    {
+                        name: "Clear Groups",
+                        func: compModel.clearGroups,
+                        context: compModel,
+                        tooltip: "Clears all groups"
                     }
                 ],
                 //tooltipModel: compModel.get("tooltipModel")
@@ -978,7 +987,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function() {
         label: "Choose Protein Colour Scheme"
     });
 
-    new CLMS.xiNET.CrosslinkViewer({
+    new CLMSUI.CrosslinkViewer({
         el: "#networkDiv",
         model: compModel,
         //     myOptions: {layout: storedLayout}

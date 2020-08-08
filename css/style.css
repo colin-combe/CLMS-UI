@@ -18,6 +18,9 @@
 	background-color: #eee;
 }
 
+#xiNetButtonBar p div ul li label{
+  display: block;
+}
 
 #hiddenProteinsMessage{
   display: none;

@@ -236,34 +236,34 @@ CLMSUI.modelUtils = {
                 // ["interactors", goTerm.getInteractors(false).size]
             ];
         },
-        
-        complex: function(interactor) {	
-            var contents = [	
-                ["Complex", interactor.id],	
-              //  ["Members", Array.from(goTerm.relationship.values()).join(", ")]	
-                // ["Accession", interactor.accession],	
-                // ["Size", interactor.size],	
-                // ["Desc.", interactor.description]	
-            ];	
 
-            // d3.entries(interactor.getMeta()).forEach(function(entry) {	
-            //     var val = entry.value;	
-            //     var key = entry.key.toLocaleLowerCase();	
-            //     if (val !== undefined && !_.isObject(val)) {	
-            //         contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);	
-            //     }	
-            // });	
-            //	
-            // if (interactor.go) {	
-            //     var goTermsMap = CLMSUI.compositeModelInst.get("go");	
-            //     var goTermsText = "";	
-            //     for (var goId of interactor.go) {	
-            //         var goTerm = goTermsMap.get(goId);	
-            //         goTermsText += goTerm.name + "<br>";	
-            //     }	
-            //     contents.push(["GO", goTermsText]);	
-            // }	
-            return contents;	
+        complex: function(interactor) {
+            var contents = [
+                ["Complex", interactor.id],
+              //  ["Members", Array.from(goTerm.relationship.values()).join(", ")]
+                // ["Accession", interactor.accession],
+                // ["Size", interactor.size],
+                // ["Desc.", interactor.description]
+            ];
+
+            // d3.entries(interactor.getMeta()).forEach(function(entry) {
+            //     var val = entry.value;
+            //     var key = entry.key.toLocaleLowerCase();
+            //     if (val !== undefined && !_.isObject(val)) {
+            //         contents.push ([key, CLMSUI.modelUtils.makeTooltipContents.niceFormat (key, val)]);
+            //     }
+            // });
+            //
+            // if (interactor.go) {
+            //     var goTermsMap = CLMSUI.compositeModelInst.get("go");
+            //     var goTermsText = "";
+            //     for (var goId of interactor.go) {
+            //         var goTerm = goTermsMap.get(goId);
+            //         goTermsText += goTerm.name + "<br>";
+            //     }
+            //     contents.push(["GO", goTermsText]);
+            // }
+            return contents;
         },
     },
 
@@ -290,8 +290,8 @@ CLMSUI.modelUtils = {
         linkList: function(linkCount) {
             return "Linked Residue Pair" + (linkCount > 1 ? "s" : "");
         },
-        complex: function(interactor) {	
-            return interactor.name.replace("_", " ");	
+        complex: function(interactor) {
+            return interactor.name.replace("_", " ");
         },
     },
 
