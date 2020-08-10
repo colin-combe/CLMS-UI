@@ -789,7 +789,7 @@ CLMSUI.init.viewsEssential = function (options) {
         targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
         xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot,
-        knownModificationsURL: CLMSUI.xiAnnotRoot + "annotate/knownModifications",
+        knownModificationsURL: false,//CLMSUI.xiAnnotRoot + "annotate/knownModifications",
         showCustomConfig: true,
         showQualityControl: "min",
         colorScheme: colorbrewer.PRGn[8],
