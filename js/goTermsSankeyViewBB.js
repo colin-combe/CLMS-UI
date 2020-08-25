@@ -382,8 +382,8 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .append("rect")
                         .attr ("y", -10)
                         .attr ("height", height + 10)
-                        .attr ("x", function(d) { return d.x; })
-                        .attr ("width", function (d) { return d.width; })
+                        .attr ("x", function(d) { return d.x ? d.x : 0; })
+                        .attr ("width", function (d) { return d.width ? d.width : 0; })
                 ;
 
                 var color = d3.scale.category20();

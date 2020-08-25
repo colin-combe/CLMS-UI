@@ -61,14 +61,22 @@ svg {
 }
 
 .proteinLabel {
-    font-size: 9pt; 
+  font-size: 10pt;
+  font-weight: bold;
 }
 
 .custom-menu-margin {
-    padding: 20px;
-    display: none;
-    z-index: 10000;
-    position: absolute;
+  padding: 20px;
+  display: none;
+  z-index: 10000;
+  position: absolute;
+}
+
+.group-custom-menu-margin {
+  padding: 20px;
+  display: none;
+  z-index: 10000;
+  position: absolute;
 }
 
 .custom-menu {

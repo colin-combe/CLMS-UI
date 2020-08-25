@@ -1,22 +1,3 @@
-<!--
-//  CLMS-UI
-//  Copyright 2015 Colin Combe, Rappsilber Laboratory, Edinburgh University
-//
-//  This file is part of CLMS-UI.
-//
-//  CLMS-UI is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  CLMS-UI is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
--->
 <?php
     session_start();
     $cacheBuster = '?v='.microtime(true);
@@ -109,16 +90,14 @@
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/SpectrumMatch.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../CLMS-model/src/CLMS/model/CrossLink.js<?php echo $cacheBuster ?>"></script>
 
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/CrosslinkViewerBB.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/RenderedMolecule.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/RenderedProtein.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/interactor/RenderedComplex.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/RenderedLink.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/RenderedCrossLink.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/P_PLink.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/Link.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/link/NaryLink.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../crosslink-viewer/src/CLMS/xiNET/Rotator.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/xiNET/CrosslinkViewerBB.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/xiNET/interactor/Interactor.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/xiNET/interactor/RenderedProtein.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/xiNET/interactor/Group.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/xiNET/link/Link.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/xiNET/link/RenderedCrossLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/xiNET/link/P_PLink.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../crosslink-viewer/src/xiNET/interactor/Rotator.js<?php echo $cacheBuster ?>"></script>
         <!-- Backbone models/views loaded after Backbone itself, otherwise need to delay their instantiation somehow -->
         <script type="text/javascript" src="./js/Utils.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/circleArrange.js<?php echo $cacheBuster ?>"></script>
@@ -163,9 +142,9 @@
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
         <!-- <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script> -->
-        <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script>
+        <!-- <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script> -->
+        <!-- <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script> -->
+        <!-- <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script> -->
 
         <!-- Spectrum view files -->
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
@@ -217,8 +196,8 @@
                 <button class='btn btn-1 btn-1a showHidden' onclick="CLMSUI.compositeModelInst.showHiddenProteins()">Show</button>
             </div>"
 
-            <div id='sslOption'>
-                <form><input type="text" style="z-index:10000" name="sslOption" value="L" size=1><br></form>
+            <div id='newGroupName'  title="Enter group name">
+                <input type="text" style="z-index:10000" name="newGroupName" value="" size=20><br>
             </div>"
 
             <div class="controls">
@@ -271,7 +250,7 @@
 				document.title = CLMS.arrayFromMapKeys(searches).join();
 
 				CLMSUI.split = Split(["#topDiv", "#bottomDiv"],
-					{ direction: "vertical", sizes: [80,20], minSize: [200,10],
+					{ direction: "vertical", sizes: [80,20], minSize: [200,0],
 						onDragEnd: function () { CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes(); }
 					}
 				);
@@ -321,16 +300,16 @@
         }
 
         // 2. Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
-        url = "./go.obo";
-        d3.text (url, function(error, txt) {
-            if (error) {
-                console.log("error", error, "for", url, arguments);
-            } else {
-                CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
-                //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
-                allDataLoaded ();
-            }
-        });
+//         url = "./go.obo";
+//         d3.text (url, function(error, txt) {
+//             if (error) {
+//                 console.log("error", error, "for", url, arguments);
+//             } else {
+//                 CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+//                 //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
+//                 allDataLoaded ();
+//             }
+//         });
 
         // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation
         CLMSUI.init.blosumLoading ();

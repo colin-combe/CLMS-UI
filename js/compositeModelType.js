@@ -16,9 +16,10 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             xinetDragToPan: true,
             xinetFixSelected: false,
             xinetShowLabels: true,
-            xinetFixedSize: false,
+            xinetFixedSize: true,
             xinetThickLinks: false,
             xinetPpiSteps: [2, 3],
+            groups: new Map (),
         });
 
         this.listenTo(this.get("clmsModel"), "change:matches", function() {
@@ -534,20 +535,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         this.set("selectedProteins", toSelect); //the array.slice() clones the array so this triggers a change
     },
 
-    // invertSelectedProteins: function() {
-    //     var toSelect = [];
-    //     var participantsArr = CLMS.arrayFromMapValues(this.get("clmsModel").get("participants"));
-    //     var participantCount = participantsArr.length;
-    //     var selected = this.get("selectedProteins");
-    //     for (var p = 0; p < participantCount; p++) {
-    //         var participant = participantsArr[p];
-    //         if (selected.indexOf(participant) == -1) {
-    //             toSelect.push(participant);
-    //         }
-    //     }
-    //     this.setSelectedProteins(toSelect);
-    // },
-
     hideSelectedProteins: function() {
         var selectedArr = this.get("selectedProteins");
         var selectedCount = selectedArr.length;
@@ -621,26 +608,35 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
         });
         this.setSelectedProteins(toSelect);
     },
-/*
-    groupSelectedProteins: function() {
-        var groups = this.get("groups");
-        if (!groups){
-          groups = [];
-        }
-        var group = [];
-        var selectedArr = this.get("selectedProteins");
-        var selectedCount = selectedArr.length;
-        for (var s = 0; s < selectedCount; s++) {
-            var participant = selectedArr[s];
-            group.push(participant);
-        }
-        groups.push(group);
-    //    this.setSelectedProteins([]);
-        this.set("groups", groups);
-        this.trigger("groupsChanged");
 
+    groupSelectedProteins: function(d3target, evt) {
+        var self = this;
+        evt = evt.originalEvent;
+        if (evt.key == "Enter"){
+            var groups = self.get("groups");
+            var groupName = d3.select("#groupSelected").property("value").trim();
+            if (groupName){
+                if (groups.has(groupName)){
+                    alert("Cannot group - duplicate group name");
+                } else {
+                    var participantIds = new Set();
+                    for (var p of self.get("selectedProteins")) {
+                        participantIds.add(p.id);
+                    }
+                    groups.set(groupName, participantIds);
+                    self.trigger("change:groups");
+                    d3.select("#groupSelected").property("value", "");
+                }
+            }
+        }
     },
-*/
+
+
+    clearGroups: function() {
+        this.set("groups", new Map());
+        this.trigger("change:groups");
+    },
+
     // Things that can cause a cross-link's minimum distance to change:
     // 1. New PDB File loaded
     // 2. Change in alignment

@@ -1,6 +1,6 @@
 /* Styles specific to xi3 visualisation page */
 
-span, label {
+/*span, */label {
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
@@ -18,6 +18,9 @@ span, label {
 	background-color: #eee;
 }
 
+#xiNetButtonBar p div ul li label{
+  display: block;
+}
 
 #hiddenProteinsMessage{
   display: none;
@@ -34,7 +37,7 @@ span, label {
   text-align: right;
 }
 
-#sslOption{
+#newGroupName{
   display: none;
 }
 
@@ -136,8 +139,10 @@ span, label {
 
 #networkDiv {
     width:100%;
-    height:100%;
     display:block;
+    position: absolute;
+    top: 37px;
+    bottom:0px;
 }
 
 #spectrumDiv {

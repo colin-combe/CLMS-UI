@@ -67,6 +67,31 @@ CLMSUI.GoTerm.prototype.isDirectRelation = function(anotherGoTerm) {
 }
 
 
+CLMSUI.GoTerm.prototype.isDescendantOf = function(anotherGoTermId) {
+    var go = CLMSUI.compositeModelInst.get("go");
+    if (anotherGoTermId == this.id) {
+        return true;
+    }
+    if (this.part_of) {
+        for (let part_ofId of this.part_of) {
+            var partOf = go.get(part_ofId);
+            if (partOf.isDescendantOf(anotherGoTermId)) {
+                return true;
+            }
+        }
+    }
+    if (this.is_a) {
+        for (let superclassId of this.is_a) {
+            var sup = go.get(superclassId);
+            if (sup.isDescendantOf(anotherGoTermId)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
 /*
 CLMSUI.GoTerm.prototype.getClosestVisibleParents = function(visibleParents) {
     if (!visibleParents) {

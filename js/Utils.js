@@ -959,16 +959,6 @@ CLMSUI.utils = {
         */
     },
 
-    isModernWeb: function () {
-        var modernWeb;
-        try {
-            modernWeb = !!new Blob();
-        } catch (e) {
-            modernWeb = false;
-        }
-        return modernWeb;
-    },
-
     // add to local storage, partObj is object such as {distanceColours: {"BS3": {domain:[15,25], range:["red", "blue", "green"]} }} that gets merged
     // into existing stored object
     setLocalStorage: function (partObj, objName) {
