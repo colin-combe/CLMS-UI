@@ -781,8 +781,6 @@ CLMSUI.init.viewsEssential = function (options) {
             }
         });
 
-    // xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
-
     var xiSPEC_options = {
         targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
@@ -793,16 +791,16 @@ CLMSUI.init.viewsEssential = function (options) {
         colorScheme: colorbrewer.PRGn[8],
     }
 
-    xiSPEC.init(xiSPEC_options);
+    xiSPEC = new xiSPEC_wrapper(xiSPEC_options)
 
     // Update spectrum view when external resize event called
-    xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function () {
-        xiSPEC.vent.trigger('resize:spectrum');
+    xiSPEC.activeSpectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        xiSPECUI.vent.trigger('resize:spectrum');
     });
 
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
-    xiSPEC.Spectrum.listenTo(CLMSUI.vent, "individualMatchSelected", function (match) {
+    xiSPEC.activeSpectrum.listenTo(CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
             var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId(match);
             CLMSUI.loadSpectrum(match, randId, this.model);

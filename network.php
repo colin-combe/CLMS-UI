@@ -71,7 +71,7 @@
         <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/ngl_verbose.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/c3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../vendor/js/split.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/split.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/svgexp.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/underscore.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/spin.js<?php echo $cacheBuster ?>"></script>
@@ -150,6 +150,7 @@
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/Wrapper.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumWrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/AnnotatedSpectrumModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumControlsView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js<?php echo $cacheBuster ?>"></script>
@@ -157,7 +158,9 @@
         <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/QCwrapperView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/ErrorPlotView.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../spectrum/src/SpectrumSettingsView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/SettingsView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/AppearanceSettingsView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/DataSettingsView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/PepInputView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js<?php echo $cacheBuster ?>"></script>
@@ -251,8 +254,9 @@
 
 				CLMSUI.split = Split(["#topDiv", "#bottomDiv"],
 					{ direction: "vertical", sizes: [80,20], minSize: [200,0],
-						onDragEnd: function () { CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes(); }
-					}
+						onDragEnd: function () { CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes(); },
+						gutterStyle: function () { return { 'margin': '0 10px', 'height': '10px' } }
+					},
 				);
                 d3.select(".gutter").attr("title", "Drag to change space available to selection table");
 
