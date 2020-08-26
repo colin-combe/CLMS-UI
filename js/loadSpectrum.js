@@ -44,6 +44,7 @@ CLMSUI.loadSpectrum = function(match, randId, spectrumModel) {
     }).join(';')
     formatted_data.precursorMZ = match.expMZ();
     formatted_data.requestID = match.id;
+    formatted_data.spectrum_title = 'PSMID: ' + match.id;
 
     console.log("loadSpectrum match:" + match.id);
 
