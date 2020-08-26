@@ -14,7 +14,7 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
     
     defaultOptions: {
         canBringToTop: true,
-        canHideToolbarArea: true,
+        canHideToolbarArea: false,
         canTakeImage: true,
     },
 
@@ -27,14 +27,6 @@ var SpectrumViewWrapper = CLMSUI.utils.BaseFrameView.extend({
         var _html = "" // i think its a mistake (of mine, I think - cc) to use id's in following instaed of classes... its a backbone thing
             //~ +"<div id='spectrum'>"
             +
-            "<div id='spectrumControls' class='toolbarArea'>" +
-            "<div id='spectrumControlsTop'>" +
-            "<button class='downloadButton'>" +
-            (CLMSUI.utils.commonLabels.downloadImg + "SVG") +
-            "</button>" +
-            "<button id='clearHighlights'>Clear Highlights</button>" +
-            "</div>" +
-            "</div>" +
             "<div id='modular_xispec' class='spectrumPlotsDiv'>" +
             "</div>" +
             "<div class='validationControls'>" +
