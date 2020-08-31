@@ -52,7 +52,7 @@ CLMSUI.init.postDataLoaded = function () {
 
     //  make uniprot feature types - done here as need proteins parsed and ready from xi
     var uniprotFeatureTypes = new Map();
-    /*var participantArray = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
+    var participantArray = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
     participantArray.forEach(function (participant) {
         if (participant.uniprot) {
             var featureArray = Array.from(participant.uniprot.features);
@@ -68,7 +68,7 @@ CLMSUI.init.postDataLoaded = function () {
                 }
             });
         }
-    });*/
+    });
 
     // add uniprot feature types
     annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
@@ -116,11 +116,11 @@ CLMSUI.init.models = function (options) {
     options.alignmentCollectionInst = alignmentCollectionInst;
 
     // HACK - does nothing at moment anyway because uniprot annotations aren't available
-    // alignmentCollectionInst.listenToOnce(CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
-    //     this.addNewProteins(CLMS.arrayFromMapValues(clmsModel.get("participants")));
-    //     console.log("ASYNC. uniprot sequences poked to collection", this);
+    alignmentCollectionInst.listenToOnce(CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
+        this.addNewProteins(CLMS.arrayFromMapValues(clmsModel.get("participants")));
+        console.log("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
-    // });
+    });
 
     CLMSUI.init.modelsEssential(options);
 

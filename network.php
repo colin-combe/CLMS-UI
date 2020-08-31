@@ -269,9 +269,11 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 
-  	} catch (err) {
+  	        } catch (err) {
                 //console.log ("ERR", err);
-				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
+				CLMSUI.utils.displayError (function() { return true; }, "An error has occurred. \t&#9785;<p class='errorReason'>"
+                    + (json.error? json.error : err.stack)
+                    +"</p>");
 			}
 		};
 
@@ -293,7 +295,9 @@
                 if (!error) {
                     success (json);
                 } else {
-                    CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
+                    CLMSUI.utils.displayError (function() { return true; }, "An error has occurred. \t&#9785;<p class='errorReason'>"
+                        + (error.statusText? error.statusText : error) +"</p>"
+                        + "<a href='" + url + "'>Try loading data only.</a>");
                     console.error ("Error", error);
                 }
             });
