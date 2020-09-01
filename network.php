@@ -284,7 +284,7 @@
         if (window.location.search) {
             // 1. Load spectrum matches, dont send all query string to php (ostensibly to help with caching)
             var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
-            var phpProps = _.pick (urlChunkMap, "upload", "sid", "unval", "linears", "lowestScore", "highestScore", "decoys");
+            var phpProps = _.pick (urlChunkMap, "upload", "sid", "auto",  "unval", "linears", "lowestScore", "highestScore", "decoys");
             var newQueryString = d3.entries(phpProps).map(function (entry) { return entry.key+"="+entry.value; }).join("&");
             console.log ("ucm", urlChunkMap, newQueryString);
             var url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;
