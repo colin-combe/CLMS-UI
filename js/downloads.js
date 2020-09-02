@@ -121,7 +121,7 @@ function download(content, contentType, fileName) {
 }
 
 function mostReadableId(protein) {
-    if (protein.accession && protein.name) {
+    if (protein.accession && protein.name && (protein.accession != protein.name)) {
         return "sp|" + protein.accession + "|" + protein.name;
     } else if (protein.name) {
         return protein.name;
@@ -446,7 +446,7 @@ function getLinksCSV() {
             const chain = pDist.chainInfo;
             row.push(distance2dp(pDist.distance), chain.from, chain.to);//, chain.fromRes + 1, chain.toRes + 1); // +1 to return to 1-INDEXED
         } else {
-            row.push("", "", "", "", "");
+            row.push("", "", "");
         }
 
         // Add presence in searches
