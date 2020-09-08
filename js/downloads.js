@@ -145,7 +145,7 @@ function mostReadableMultipleId(match, matchedPeptideIndex, clmsModel) {
 
 
 function getMatchesCSV() {
-    let csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","PeakListFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","Decoy1","Decoy2","3D Distance","From Chain","To Chain","PDB SeqPos 1","PDB SeqPos 2","LinkType","DecoyType","Retention Time"\r\n';
+    let csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","PeakListFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","Decoy1","Decoy2","3D Distance","From Chain","To Chain","LinkType","DecoyType","Retention Time"\r\n';
     const clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     const participants = clmsModel.get("participants");
     const distance2dp = d3.format(".2f");
@@ -184,7 +184,7 @@ function getMatchesCSV() {
             calcDecoyProteinDistances: true
         });
         const distances2DArr = distances.map(function (dist) {
-            return dist && dist.distance ? [distance2dp(dist.distance), dist.chainInfo.from, dist.chainInfo.to, dist.chainInfo.fromRes, dist.chainInfo.toRes] : ["", "", "", "", ""];
+            return dist && dist.distance ? [distance2dp(dist.distance), dist.chainInfo.from, dist.chainInfo.to /*, dist.chainInfo.fromRes, dist.chainInfo.toRes*/] : ["", "", ""];//, "", ""];
         });
         const distancesTransposed = d3.transpose(distances2DArr); // transpose so distance data now grouped in array by field (distance, tores, etc)
         const distancesJoined = distancesTransposed.map(function (arr) {
