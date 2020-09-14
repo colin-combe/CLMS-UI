@@ -17,9 +17,9 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             xinetFixSelected: false,
             xinetShowLabels: true,
             xinetFixedSize: true,
-            xinetThickLinks: false,
+            xinetThickLinks: true,
             xinetPpiSteps: [2, 3],
-            groups: {}, // this is hack, theres something wrong here, making saving groups in layout work is still todo
+            groups: new Map (),
         });
 
         this.listenTo(this.get("clmsModel"), "change:matches", function() {
@@ -630,7 +630,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             }
         }
     },
-
 
     clearGroups: function() {
         this.set("groups", new Map());
