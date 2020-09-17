@@ -17,7 +17,7 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             xinetFixSelected: false,
             xinetShowLabels: true,
             xinetFixedSize: true,
-            xinetThickLinks: false,
+            xinetThickLinks: true,
             xinetPpiSteps: [2, 3],
             groups: new Map (),
         });
@@ -630,7 +630,6 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
             }
         }
     },
-
 
     clearGroups: function() {
         this.set("groups", new Map());

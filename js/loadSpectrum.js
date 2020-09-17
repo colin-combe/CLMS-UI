@@ -1,7 +1,7 @@
 var CLMSUI = CLMSUI || {};
 var xiSPEC = xiSPEC || {};
 
-CLMSUI.loadSpectrum = function(match, randId, spectrumModel) {
+CLMSUI.loadSpectrum = function(match, randId, spectrumModel) { 
     if (match.spectrum && match.spectrum.pks) {
         var formatted_data = {};
 

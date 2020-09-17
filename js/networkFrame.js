@@ -1,4 +1,3 @@
-
 var CLMSUI = CLMSUI || {};
 
 // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
@@ -117,6 +116,7 @@ CLMSUI.init.models = function (options) {
     var alignmentCollectionInst = new CLMSUI.BackboneModelTypes.ProtAlignCollection();
     options.alignmentCollectionInst = alignmentCollectionInst;
 
+    // HACK - does nothing at moment anyway because uniprot annotations aren't available
     alignmentCollectionInst.listenToOnce(CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
         this.addNewProteins(CLMS.arrayFromMapValues(clmsModel.get("participants")));
         console.log("ASYNC. uniprot sequences poked to collection", this);
@@ -205,7 +205,7 @@ CLMSUI.init.models = function (options) {
 //only inits stuff required by validation page
 CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.oldDB = options.oldDB || false;
-/*
+
     var hasMissing = !_.isEmpty(options.missingSearchIDs);
     var hasIncorrect = !_.isEmpty(options.incorrectSearchIDs);
     var hasNoMatches = _.isEmpty(options.rawMatches);
@@ -215,10 +215,8 @@ CLMSUI.init.modelsEssential = function (options) {
         },
         (hasMissing ? "Cannot find Search ID" + (options.missingSearchIDs.length > 1 ? "s " : " ") + options.missingSearchIDs.join(", ") + ".<br>" : "") +
         (hasIncorrect ? "Wrong ID Key for Search ID" + (options.incorrectSearchIDs.length > 1 ? "s " : " ") + options.incorrectSearchIDs.join(", ") + ".<br>" : "") +
-        (!hasMissing && !hasIncorrect && hasNoMatches ? "No cross-links detected for this search.<br>" : "") +
-        "<p>You can either go to the search history page <br>or you can upload CSV files via the LOAD menu.</p>"
+        (!hasMissing && !hasIncorrect && hasNoMatches ? "No cross-links detected for this search.<br>" : "")
     );
-*/
 
     // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     var clmsModelInst = new window.CLMS.model.SearchResultsModel();
@@ -254,7 +252,7 @@ CLMSUI.init.modelsEssential = function (options) {
         B: clmsModelInst.get("manualValidatedPresent"),
         C: clmsModelInst.get("manualValidatedPresent"),
         Q: clmsModelInst.get("manualValidatedPresent"),
-        AUTO: !clmsModelInst.get("manualValidatedPresent"),
+        // AUTO: !clmsModelInst.get("manualValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
         //matchScoreCutoff: [undefined, undefined],
@@ -783,8 +781,6 @@ CLMSUI.init.viewsEssential = function (options) {
             }
         });
 
-    // xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
-
     var xiSPEC_options = {
         targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
@@ -795,16 +791,16 @@ CLMSUI.init.viewsEssential = function (options) {
         colorScheme: colorbrewer.PRGn[8],
     }
 
-    xiSPEC.init(xiSPEC_options);
+    xiSPEC = new xiSPEC_wrapper(xiSPEC_options)
 
     // Update spectrum view when external resize event called
-    xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function () {
-        xiSPEC.vent.trigger('resize:spectrum');
+    xiSPEC.activeSpectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        xiSPECUI.vent.trigger('resize:spectrum');
     });
 
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
-    xiSPEC.Spectrum.listenTo(CLMSUI.vent, "individualMatchSelected", function (match) {
+    xiSPEC.activeSpectrum.listenTo(CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
             var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId(match);
             CLMSUI.loadSpectrum(match, randId, this.model);
@@ -1120,4 +1116,3 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
     ByRei_dynDiv.init.main();
     //ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
 };
-

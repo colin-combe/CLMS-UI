@@ -58,7 +58,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             "autovalidated", "validated", "homom", "group", "searchId", "runName", "scanNumber",
             "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",
             "precursorIntensity", "elutionStart", "elutionEnd", "expMissedCleavages",
-            "searchMissedCleavages", "modificationCount",
+            "searchMissedCleavages", "missingPeaks", "modificationCount",
         ];
 
         this.headerLabels = {
@@ -94,7 +94,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             elutionEnd: "Elut. End",
             expMissedCleavages: "Experimental Max. Missed Cleavages",
             searchMissedCleavages: "Search Max. Missed Cleavages",
-            modificationCount: "Max. Mod. Count",
+            modificationCount: "Max. Mod. Count"
         };
 
         this.numberColumns = d3.set(["ambiguity", "score", "linkPos1", "linkPos2", "pepPos1", "pepPos2", "precursorCharge", "expMZ", "expMass", "calcMZ", "calcMass", "massError",  "missingPeaks", "precursorItensity", /*"expMissedCleavages", "searchMissedCleavages",*/ "elutionStart", "elutionEnd", "modificationCount"]);
@@ -143,6 +143,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
             }
         );
 
+        var integerNumberFormat = d3.format(".0f");
         var twoZeroPadder = d3.format(".2f");
         var massZeroPadder = d3.format(".6f");
         var scientific = d3.format(".4e");
@@ -232,7 +233,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return massZeroPadder(d.massError());
             },
             missingPeaks: function(d) {
-                return massZeroPadder(d.missingPeaks());
+                return integerNumberFormat(d.missingPeaks());
             },
             precursorIntensity: function(d) {
                 return scientific(d.precursor_intensity);

@@ -495,13 +495,11 @@ A.btn {
 /* For use with Split.js */
 
 .gutter {
-    border-top: 1px solid white;
-    border-bottom: 1px solid #aaa;
+
     background-color: #091d42;
   background-repeat: no-repeat;
   background-position: 50%;
   position: relative; /* will overlay previous absolute divs i.e. distance slider */
-    margin: 0 10px;
 }
 
 .gutter:hover {
@@ -510,11 +508,15 @@ A.btn {
 }
 
 .gutter.gutter-horizontal {
+  border-left: 1px solid #aaa;
+  border-right: 1px solid #aaa;
   background-image: url('../images/grips/vertical.png');
   cursor: ew-resize;
 }
 
 .gutter.gutter-vertical {
+  border-top: 1px solid white;
+  border-bottom: 1px solid #aaa;
   background-image: url('../images/grips/horizontal.png');
   cursor: ns-resize;
 }
