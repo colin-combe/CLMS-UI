@@ -205,7 +205,7 @@ CLMSUI.init.models = function (options) {
 //only inits stuff required by validation page
 CLMSUI.init.modelsEssential = function (options) {
     CLMSUI.oldDB = options.oldDB || false;
-
+/*
     var hasMissing = !_.isEmpty(options.missingSearchIDs);
     var hasIncorrect = !_.isEmpty(options.incorrectSearchIDs);
     var hasNoMatches = _.isEmpty(options.rawMatches);
@@ -217,6 +217,7 @@ CLMSUI.init.modelsEssential = function (options) {
         (hasIncorrect ? "Wrong ID Key for Search ID" + (options.incorrectSearchIDs.length > 1 ? "s " : " ") + options.incorrectSearchIDs.join(", ") + ".<br>" : "") +
         (!hasMissing && !hasIncorrect && hasNoMatches ? "No cross-links detected for this search.<br>" : "")
     );
+*/
 
     // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
     var clmsModelInst = new window.CLMS.model.SearchResultsModel();
