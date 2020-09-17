@@ -22,7 +22,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 C: true,
                 Q: true,
                 unval: false,
-                AUTO: false,
+                AUTO: true,
                 decoys: true,
                 //distance
                 distanceUndef: true,

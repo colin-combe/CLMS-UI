@@ -252,11 +252,11 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         });
 
         //hack to take out pan/select option in firefox TODO - change to detecting relevant feature (getIntersectionList)
-        if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+        // if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
             // Do Firefox-related activities
             d3.selectAll(".xinetDragToPan").style("display", "none");
             d3.selectAll(".xinetDragToSelect").style("display", "none");
-        };
+        // };
     },
 
     dragActionChanged: function() {
@@ -349,7 +349,6 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         }
         this.model.set("groups", groupMap);
     },
-
 
     identifier: "xiNET Controls",
 });

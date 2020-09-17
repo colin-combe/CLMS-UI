@@ -12,7 +12,7 @@ CLMSUI.loadSpectrum = function(match, randId, spectrumModel) {
         formatted_data.linkPos2 = match.linkPos2 - 1;
     }
     formatted_data.crossLinkerModMass = match.crossLinkerModMass()
-    formatted_data.modifications = xiSPEC.SpectrumModel.knownModifications;
+    formatted_data.modifications = xiSPEC.activeSpectrum.models.Spectrum.knownModifications;
     formatted_data.precursorCharge = match.precursorCharge;
     formatted_data.fragmentTolerance = match.fragmentTolerance();
 
@@ -44,6 +44,7 @@ CLMSUI.loadSpectrum = function(match, randId, spectrumModel) {
     }).join(';')
     formatted_data.precursorMZ = match.expMZ();
     formatted_data.requestID = match.id;
+    formatted_data.spectrum_title = 'PSMID: ' + match.id;
 
     console.log("loadSpectrum match:" + match.id);
 

@@ -121,7 +121,7 @@ function download(content, contentType, fileName) {
 }
 
 function mostReadableId(protein) {
-    if (protein.accession && protein.name) {
+    if (protein.accession && protein.name && (protein.accession != protein.name)) {
         return "sp|" + protein.accession + "|" + protein.name;
     } else if (protein.name) {
         return protein.name;
@@ -145,7 +145,7 @@ function mostReadableMultipleId(match, matchedPeptideIndex, clmsModel) {
 
 
 function getMatchesCSV() {
-    let csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","AutoValidated","Validated","Search","RawFileName","PeakListFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","Decoy1","Decoy2","3D Distance","From Chain","To Chain","PDB SeqPos 1","PDB SeqPos 2","LinkType","DecoyType","Retention Time"\r\n';
+    let csv = '"Id","Protein1","SeqPos1","PepPos1","PepSeq1","LinkPos1","Protein2","SeqPos2","PepPos2","PepSeq2","LinkPos2","Score","Charge","ExpMz","ExpMass","CalcMz","CalcMass","MassError","Missing Peaks","AutoValidated","Validated","Search","RawFileName","PeakListFileName","ScanNumber","ScanIndex","CrossLinkerModMass","FragmentTolerance","IonTypes","Decoy1","Decoy2","3D Distance","From Chain","To Chain","LinkType","DecoyType","Retention Time"\r\n';
     const clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     const participants = clmsModel.get("participants");
     const distance2dp = d3.format(".2f");
@@ -184,7 +184,7 @@ function getMatchesCSV() {
             calcDecoyProteinDistances: true
         });
         const distances2DArr = distances.map(function (dist) {
-            return dist && dist.distance ? [distance2dp(dist.distance), dist.chainInfo.from, dist.chainInfo.to, dist.chainInfo.fromRes, dist.chainInfo.toRes] : ["", "", "", "", ""];
+            return dist && dist.distance ? [distance2dp(dist.distance), dist.chainInfo.from, dist.chainInfo.to /*, dist.chainInfo.fromRes, dist.chainInfo.toRes*/] : ["", "", ""];//, "", ""];
         });
         const distancesTransposed = d3.transpose(distances2DArr); // transpose so distance data now grouped in array by field (distance, tores, etc)
         const distancesJoined = distancesTransposed.map(function (arr) {
@@ -206,7 +206,7 @@ function getMatchesCSV() {
         const retentionTime = match.retentionTime !== undefined ? match.retentionTime : (match.elution_time_end === -1 ? match.elution_time_start : "");
 
         const data = [
-            match.id, mostReadableMultipleId(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? mostReadableMultipleId(match, 1, clmsModel) : ""), lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.precursorCharge, match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(), match.autovalidated, match.validated, match.searchId, match.runName(), match.peakListFileName(), match.scanNumber, match.scanIndex, match.crossLinkerModMass(), match.fragmentToleranceString(), match.ionTypesString(), decoy1, decoy2, distancesJoined.join('","'), linkType, decoyType, retentionTime
+            match.id, mostReadableMultipleId(match, 0, clmsModel), lp1, pp1, peptides1.seq_mods, match.linkPos1, (peptides2 ? mostReadableMultipleId(match, 1, clmsModel) : ""), lp2, pp2, (peptides2 ? peptides2.seq_mods : ""), match.linkPos2, match.score(), match.precursorCharge, match.expMZ(), match.expMass(), match.calcMZ(), match.calcMass(), match.massError(), match.missingPeaks(), match.autovalidated, match.validated, match.searchId, match.runName(), match.peakListFileName(), match.scanNumber, match.scanIndex, match.crossLinkerModMass(), match.fragmentToleranceString(), match.ionTypesString(), decoy1, decoy2, distancesJoined.join('","'), linkType, decoyType, retentionTime
         ];
         csv += '"' + data.join('","') + '"\r\n';
         /*
@@ -446,7 +446,7 @@ function getLinksCSV() {
             const chain = pDist.chainInfo;
             row.push(distance2dp(pDist.distance), chain.from, chain.to);//, chain.fromRes + 1, chain.toRes + 1); // +1 to return to 1-INDEXED
         } else {
-            row.push("", "", "", "", "");
+            row.push("", "", "");
         }
 
         // Add presence in searches

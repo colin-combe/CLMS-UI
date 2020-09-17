@@ -52,7 +52,7 @@ CLMSUI.init.postDataLoaded = function () {
 
     //  make uniprot feature types - done here as need proteins parsed and ready from xi
     var uniprotFeatureTypes = new Map();
-    /*var participantArray = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
+    var participantArray = CLMS.arrayFromMapValues(CLMSUI.compositeModelInst.get("clmsModel").get("participants"));
     participantArray.forEach(function (participant) {
         if (participant.uniprot) {
             var featureArray = Array.from(participant.uniprot.features);
@@ -68,7 +68,7 @@ CLMSUI.init.postDataLoaded = function () {
                 }
             });
         }
-    });*/
+    });
 
     // add uniprot feature types
     annotationTypes = annotationTypes.concat(CLMS.arrayFromMapValues(uniprotFeatureTypes));
@@ -116,11 +116,11 @@ CLMSUI.init.models = function (options) {
     options.alignmentCollectionInst = alignmentCollectionInst;
 
     // HACK - does nothing at moment anyway because uniprot annotations aren't available
-    // alignmentCollectionInst.listenToOnce(CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
-    //     this.addNewProteins(CLMS.arrayFromMapValues(clmsModel.get("participants")));
-    //     console.log("ASYNC. uniprot sequences poked to collection", this);
+    alignmentCollectionInst.listenToOnce(CLMSUI.vent, "uniprotDataParsed", function (clmsModel) {
+        this.addNewProteins(CLMS.arrayFromMapValues(clmsModel.get("participants")));
+        console.log("ASYNC. uniprot sequences poked to collection", this);
         allDataLoaded();
-    // });
+    });
 
     CLMSUI.init.modelsEssential(options);
 
@@ -214,8 +214,7 @@ CLMSUI.init.modelsEssential = function (options) {
         },
         (hasMissing ? "Cannot find Search ID" + (options.missingSearchIDs.length > 1 ? "s " : " ") + options.missingSearchIDs.join(", ") + ".<br>" : "") +
         (hasIncorrect ? "Wrong ID Key for Search ID" + (options.incorrectSearchIDs.length > 1 ? "s " : " ") + options.incorrectSearchIDs.join(", ") + ".<br>" : "") +
-        (!hasMissing && !hasIncorrect && hasNoMatches ? "No cross-links detected for this search.<br>" : "") +
-        "<p>You can either go to the search history page <br>or you can upload CSV files via the LOAD menu.</p>"
+        (!hasMissing && !hasIncorrect && hasNoMatches ? "No cross-links detected for this search.<br>" : "")
     );
 
     // This SearchResultsModel is what fires (sync or async) the uniprotDataParsed event we've set up a listener for above ^^^
@@ -252,7 +251,7 @@ CLMSUI.init.modelsEssential = function (options) {
         B: clmsModelInst.get("manualValidatedPresent"),
         C: clmsModelInst.get("manualValidatedPresent"),
         Q: clmsModelInst.get("manualValidatedPresent"),
-        AUTO: !clmsModelInst.get("manualValidatedPresent"),
+        // AUTO: !clmsModelInst.get("manualValidatedPresent"),
         ambig: clmsModelInst.get("ambiguousPresent"),
         linears: clmsModelInst.get("linearsPresent"),
         //matchScoreCutoff: [undefined, undefined],
@@ -781,8 +780,6 @@ CLMSUI.init.viewsEssential = function (options) {
             }
         });
 
-    // xiSPEC.init(options.specWrapperDiv, {baseDir: CLMSUI.xiSpecBaseDir, xiAnnotatorBaseURL: CLMSUI.xiAnnotRoot});
-
     var xiSPEC_options = {
         targetDiv: 'modular_xispec',
         baseDir: CLMSUI.xiSpecBaseDir,
@@ -793,16 +790,16 @@ CLMSUI.init.viewsEssential = function (options) {
         colorScheme: colorbrewer.PRGn[8],
     }
 
-    xiSPEC.init(xiSPEC_options);
+    xiSPEC = new xiSPEC_wrapper(xiSPEC_options)
 
     // Update spectrum view when external resize event called
-    xiSPEC.Spectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function () {
-        xiSPEC.vent.trigger('resize:spectrum');
+    xiSPEC.activeSpectrum.listenTo(CLMSUI.vent, "resizeSpectrumSubViews", function () {
+        xiSPECUI.vent.trigger('resize:spectrum');
     });
 
     // "individualMatchSelected" in CLMSUI.vent is link event between selection table view and spectrum view
     // used to transport one Match between views
-    xiSPEC.Spectrum.listenTo(CLMSUI.vent, "individualMatchSelected", function (match) {
+    xiSPEC.activeSpectrum.listenTo(CLMSUI.vent, "individualMatchSelected", function (match) {
         if (match) {
             var randId = CLMSUI.compositeModelInst.get("clmsModel").getSearchRandomId(match);
             CLMSUI.loadSpectrum(match, randId, this.model);
