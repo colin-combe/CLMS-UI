@@ -73,7 +73,7 @@
         <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/ngl_verbose.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/c3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../vendor/js/split.min.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/split.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/svgexp.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/underscore.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/spin.js<?php echo $cacheBuster ?>"></script>
