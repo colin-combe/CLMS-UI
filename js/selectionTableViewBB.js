@@ -233,7 +233,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                 return massZeroPadder(d.massError());
             },
             missingPeaks: function(d) {
-                return integerNumberFormat(d.missingPeaks());
+                return "";// HACK //integerNumberFormat(d.missingPeaks());
             },
             precursorIntensity: function(d) {
                 return scientific(d.precursor_intensity);
