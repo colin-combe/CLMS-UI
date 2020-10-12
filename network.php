@@ -151,6 +151,7 @@
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/Wrapper.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/SpectrumWrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/AnnotatedSpectrumModel.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumControlsView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/SpectrumView2.js<?php echo $cacheBuster ?>"></script>
@@ -158,7 +159,9 @@
         <script type="text/javascript" src="../spectrum/src/PrecursorInfoView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/QCwrapperView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/ErrorPlotView.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../spectrum/src/SpectrumSettingsView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/SettingsView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/AppearanceSettingsView.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../spectrum/src/DataSettingsView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/PepInputView.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/FragKey/KeyFragment.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/src/graph/Graph.js<?php echo $cacheBuster ?>"></script>
@@ -252,8 +255,9 @@
 
 				CLMSUI.split = Split(["#topDiv", "#bottomDiv"],
 					{ direction: "vertical", sizes: [80,20], minSize: [200,0],
-						onDragEnd: function () { CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes(); }
-					}
+						onDragEnd: function () { CLMSUI.oldSplitterProportions = CLMSUI.split.getSizes(); },
+						gutterStyle: function () { return { 'margin': '0 10px', 'height': '10px' } }
+					},
 				);
                 d3.select(".gutter").attr("title", "Drag to change space available to selection table");
 
@@ -266,9 +270,11 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 
-  	} catch (err) {
+  	        } catch (err) {
                 //console.log ("ERR", err);
-				CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+(json ? json.error : "")+"</p>");
+				CLMSUI.utils.displayError (function() { return true; }, "An error has occurred. \t&#9785;<p class='errorReason'>"
+                    + (json.error? json.error : err.stack)
+                    +"</p>");
 			}
 		};
 
@@ -279,7 +285,7 @@
         if (window.location.search) {
             // 1. Load spectrum matches, dont send all query string to php (ostensibly to help with caching)
             var urlChunkMap = CLMSUI.modelUtils.parseURLQueryString (window.location.search.slice(1));
-            var phpProps = _.pick (urlChunkMap, "upload", "sid", "unval", "linears", "lowestScore", "highestScore", "decoys");
+            var phpProps = _.pick (urlChunkMap, "upload", "sid", "auto",  "unval", "linears", "lowestScore", "highestScore", "decoys");
             var newQueryString = d3.entries(phpProps).map(function (entry) { return entry.key+"="+entry.value; }).join("&");
             console.log ("ucm", urlChunkMap, newQueryString);
             var url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;
@@ -290,7 +296,9 @@
                 if (!error) {
                     success (json);
                 } else {
-                    CLMSUI.utils.displayError (function() { return true; }, "Unfortunately, an error has occurred while trying to load the search.<p class='errorReason'>"+error.statusText+"</p>");
+                    CLMSUI.utils.displayError (function() { return true; }, "An error has occurred. \t&#9785;<p class='errorReason'>"
+                        + (error.statusText? error.statusText : error) +"</p>"
+                        + "<a href='" + url + "'>Try loading data only.</a>");
                     console.error ("Error", error);
                 }
             });
