@@ -137,27 +137,22 @@ header('Content-type: text/html; charset=utf-8');
     <body>
         <!-- Main -->
         <div id="main">
-
             <div class="mainContent">
-                <div id="topDiv">
-                </div>
+                <div class="page-header" style="position:relative">
+                    <i class="fa fa-home fa-xi" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
+                    <span class="headerLabel">
+                        <?php echo $_SESSION['session_name'] ?>
+                    </span>
+                    <p id="expDropdownPlaceholder"></p>
+                    <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
+                </div> <!-- page-header -->
+                <div id="topDiv"></div>
                 <div id="bottomDiv"></div>
             </div>
-
-            <div class="page-header">
-                <i class="fa fa-home fa-xi" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
-                <span class="headerLabel">
-                    <?php echo $_SESSION['session_name'] ?>
-                </span>
-                <p id="expDropdownPlaceholder"></p>
-                <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
-            </div> <!-- page-header -->
-
             <div class="controls">
                 <span id="filterPlaceholder"></span>
             </div>
         </div><!-- MAIN -->
-
 
         <script>
         //<![CDATA[
