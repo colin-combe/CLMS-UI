@@ -373,12 +373,19 @@ CLMSUI.init.views = function () {
     });
 
     // Generate checkboxes for view dropdown
-    var checkBoxData = [{
-        id: "circularChkBxPlaceholder",
-        label: "Circular",
-        eventName: "circularViewShow",
-        tooltip: "Proteins are arranged in a circle, with crosslinks drawn in-between",
-    },
+    var checkBoxData = [        {
+            id: "keyChkBxPlaceholder",
+            label: "Legend & Colours",
+            eventName: "keyViewShow",
+            tooltip: "Explains and allows changing of current colour scheme",
+            sectionEnd: true
+        },
+        {
+            id: "circularChkBxPlaceholder",
+            label: "Circular",
+            eventName: "circularViewShow",
+            tooltip: "Proteins are arranged in a circle, with crosslinks drawn in-between",
+        },
         {
             id: "nglChkBxPlaceholder",
             label: "3D (NGL)",
@@ -401,7 +408,7 @@ CLMSUI.init.views = function () {
             id: "spectrumChkBxPlaceholder",
             label: "Spectrum",
             eventName: "spectrumShow",
-            tooltip: "View the spectrum for a selected match (selection made through Selected Match Table after selecting Cross-Links)",
+            tooltip: "View the spectrum for a selected match (selection made through Selected Match Table after selecting Crosslinks)",
             sectionEnd: true
         },
         {
@@ -434,14 +441,7 @@ CLMSUI.init.views = function () {
             label: "Search Summaries",
             eventName: "searchesViewShow",
             tooltip: "Shows metadata for current searches",
-            sectionEnd: true
-        },
-        {
-            id: "keyChkBxPlaceholder",
-            label: "Legend & Colours",
-            eventName: "keyViewShow",
-            tooltip: "Explains and allows changing of current colour scheme",
-            sectionEnd: true
+            sectionEnd: false
         },
         // {
         //     id: "goTermsChkBxPlaceholder",
@@ -822,7 +822,7 @@ CLMSUI.init.viewsEssential = function (options) {
                 sectionBegin: true
             },
                 {
-                    name: "Filtered Cross-Links",
+                    name: "Filtered Crosslinks",
                     func: downloadLinks,
                     tooltip: "Produces a CSV File of Filtered Cross-Link data"
                 },
@@ -981,7 +981,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             model: compModel,
             attr: "proteinColourAssignment"
         },
-        label: "Choose Protein Colour Scheme"
+        label: "Protein Colour Scheme"
     });
 
     new CLMSUI.CrosslinkViewer({
@@ -1058,12 +1058,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         model: compModel,
         displayEventName: "scatterplotViewShow",
     });
-
-    // new CLMSUI.CSVFileChooserBB({
-    //     el: "#csvPanel",
-    //     model: compModel,
-    //     displayEventName: "csvFileChooserShow",
-    // });
 
     new CLMSUI.LinkMetaDataFileChooserBB({
         el: "#linkMetaLoadPanel",

@@ -82,15 +82,15 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         // Generate Export/Save cross-link data dropdown
         var saveExportButtonData = [{
                 class: "savePDBButton",
-                label: "PDB & CrossLinks",
+                label: "PDB & Crosslinks",
                 id: "savePDB",
-                d3tooltip: "Saves a copy of the PDB with complete filtered cross-links"
+                d3tooltip: "Saves a copy of the PDB with complete filtered crosslinks"
             },
             {
                 class: "exportPymolButton",
                 label: "Pymol Command File",
                 id: "pymolExport",
-                d3tooltip: "Export a Pymol command script for recreating this pdb and complete filtered cross-links"
+                d3tooltip: "Export a Pymol command script for recreating this pdb and complete filtered crosslinks"
             },
             {
                 class: "export3dLinksCSV",
@@ -102,7 +102,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 class: "exportHaddockButton",
                 label: "Haddock Distance Restraints File",
                 id: "haddockExport",
-                d3tooltip: "Export a Haddock command script containing the complete filtered inter-pdb(model) cross-links. Requires 'Show > Inter-Model Distances' to be set"
+                d3tooltip: "Export a Haddock command script containing the complete filtered inter-pdb(model) crosslinks. Requires 'Show > Inter-Model Distances' to be set"
             },
         ];
         saveExportButtonData
@@ -178,16 +178,16 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
         var toggleButtonData = [{
                 initialState: this.options.selectedOnly,
                 class: "selectedOnlyCB",
-                label: "Selected Cross-Links Only",
+                label: "Selected Crosslinks Only",
                 id: "selectedOnly",
-                d3tooltip: "Only show selected cross-links"
+                d3tooltip: "Only show selected crosslinks"
             },
             {
                 initialState: this.options.shortestLinksOnly,
                 class: "shortestLinkCB",
-                label: "Shortest Possible Cross-Links Only",
+                label: "Shortest Possible Crosslinks Only",
                 id: "shortestOnly",
-                d3tooltip: "Only show shortest possible cross-links: complexes with multiple (N) copies of a protein can have multiple possible alternatives for cross-links - N x N for self links, N x M for between links"
+                d3tooltip: "Only show shortest possible crosslinks: complexes with multiple (N) copies of a protein can have multiple possible alternatives for crosslinks - N x N for self links, N x M for between links"
             },
             {
                 initialState: this.options.allowInterModelDistances,
@@ -201,21 +201,21 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 class: "showResiduesCB",
                 label: "Cross-Linked Residues",
                 id: "showResidues",
-                d3tooltip: "Show cross-linked residues on protein representations"
+                d3tooltip: "Show crosslinked residues on protein representations"
             },
             {
                 initialState: this.options.showAllProteins,
                 class: "showAllProteinsCB",
                 label: "All Proteins",
                 id: "showAllProteins",
-                d3tooltip: "Keep showing proteins with no current cross-links (within available PDB structure)"
+                d3tooltip: "Keep showing proteins with no current crosslinks (within available PDB structure)"
             },
             {
                 initialState: this.options.labelVisible,
                 class: "distanceLabelCB",
                 label: "Distance Labels",
                 id: "visLabel",
-                d3tooltip: "Show distance labels on displayed cross-links"
+                d3tooltip: "Show distance labels on displayed crosslinks"
             },
             {
                 class: "chainLabelLengthRB",

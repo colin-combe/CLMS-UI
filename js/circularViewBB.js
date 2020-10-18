@@ -262,7 +262,7 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 type: "radio",
                 group: "sort",
                 sectionEnd: true,
-                d3tooltip: "Order proteins to reduce visual cross-link intersections in the circle - making it easier to comprehend"
+                d3tooltip: "Order proteins to reduce visual crosslink intersections in the circle - making it easier to comprehend"
             },
             {
                 class: "niceButton",
@@ -311,35 +311,35 @@ CLMSUI.CircularViewBB = CLMSUI.utils.BaseFrameView.extend({
                 label: "All Proteins",
                 id: "showLinkless",
                 initialState: this.options.showLinkless,
-                d3tooltip: "Keep showing proteins with no current cross-links for a steadier layout"
+                d3tooltip: "Keep showing proteins with no current crosslinks for a steadier layout"
             },
             {
                 class: "showResLabelsButton",
                 label: "Residue Labels (If Few Links)",
                 id: "resLabels",
                 initialState: this.options.showResLabels,
-                d3tooltip: "If only a few cross-links, show the residue letters at the ends of the cross-links"
+                d3tooltip: "If only a few crosslinks, show the residue letters at the ends of the cross-links"
             },
             {
                 class: "flipIntraButton",
                 label: "Self Links on Outside",
                 id: "flip",
                 initialState: this.options.intraOutside,
-                d3tooltip: "Flips the display of Self cross-links between inside and outside"
+                d3tooltip: "Flips the display of Self crosslinks between inside and outside"
             },
             {
                 class: "toggleHomomOpposition",
                 label: "Links with Overlapping Peptides Opposite to Self Links",
                 id: "homomOpposite",
                 initialState: this.options.homomOpposite,
-                d3tooltip: "Show cross-links with overlapping peptides on the opposite side (in/out) to Self cross-links. Often these may be homomultimeric - links between different copies of the same protein."
+                d3tooltip: "Show crosslinks with overlapping peptides on the opposite side (in/out) to Self crosslinks. Often these may be homomultimeric - links between different copies of the same protein."
             },
             {
                 class: "showSelectedOnly",
-                label: "Selected Cross-Links Only",
+                label: "Selected Crosslinks Only",
                 id: "showSelectedOnly",
                 initialState: this.options.showSelectedOnly,
-                d3tooltip: "Show selected cross-links only (yellow highlighting is removed also.)"
+                d3tooltip: "Show selected crosslinks only (yellow highlighting is removed also.)"
             },
         ];
         showOptionsButtonData

@@ -1,6 +1,5 @@
 var CLMSUI = CLMSUI || {};
 
-
 CLMSUI.BackboneModelTypes.DefaultProteinColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend({
     initialize: function() {
         this
