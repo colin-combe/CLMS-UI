@@ -8,8 +8,19 @@ CLMSUI.BackboneModelTypes.DefaultLinkColourModel = CLMSUI.BackboneModelTypes.Col
             .set("type", "ordinal")
         ;
     },
-    getValue: function(crossLink) {
-        return crossLink.isSelfLink() || crossLink.isLinearLink() ? (crossLink.confirmedHomomultimer ? 1 : 0) : 2;
+    getValue: function(link) {
+        // if (link.crossLinks) {
+        //     return link.crossLinks[0].isSelfLink() || link.crossLinks[0].isLinearLink() ? (link.hd ? 1 : 0) : 2;
+        // } else {
+            return link.isSelfLink() || link.isLinearLink() ? (link.confirmedHomomultimer ? 1 : 0) : 2;
+        // }
+    },
+    getColour: function(obj) {  // obj is generally a crosslink, but is non-specific at this point
+        if (obj.crossLinks) {
+            return "#202020";
+        }
+        const val = this.getValue(obj);
+        return val !== undefined ? this.get("colScale")(val) : this.get("undefinedColour");
     },
 });
 
@@ -43,7 +54,12 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
 
         const multiGroupColour = "#202020"; // default colour for links involved in multiple groups
         if (groupCount < 11) {
-            const colArr = [multiGroupColour].concat(groupCount < 11 ? ["#4e79a7", "#f28e2c", "#e15759", "#76b7b2", "#59a14f", "#edc949", "#af7aa1", "#ff9da7", "#9c755f", "#bab0ab"] : colorbrewer.Paired[10]);
+            const colArr = [multiGroupColour].concat(groupCount < 6 ? ["#1b9e77",
+            "#7570b3",
+            "#e7298a",
+            "#66a61e",
+            "#d95f02"
+            ] : colorbrewer.Paired[10]);
             colScale = d3.scale.ordinal().range(colArr).domain(groupDomain);
         } else { // more than 10 groups, not really feasible to find colour scale that works - a d3.scale that always returns gray?
             colScale = d3.scale.linear().domain([-1, 0]).range([multiGroupColour, "#448866"]).clamp(true);
@@ -55,23 +71,44 @@ CLMSUI.BackboneModelTypes.GroupColourModel = CLMSUI.BackboneModelTypes.ColourMod
             .set("type", "ordinal")
         ;
     },
-    getValue: function(crossLink) {
-        //check if link uniquely belongs to one group
-        const filteredMatchesAndPepPositions = crossLink.filteredMatches_pp;
+    getValue: function(link) {
+        if (link.crossLinks) {
+            for (let crosslink of link.crossLinks) {
+                const filteredMatchesAndPepPositions = crosslink.filteredMatches_pp;
 
-        let value = null;
-        for (let fm_pp = filteredMatchesAndPepPositions.length; --fm_pp >= 0;) {
-            const match = filteredMatchesAndPepPositions[fm_pp].match;
-            const group = this.searchMap.get(match.searchId).group;
-            if (!value) {
-                value = group;
-            } else if (value !== group) {
-                value = -1;    //undefined;
-                break;
+                let value = null;
+                for (let fm_pp = filteredMatchesAndPepPositions.length; --fm_pp >= 0;) {
+                    const match = filteredMatchesAndPepPositions[fm_pp].match;
+                    const group = this.searchMap.get(match.searchId).group;
+                    if (!value) {
+                        value = group;
+                    } else if (value !== group) {
+                        value = -1;    //undefined;
+                        break;
+                    }
+                }
+                // choose value if link definitely belongs to just one group or set as undefined (-1)
+                return value;
             }
         }
-        // choose value if link definitely belongs to just one group or set as undefined (-1)
-        return value;
+        else {
+            //check if link uniquely belongs to one group
+            const filteredMatchesAndPepPositions = link.filteredMatches_pp;
+
+            let value = null;
+            for (let fm_pp = filteredMatchesAndPepPositions.length; --fm_pp >= 0;) {
+                const match = filteredMatchesAndPepPositions[fm_pp].match;
+                const group = this.searchMap.get(match.searchId).group;
+                if (!value) {
+                    value = group;
+                } else if (value !== group) {
+                    value = -1;    //undefined;
+                    break;
+                }
+            }
+            // choose value if link definitely belongs to just one group or set as undefined (-1)
+            return value;
+        }
     },
     getColourByValue: function(val) {
         const scale = this.get("colScale");
@@ -96,8 +133,11 @@ CLMSUI.BackboneModelTypes.DistanceColourModel = CLMSUI.BackboneModelTypes.Colour
             .set("unit", "Å")
         ;
     },
-    getValue: function(crossLink) {
-        return crossLink.getMeta("distance");
+    getValue: function(link) {
+        if (link.crossLinks) {
+            return undefined;
+        }
+        return link.getMeta("distance");
         //return CLMSUI.compositeModelInst.getSingleCrosslinkDistance(crossLink);
     },
 });
@@ -135,47 +175,45 @@ CLMSUI.BackboneModelTypes.InterProteinColourModel = CLMSUI.BackboneModelTypes.Co
         return pid1 < pid2 ? pid1 + "---" + pid2 : pid2 + "---" + pid1;
     },
 
-    getValue: function(crossLink) {
-        const id1 = crossLink.fromProtein.id;
-        const id2 = crossLink.toProtein ? crossLink.toProtein.id : undefined;
+    getValue: function(link) {
+        let id1, id2;
+        if (link.crossLinks) {
+            id1 = link.crossLinks[0].fromProtein.id;
+            id2 = link.crossLinks[0].toProtein ? link.crossLinks[0].toProtein.id : undefined;
+        } else {
+            id1 = link.fromProtein.id;
+            id2 = link.toProtein ? link.toProtein.id : undefined;
+        }
         return (id2 === undefined || id1 === id2) ? "same" : (this.overload ? "other" : this.makeProteinPairKey(id1, id2));
     },
 });
 
 CLMSUI.BackboneModelTypes.HighestScoreColourModel = CLMSUI.BackboneModelTypes.ColourModel.extend({
     initialize: function(properties, options) {
-        // const domain = this.get("colScale").domain();
-        // let labels = [];
-        // if (this.isCategorical()) {
-        //     labels = domain.map(function(domVal) {
-        //         return String(domVal)
-        //             .toLowerCase()
-        //             .replace(/\b[a-z](?=[a-z]{1})/g, function(letter) {
-        //                 return letter.toUpperCase();
-        //             });
-        //     });
-        // } else {
-        //     labels = (domain.length === 2 ? ["Min", "Max"] : ["Min", "Zero", "Max"]);
-        //     domain.map(function(domVal, i) {
-        //         labels[i] += domVal;
-        //     });
-        // }
-
-        // console.log("**", this.get("colScale").quantiles());
-        //
-        // this.set("labels", this.get("colScale").copy().range(labels));
+        this.set("type", "threshold")
+            .set("labels", this.get("colScale").copy().range(["Low Score", "Mid Score", "High Score"]));
     },
-    getValue: function (crosslink) {
-        const scores = crosslink.filteredMatches_pp.map(function(m) {
-            return m.match.score();
-        });
+    getValue: function (link) {
+        let scores = [];
+        if (link.crossLinks) {
+            for (let crosslink of link.crossLinks) {
+                //todo if we were certain the matches were sorted by score we could speed this up by only taking first match
+                for (let m_pp of crosslink.filteredMatches_pp) {
+                    scores.push(m_pp.match.score());
+                }
+            }
+        }else {
+            scores = link.filteredMatches_pp.map(function(m) {
+                return m.match.score();
+            });
+        }
         return Math.max.apply(Math, scores);
     },
     getLabelColourPairings: function () {
-        // const colScale = this.get("colScale");
-        // const labels = this.get("labels").range().concat(this.get("undefinedLabel"));
-        // const minLength = Math.min(colScale.range().length, this.get("labels").range().length);  // restrict range used when ordinal scale
-        // const colScaleRange = colScale.range().slice(0, minLength).concat(this.get("undefinedColour"));
-        return [];//d3.zip (labels, colScaleRange);
+        const colScale = this.get("colScale");
+        const labels = this.get("labels").range();//.concat(this.get("undefinedLabel"));
+        const minLength = Math.min(colScale.range().length, this.get("labels").range().length);  // restrict range used when ordinal scale
+        const colScaleRange = colScale.range().slice(0, minLength);//.concat(this.get("undefinedColour"));
+       return d3.zip (labels, colScaleRange);
     },
 });

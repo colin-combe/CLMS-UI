@@ -24,8 +24,8 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "click .autoGroupButton": "autoGroup",
             "click .saveLayoutButton": "saveLayout",
 
-            "change .xinetDragToPan": "dragActionChanged",
-            "change .xinetDragToSelect": "dragActionChanged",
+            // "change .xinetDragToPan": "dragActionChanged",
+            // "change .xinetDragToSelect": "dragActionChanged",
             "change .fixSelected": "setFixSelected",
             "change .showLabels": "setShowLabels",
             "change .fixedSize": "setFixedSize",
@@ -126,26 +126,27 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         });
 
         // Various view options set up...
-        var toggleButtonData = [{
-                class: "xinetDragToPan",
-                label: "Pan",
-                id: "dragToPan",
-                tooltip: "drag to pan in xiNET",
-                group: "dragTo",
-                type: "radio",
-                value: "Pan",
-                header: "Drag to"
-            },
-            {
-                class: "xinetDragToSelect",
-                label: "Select",
-                id: "dragToSelect",
-                tooltip: "drag to select in xiNET",
-                group: "dragTo",
-                type: "radio",
-                value: "Select",
-                sectionEnd: true,
-            },
+        var toggleButtonData = [
+            // {
+            //     class: "xinetDragToPan",
+            //     label: "Pan",
+            //     id: "dragToPan",
+            //     tooltip: "drag to pan in xiNET",
+            //     group: "dragTo",
+            //     type: "radio",
+            //     value: "Pan",
+            //     header: "Drag to"
+            // },
+            // {
+            //     class: "xinetDragToSelect",
+            //     label: "Select",
+            //     id: "dragToSelect",
+            //     tooltip: "drag to select in xiNET",
+            //     group: "dragTo",
+            //     type: "radio",
+            //     value: "Select",
+            //     sectionEnd: true,
+            // },
             {
                 initialState: this.model.get("xinetFixSelected"),
                 class: "fixSelected",
@@ -203,7 +204,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             .attr("max", 10)
             .attr("value", 2)
             .attr("id", "xiNetButtonBarppiStep1")
-            .attr("disabled", self.model.get("xinetThickLinks"))
+            // .attr("disabled", self.model.get("xinetThickLinks")) // todo - not working right? but currently enabled by default so doesn't matter
             .classed('xinetPpiStep', true);
 
         d3.select("body")
@@ -216,7 +217,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             .attr("max", 100)
             .attr("value", 3)
             .attr("id", "xiNetButtonBarppiStep2")
-            .attr("disabled", self.model.get("xinetThickLinks"))
+            // .attr("disabled", self.model.get("xinetThickLinks")) // todo - not working right? but currently enabled by default so doesn't matter
             .classed('xinetPpiStep', true);
 
         CLMSUI.utils.makeBackboneButtons(mainDivSel, self.el.id, toggleButtonData);
@@ -259,9 +260,9 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         // };
     },
 
-    dragActionChanged: function() {
-        this.model.set("xinetDragToPan", d3.select("input.xinetDragToPan").property("checked"));
-    },
+    // dragActionChanged: function() {
+    //     this.model.set("xinetDragToPan", d3.select("input.xinetDragToPan").property("checked"));
+    // },
 
     setShowLabels: function() {
         this.model.set("xinetShowLabels", d3.select("input.showLabels").property("checked"));

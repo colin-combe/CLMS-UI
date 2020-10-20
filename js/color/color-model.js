@@ -106,8 +106,12 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
     });
 
     //init highest score colour model
+    const clmsModel = CLMSUI.compositeModelInst.get("clmsModel"); //todo - shouldn't have this static reference to model here
+    const minScore = clmsModel.get("minScore");
+    const maxScore = clmsModel.get("maxScore");
+
     const hiScores = [];
-    for (let crosslink of CLMSUI.compositeModelInst.get("clmsModel").get("crossLinks").values()){
+    for (let crosslink of clmsModel.get("crossLinks").values()){
         const scores = crosslink.filteredMatches_pp.map(function(m) {
             return m.match.score();
         });
@@ -116,14 +120,19 @@ CLMSUI.linkColour.setupColourModels = function (userConfig) {
 
     const hiScoresColScale = d3.scale.quantile()
         .domain(hiScores)
-        .range(colorbrewer.PRGn[4]);
+        .range(colorbrewer.PRGn[3]);
+
+    const quantiles = hiScoresColScale.quantiles();
+
+    const range = [minScore, quantiles[0], quantiles[1], maxScore];
+    console.log(quantiles, range);
 
     CLMSUI.linkColour.highestScoreColoursBB = new CLMSUI.BackboneModelTypes.HighestScoreColourModel({
-        colScale: hiScoresColScale, //d3.scale.threshold().domain(config.distance.domain).range(config.distance.range),
+        colScale: d3.scale.threshold().domain(quantiles).range(colorbrewer.Dark2[3].reverse()),
         title: "Highest Score",
         longDescription: "Highest score from supporting matches that meet current filter.",
         id: "HiScores",
-        // superDomain: [0, 120], // superdomain is used in conjunction with drawing sliders, it's the maximum that the values in the threshold can be
+        superDomain: [minScore, maxScore], // superdomain is used in conjunction with drawing sliders, it's the maximum that the values in the threshold can be
     });
 
     const linkColourCollection = new CLMSUI.BackboneModelTypes.ColourModelCollection([

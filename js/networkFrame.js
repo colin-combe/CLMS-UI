@@ -81,6 +81,12 @@ CLMSUI.init.postDataLoaded = function () {
     CLMSUI.compositeModelInst.applyFilter(); // do it first time so filtered sets aren't empty
 
     CLMSUI.vent.trigger("initialSetupDone"); //	Message that models and views are ready for action, with filter set initially
+
+    //todo - bit hacky having this here, but it works here and not elsewhere (for reasons unknown)
+    if (CLMSUI.compositeModelInst.get("clmsModel").get("searches").size > 1) {
+        d3.select("#linkColourSelect").property("value","Group");
+    }
+
 };
 
 // This bar function calls postDataLoaded on the 4th go, ensuring all data is in place from various data loading ops
@@ -927,6 +933,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "keyViewShow",
         model: compModel,
     });
+    //if (CLMSUI.compositeModelInst.get("clmsModel").get("searches").size > 1) {
+    //     d3.select("#linkColourSelect").property("value","Group");
+    //}
 
     new CLMSUI.SearchSummaryViewBB({
         el: "#searchSummaryPanel",
@@ -1106,6 +1115,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
     // so we run it again here, doesn't do any harm
-    ByRei_dynDiv.init.main();
-    //ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
+    //ByRei_dynDiv.init.main();
+    // //ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
 };
