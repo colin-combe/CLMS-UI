@@ -146,6 +146,8 @@
         <!-- <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script> -->
         <!-- <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script> -->
 
+        <script type="text/javascript" src="../userGUI/js/dialogs.js<?php echo $cacheBuster ?>"></script>
+
         <!-- Spectrum view files -->
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../spectrum/vendor/jscolor.min.js<?php echo $cacheBuster ?>"></script>

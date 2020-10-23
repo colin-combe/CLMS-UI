@@ -632,8 +632,11 @@ CLMSUI.BackboneModelTypes.CompositeModelType = Backbone.Model.extend({
     },
 
     clearGroups: function() {
-        this.set("groups", new Map());
-        this.trigger("change:groups");
+        const self = this;
+        CLMSUI.jqdialogs.areYouSureDialog("ClearGroupsDialog", "Clear all groups?", "Clear Groups", "Yes", "No", function () {
+            self.set("groups", new Map());
+            self.trigger("change:groups");
+        });
     },
 
     // Things that can cause a cross-link's minimum distance to change:
