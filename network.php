@@ -1,6 +1,6 @@
 <?php
     session_start();
-    $cacheBuster = '?v='.microtime(true);
+    $cacheBuster = '';//?v='.microtime(true);
 ?>
 
 <!DOCTYPE html>
@@ -64,8 +64,6 @@
       	<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
       	<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
-        <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script> <!-- IE11 Promise Polyfill -->
-
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
@@ -78,11 +76,10 @@
         <script type="text/javascript" src="../vendor/js/jquery-3.4.1.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-	      <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
-	      <script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
-	      <script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
-	      <script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
+	    <script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
+	    <script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3-octree.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery-ui.js<?php echo $cacheBuster ?>"></script>
 
@@ -234,7 +231,7 @@
         var z;
 
 		var success = function (json) {
-			try {
+			// try {
                 if (json.error) {
                     throw "Error from server";
                 }
@@ -271,12 +268,12 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 
-  	        } catch (err) {
-                //console.log ("ERR", err);
-				CLMSUI.utils.displayError (function() { return true; }, "An error has occurred. \t&#9785;<p class='errorReason'>"
-                    + (json.error? json.error : err.stack)
-                    +"</p>");
-			}
+  	      //   } catch (err) {
+            //     //console.log ("ERR", err);
+			// 	CLMSUI.utils.displayError (function() { return true; }, "An error has occurred. \t&#9785;<p class='errorReason'>"
+            //         + (json.error? json.error : err.stack)
+            //         +"</p>");
+			// }
 		};
 
 

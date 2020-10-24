@@ -95,7 +95,7 @@ var allDataLoaded = _.after(3, CLMSUI.init.postDataLoaded);
 // for qunit testing
 CLMSUI.init.pretendLoad = function () {
     allDataLoaded();
-    allDataLoaded();
+    // allDataLoaded();
 };
 
 
@@ -851,6 +851,11 @@ CLMSUI.init.viewsEssential = function (options) {
                     name: "Protein Accession list",
                     func: downloadProteinAccessions,
                     tooltip: "Produces a single row CSV File of visible Proteins' Accession numbers",
+                },
+                {
+                    name: "Groups",
+                    func: downloadGroups,
+                    tooltip: "Produces a CSV File of Proteins' Accession numbers with group membership given in the 'complex' column",
                     sectionEnd: true
                 },
                 {

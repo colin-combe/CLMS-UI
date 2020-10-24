@@ -47,6 +47,10 @@ function downloadProteinAccessions() {
     download(getProteinAccessions(), 'text/csv', downloadFilename("proteinAccessions"));
 }
 
+function downloadGroups() {
+    download(getGroups(), 'text/csv', downloadFilename("groups"));
+}
+
 function download(content, contentType, fileName) {
     const oldToNewTypes = {
         "application/svg": "image/svg+xml;charset=utf-8",
@@ -553,7 +557,6 @@ function getDecoyTypeFromCrosslink (aCrosslink) {
     return decoyType;
 }
 
-
 function getResidueCount() {
     let csv = '"Residue(s)","Occurences(in_unique_links)"\r\n';
     //~ var matches = xlv.matches;//.values();
@@ -694,4 +697,29 @@ function getProteinAccessions() {
         }
     }
     return accs.join(",");
+}
+
+function getGroups() {
+    const headerArray = ["ProteinID", "Name", "Complex"];
+    const headerRow = '"' + headerArray.join('","') + '"';
+    const rows = [headerRow];
+
+    const clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+    const groups = CLMSUI.compositeModelInst.get("groups");
+    console.log("**", groups);
+    const proteins = clmsModel.get("participants").values();
+    for (let p of proteins) {
+        if (!p.is_decoy) {
+            const row = [p.id, p.name];
+            const protGroups = [];
+            for (let g of groups.entries()) {
+                if (g[1].has(p.id)) {
+                    protGroups.push(g[0]);
+                }
+            }
+            row.push(protGroups.join(","));
+            rows.push('"' + row.join('","') + '"');
+        }
+    }
+    return rows.join("\r\n") + '\r\n';
 }
