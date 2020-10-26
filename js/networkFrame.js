@@ -1120,6 +1120,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
     // so we run it again here, doesn't do any harm
-    //ByRei_dynDiv.init.main();
-    // //ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
+    ByRei_dynDiv.init.main();
+    //ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
 };
