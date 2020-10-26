@@ -1379,7 +1379,7 @@ CLMSUI.utils = {
             var labels = colourScheme.isCategorical() ? colourScheme.get("labels").range() : [];
             var commaed = d3.format(",");
             var totalStr = commaed(d3.sum(counts));
-            var itemStr = matchLevel ? " Matches" : " Cross-Links";
+            var itemStr = matchLevel ? " Matches" : " Crosslinks";
             var pairs = _.zip (labels, counts);
             var linkCountStr = counts.map(function(count, i) {
                 return commaed(count) + " " + (matchLevel ? "in " : "") + (labels[i] || colourScheme.get("undefinedLabel"));
@@ -1469,7 +1469,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend({
         d3.select(this.el).attr("class", "btn selectHolder")
             .append("span")
             .attr("class", "noBreak")
-            .html("<span class='rainbow'></span>"+(options.label || "Choose Cross-Link Colour Scheme")+" ►");
+            .html((options.label || "Crosslink Colour Scheme")+" ►");
 
         var addOptions = function(selectSel) {
             var optionSel = selectSel
