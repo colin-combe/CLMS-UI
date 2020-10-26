@@ -1,6 +1,6 @@
 <?php
     session_start();
-    $cacheBuster = '';//?v='.microtime(true);
+    $cacheBuster = '?v='.microtime(true);
 ?>
 
 <!DOCTYPE html>
@@ -231,7 +231,7 @@
         var z;
 
 		var success = function (json) {
-			// try {
+			try {
                 if (json.error) {
                     throw "Error from server";
                 }
@@ -268,12 +268,12 @@
 				CLMSUI.init.views();
 				allDataLoaded ();
 
-  	      //   } catch (err) {
-            //     //console.log ("ERR", err);
-			// 	CLMSUI.utils.displayError (function() { return true; }, "An error has occurred. \t&#9785;<p class='errorReason'>"
-            //         + (json.error? json.error : err.stack)
-            //         +"</p>");
-			// }
+  	        } catch (err) {
+                //console.log ("ERR", err);
+				CLMSUI.utils.displayError (function() { return true; }, "An error has occurred. \t&#9785;<p class='errorReason'>"
+                    + (json.error? json.error : err.stack)
+                    +"</p>");
+			}
 		};
 
 
