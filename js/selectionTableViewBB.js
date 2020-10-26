@@ -484,16 +484,16 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         var TSFUniqueMatches = totalSelectedFilteredMatches - repeats;
 
         if (selectedXLinkCount === 0) {
-            panelHeading.html("Currently empty<sup>?</sup>").attr("title", "Select Cross-Links / Matches in other views to populate this table")
+            panelHeading.html("Currently empty<sup>?</sup>").attr("title", "Select Crosslinks / Matches in other views to populate this table")
         } else {
             panelHeading.text(
                 commaFormat(lower) + " - " + commaFormat(upper) + " of " +
                 (repeats > 0 ? commaFormat(totalSelectedFilteredMatches) + " combinations of " : "") +
                 commaFormat(TSFUniqueMatches) + " Selected Match" + ((TSFUniqueMatches != 1) ? "es" : "") +
                 " shared across " +
-                commaFormat(selectedXLinkCount) + " Cross-Link" + ((selectedXLinkCount !== 1) ? "s" : "")
+                commaFormat(selectedXLinkCount) + " Crosslink" + ((selectedXLinkCount !== 1) ? "s" : "")
             );
-            panelHeading.attr("title", "Combinations? Some matches may be ambiguous and associated with multiple Cross-Links");
+            panelHeading.attr("title", "Combinations? Some matches may be ambiguous and associated with multiple Crosslinks");
         }
 
         var tablePage = this.matchCountIndices.slice(lowerLink, upperLink + 1);

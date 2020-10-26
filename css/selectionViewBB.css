@@ -22,12 +22,12 @@
     background: #eee;
 }
 
-.selectView tbody tr:nth-child(odd) {
-    background: #e8e8ff;
+.selectView tbody tr:nth-child(even) {
+    background: #eee;/*#e8e8ff;*/
 }
 
 .selectView TBODY TR:first-child {
-    background: #99f;
+    /*background: #99f;*/
     color: #444;
     font-size: 1em;
 }
