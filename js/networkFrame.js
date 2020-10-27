@@ -1,4 +1,3 @@
-
 var CLMSUI = CLMSUI || {};
 
 // http://stackoverflow.com/questions/11609825/backbone-js-how-to-communicate-between-views
@@ -861,14 +860,14 @@ CLMSUI.init.viewsEssential = function (options) {
                     tooltip: "Produces a CSV File of Proteins' Accession numbers with group membership given in the 'complex' column",
                     sectionEnd: true
                 },
-                {
-                    name: "Filtered Matches ",  // extra space to differentiate from first entry in menu
-                    func: downloadSSL,
-                    tooltip: "Produces an SSL file for quantitation in SkyLine",
-                    categoryTitle: "As an SSL File (needs fixed)",
-                    sectionBegin: true,
-                    sectionEnd: true
-                },
+                //{
+                //    name: "Filtered Matches ",  // extra space to differentiate from first entry in menu
+                //    func: downloadSSL,
+                //    tooltip: "Produces an SSL file for quantitation in SkyLine",
+                //    categoryTitle: "As an SSL File (needs fixed)",
+                //    sectionBegin: true,
+                //    sectionEnd: true
+                //},
                 {
                     name: "Make Filtered XI URL",
                     func: function () {
@@ -1123,6 +1122,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
 
     // ByRei_dynDiv by default fires this on window.load (like this whole block), but that means the KeyView is too late to be picked up
     // so we run it again here, doesn't do any harm
-    //ByRei_dynDiv.init.main();
-    // //ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
+    ByRei_dynDiv.init.main();
+    //ByRei_dynDiv.db (1, d3.select("#subPanelLimiter").node());
 };
