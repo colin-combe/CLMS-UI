@@ -22,7 +22,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 C: true,
                 Q: true,
                 unval: false,
-                AUTO: false, // if u change this to true one of the unit tests will fail
+                AUTO: true, // if u change this to true one of the unit tests will fail
                 decoys: true,
                 //distance
                 distanceUndef: true,
