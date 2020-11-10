@@ -19,6 +19,7 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
             "click #nglPanelsavePDB": "savePDB", // hacked to stop it firing twice (when it was on class)
             "click #nglPanelpymolExport": "exportPymol",
             "click #nglPanellinksCSVExport": "export3dLinksCSV",
+            "click #nglPanellinksCSVExportSelected": "export3dLinksCSVSelected",
             "click #nglPanelhaddockExport": "exportHaddock",
             "click .distanceLabelCB": "toggleLabels",
             "click .selectedOnlyCB": "toggleNonSelectedLinks",
@@ -711,12 +712,16 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
     export3dLinksCSV: function () {
         var stageModel = this.model.get("stageModel");
         CLMSUI.NGLUtils.export3dLinksCSV (
-            stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(),
-                ["PDB ID: "+stageModel.getStructureName(),
-                "Exported by "+this.identifier+" and XiView",
-                 "Search ID: "+CLMSUI.utils.searchesToString(),
-                 "Filter: "+CLMSUI.utils.filterStateToString()
-                ]
+            stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(), false
+        );
+        return this;
+    },
+
+    //todo - unnecessary duplication
+    export3dLinksCSVSelected: function () {
+        var stageModel = this.model.get("stageModel");
+        CLMSUI.NGLUtils.export3dLinksCSV (
+            stageModel.get("structureComp").structure, stageModel, this.pdbFilenameStateString(), true
         );
         return this;
     },
