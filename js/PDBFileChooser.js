@@ -103,7 +103,7 @@ CLMSUI.PDBFileChooserBB = CLMSUI.utils.BaseFrameView.extend({
         queryBox.append("p").attr("class", "smallHeading").text("PDB Query Services");
 
         var qButtonData = [
-            {class: "pdbWindowButton", text: "Show PDBs Matching UniProt Accessions @ RCSB.org", tooltip: "Queries RCSB with Uniprot accession numbers of selected proteins (all if none selected)"},
+          //  {class: "pdbWindowButton", text: "Show PDBs Matching UniProt Accessions @ RCSB.org", tooltip: "Queries RCSB with Uniprot accession numbers of selected proteins (all if none selected)"},
             {class: "ebiPdbWindowButton", text: "Show PDBs Matching a Protein Sequence @ EBI", tooltip: "Queries EBI with an individual protein sequence to find relevant PDBs"}
         ];
         queryBox.selectAll("button").data(qButtonData, function (d) { return d.text; })
