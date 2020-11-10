@@ -100,6 +100,12 @@ CLMSUI.NGLViewBB = CLMSUI.utils.BaseFrameView.extend({
                 d3tooltip: "Export a CSV file of the links currently displayed in NGL"
             },
             {
+                class: "export3dLinksCSVSelected",
+                label: "3D Links CSV - Selected Only",
+                id: "linksCSVExportSelected",
+                d3tooltip: "Export a CSV file of the links currently selected in NGL"
+            },
+            {
                 class: "exportHaddockButton",
                 label: "Haddock Distance Restraints File",
                 id: "haddockExport",
