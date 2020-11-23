@@ -64,6 +64,8 @@
       	<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
       	<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
+       <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
+
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>

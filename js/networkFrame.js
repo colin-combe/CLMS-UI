@@ -862,7 +862,7 @@ CLMSUI.init.viewsEssential = function (options) {
                     name: "Filtered Matches ",  // extra space to differentiate from first entry in menu
                     func: downloadSSL,
                     tooltip: "Produces an SSL file for quantitation in SkyLine",
-                    categoryTitle: "As an SSL File (needs fixed)",
+                    categoryTitle: "As an SSL File",
                     sectionBegin: true,
                     sectionEnd: true
                 },

@@ -799,7 +799,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
         } else {
             //d3.select(".validationControls").style("display", "block");
         }
-        if (d.src) { // if the src att is missing its from a csv file
+        //if (d.src) { // if the src att is missing its from a csv file
             // always trigger change event even if same (in some situations we redisplay spectrum viewer through this event)
             this.model
                 .set("lastSelectedMatch", {
@@ -809,7 +809,7 @@ CLMSUI.SelectionTableViewBB = Backbone.View.extend({
                     silent: true
                 })
                 .trigger("change:lastSelectedMatch", this.model, this.model.get("selectedMatch"));
-        }
+        //}
     },
 
     identifier: "Selected Match Table",

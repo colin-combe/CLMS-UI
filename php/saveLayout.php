@@ -18,10 +18,10 @@
 //  along with CLMS-UI.  If not, see <http://www.gnu.org/licenses/>.
 
 session_start();
-if ($_SESSION['session_name']) {
+if (isset($_SESSION['session_name'])) {
     include('../../connectionString.php');
     $dbconn = pg_connect($connectionString)
-            or die('Could not connect to database.');
+            or die('Could not connect: ' . pg_last_error());
     // Prepare a query for execution
     pg_prepare($dbconn, "my_query", 'INSERT INTO layouts (search_id, user_id, layout, description) VALUES ($1, -1, $2, $3)');
     // Execute the prepared query
