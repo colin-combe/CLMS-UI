@@ -1,6 +1,6 @@
 CLMSUI = CLMSUI || {};
 
-CLMSUI.GoTerm = function() {
+CLMSUI.GoTerm = function () {
     // lazy instantiation instead
     //this.is_a = new Set(); // i.e. superclasses
     //this.subclasses = new Set();
@@ -10,7 +10,7 @@ CLMSUI.GoTerm = function() {
     this.filtInteractorCount = 0;
 };
 
-CLMSUI.GoTerm.prototype.getInteractors = function(storeCount) {
+CLMSUI.GoTerm.prototype.getInteractors = function (storeCount) {
     var go = CLMSUI.compositeModelInst.get("go");
     CLMSUI.GoTerm.prototype.getCount++;
 
@@ -57,7 +57,7 @@ CLMSUI.GoTerm.prototype.getInteractors = function(storeCount) {
 };
 
 
-CLMSUI.GoTerm.prototype.isDirectRelation = function(anotherGoTerm) {
+CLMSUI.GoTerm.prototype.isDirectRelation = function (anotherGoTerm) {
     var agoid = anotherGoTerm.id;
     return (
         (this == anotherGoTerm) ||
@@ -69,7 +69,7 @@ CLMSUI.GoTerm.prototype.isDirectRelation = function(anotherGoTerm) {
 }
 
 
-CLMSUI.GoTerm.prototype.isDescendantOf = function(anotherGoTermId) {
+CLMSUI.GoTerm.prototype.isDescendantOf = function (anotherGoTermId) {
     var go = CLMSUI.compositeModelInst.get("go");
     if (anotherGoTermId == this.id) {
         return true;

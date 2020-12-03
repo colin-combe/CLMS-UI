@@ -97,6 +97,10 @@ CLMSUI.modelUtils = {
                 ["Desc.", interactor.description]
             ];
 
+            if (interactor.uniprot) {
+                contents.push(["Keywords", interactor.uniprot.keywords]);
+            }
+
             d3.entries(interactor.getMeta()).forEach(function(entry) {
                 var val = entry.value;
                 var key = entry.key.toLocaleLowerCase();
@@ -105,15 +109,6 @@ CLMSUI.modelUtils = {
                 }
             });
 
-            if (interactor.go) {
-                var goTermsMap = CLMSUI.compositeModelInst.get("go");
-                var goTermsText = "";
-                for (var goId of interactor.go) {
-                    var goTerm = goTermsMap.get(goId);
-                    goTermsText += goTerm.name + "<br>";
-                }
-                contents.push(["GO", goTermsText]);
-            }
             return contents;
         },
 

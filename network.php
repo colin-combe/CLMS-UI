@@ -144,9 +144,9 @@
         <script type="text/javascript" src="./js/searchSummaryViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
-        <!-- <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script> -->
-        <!-- <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script> -->
-        <!-- <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script> -->
+         <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script>
+         <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script>
+         <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="../userGUI/js/dialogs.js<?php echo $cacheBuster ?>"></script>
 
@@ -312,16 +312,16 @@
         }
 
         // 2. Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
-//         url = "./go.obo";
-//         d3.text (url, function(error, txt) {
-//             if (error) {
-//                 console.log("error", error, "for", url, arguments);
-//             } else {
-//                 CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
-//                 //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
-//                 allDataLoaded ();
-//             }
-//         });
+        url = "./go.obo";
+        d3.text (url, function(error, txt) {
+            if (error) {
+                console.log("error", error, "for", url, arguments);
+            } else {
+                CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+                //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
+                allDataLoaded ();
+            }
+        });
 
         // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation
         CLMSUI.init.blosumLoading ();

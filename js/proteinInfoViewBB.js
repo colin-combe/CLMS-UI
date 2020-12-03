@@ -19,8 +19,8 @@ CLMSUI.ProteinInfoViewBB = CLMSUI.utils.BaseFrameView.extend({
 
     defaultOptions: {
         fixedFontKeys: d3.set(["sequence", "seq"]),
-        removeTheseKeys: d3.set(["canonicalSeq", "seq_mods", "filteredNotDecoyNotLinearCrossLinks", "hidden"]),
-        expandTheseKeys: d3.set(["uniprotFeatures", "meta"]),
+        removeTheseKeys: d3.set(["canonicalSeq", "seq_mods", "filteredNotDecoyNotLinearCrossLinks", "hidden", "TargetProteinID"]),
+        expandTheseKeys: d3.set(["uniprot", "meta"]),
     },
 
     initialize: function(viewOptions) {
