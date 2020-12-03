@@ -91,7 +91,7 @@ CLMSUI.init.postDataLoaded = function () {
 };
 
 // This bar function calls postDataLoaded on the 4th go, ensuring all data is in place from various data loading ops
-var allDataLoaded = _.after(3, CLMSUI.init.postDataLoaded);
+var allDataLoaded = _.after(4, CLMSUI.init.postDataLoaded);
 
 // for qunit testing
 CLMSUI.init.pretendLoad = function () {
@@ -451,12 +451,12 @@ CLMSUI.init.views = function () {
             tooltip: "Shows metadata for current searches",
             sectionEnd: false
         },
-        // {
-        //     id: "goTermsChkBxPlaceholder",
-        //     label: "GO Terms",
-        //     eventName: "goTermsViewShow",
-        //     tooltip: "Browse Gene Ontology terms"
-        // },
+        {
+            id: "goTermsChkBxPlaceholder",
+            label: "GO Terms",
+            eventName: "goTermsViewShow",
+            tooltip: "Browse Gene Ontology terms"
+        },
     ];
     checkBoxData.forEach(function (cbdata) {
         var options = $.extend({
@@ -1093,11 +1093,11 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "userAnnotationsMetaDataFileChooserShow",
     });
 
-    // new CLMSUI.GoTermsViewBB({
-    //     el: "#goTermsPanel",
-    //     model: compModel,
-    //     displayEventName: "goTermsViewShow",
-    // });
+    new CLMSUI.GoTermsViewBB({
+        el: "#goTermsPanel",
+        model: compModel,
+        displayEventName: "goTermsViewShow",
+    });
 
     new CLMSUI.ProteinInfoViewBB({
         el: "#proteinInfoPanel",
