@@ -36,7 +36,7 @@ header('Content-type: text/html; charset=utf-8');
             $pattern = '/[^0-9,\-]/';
             if (preg_match($pattern, $sid)){
                 header();
-                echo ("<!DOCTYPE html>\n<html><head></head><body>You're having a laugh.</body></html>");
+                echo ("<!DOCTYPE html>\n<html><head></head><body>404.</body></html>");
                 exit;
             }
             $pageName = "Validation";
@@ -71,6 +71,7 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="./css/validate.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/filter.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/validationPage.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>

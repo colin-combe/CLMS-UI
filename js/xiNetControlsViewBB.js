@@ -405,6 +405,7 @@ CLMSUI.xiNetLayoutListViewBB = CLMSUI.DropDownMenuViewBB.extend({
                 name: selectedKey,
                 func: function() {
                     d3.select(".savedLayoutName").property("value", selectedKey);
+                    CLMSUI.compositeModelInst.clearGroups();
                     CLMSUI.vent.trigger("xinetLoadLayout", layouts[selectedKey]);
                 },
                 context: CLMSUI.compositeModelInst
