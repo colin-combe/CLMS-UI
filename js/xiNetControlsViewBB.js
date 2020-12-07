@@ -68,9 +68,9 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
         var mainDivSel = d3.select(this.el);
 
         var buttonHtml = "<p id='displayOptionsPlaceholder' class='btn btn-1 btn-1a'></p>" +
-            "<span class='layoutLabel noBreak sectionDividerLeft' >Layout:</span>" +
-            "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>" +
+            // "<span class='layoutLabel noBreak sectionDividerLeft' >Layout:</span>" +
             "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
+            "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>" +
             "<input type='text' name='name' id='name' class='saveLayoutName' value='' placeholder='Enter Save Layout Name'>" +
             "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>";
 
@@ -107,7 +107,7 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             el: "#loadLayoutButton",
             model: CLMSUI.compositeModelInst,
             myOptions: {
-                title: "Load ▼",
+                title: "Load Layout▼",
             }
         });
 
