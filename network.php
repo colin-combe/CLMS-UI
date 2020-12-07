@@ -224,9 +224,9 @@
 
         var CLMSUI = CLMSUI || {};
         <?php
-            if (isset($_SESSION['session_name'])) {
-                echo "CLMSUI.loggedIn = true;";
-            }
+//            if (isset($_SESSION['session_name'])) {
+//                echo "CLMSUI.loggedIn = true;";
+//            }
             if (file_exists('../xiSpecConfig.php')) {
                 include('../xiSpecConfig.php');
             }
@@ -291,7 +291,7 @@
             var phpProps = _.pick (urlChunkMap, "upload", "sid", "auto",  "unval", "linears", "lowestScore", "highestScore", "decoys");
             var newQueryString = d3.entries(phpProps).map(function (entry) { return entry.key+"="+entry.value; }).join("&");
             console.log ("ucm", urlChunkMap, newQueryString);
-            var url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;
+            const url = "../CLMS-model/php/spectrumMatches.php?" + newQueryString;
 
             d3.json (url, function (error, json) {
                 spinner.stop(); // stop spinner on request returning
@@ -312,7 +312,7 @@
         }
 
         // 2. Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
-        url = "./go.obo";
+        const url = "./go.obo";
         d3.text (url, function(error, txt) {
             if (error) {
                 console.log("error", error, "for", url, arguments);
