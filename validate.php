@@ -146,18 +146,6 @@ header('Content-type: text/html; charset=utf-8');
         <!-- Main -->
         <div id="main">
             <div class="mainContent">
-                <div class="page-header" style="position:relative">
-                    <i class="fa fa-home fa-xi" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
-                    <span class="headerLabel">
-                        <?php echo $_SESSION['session_name'] ?>
-                    </span>
-                    <p id="expDropdownPlaceholder"></p>
-                    <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
-                </div> <!-- page-header -->
-                <div id="topDiv"></div>
-                <div id="bottomDiv"></div>
-            </div>
-<<<<<<< HEAD
 
             <div class="page-header">
                 <i class="fa fa-home fa-xi" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
@@ -168,8 +156,9 @@ header('Content-type: text/html; charset=utf-8');
                 <button class='btn btn-1 btn-1a' onclick="window.location = './network.php'+window.location.search;" title="View results">Done</button>
             </div> <!-- page-header -->
 
-=======
->>>>>>> 8929717b3091bbeeb13e962064b93871e7f8485b
+                <div id="topDiv"></div>
+                <div id="bottomDiv"></div>
+            </div>
             <div class="controls">
                 <span id="filterPlaceholder"></span>
             </div>

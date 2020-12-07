@@ -36,17 +36,6 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
     },
 
     saveLayout: function() {
-        var xmlhttp = new XMLHttpRequest();
-        var url = "./php/isLoggedIn.php";
-        xmlhttp.open("POST", url, true);
-        //Send the proper header information along with the request
-        xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        xmlhttp.onreadystatechange = function() { //Call a function when the state changes.
-            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                if (xmlhttp.responseText == "false") {
-                    alert("You must be logged in to save layout. A new tab will open for you to log in, you can then return here and Save.")
-                    window.open("../userGUI/userLogin.html", "_blank");
-                } else {
                     var callback = function(layoutJson) {
                         var xmlhttp = new XMLHttpRequest();
                         var url = "./php/saveLayout.php";
@@ -62,19 +51,11 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
                         var sid = CLMSUI.compositeModelInst.get("clmsModel").get("sid");
                         var params = "sid=" + sid +
                             "&layout=" + encodeURIComponent(layoutJson.replace(/[\t\r\n']+/g, "")) +
-                            "&name=" + encodeURIComponent(d3.select(".savedLayoutName").property("value"));
+                            "&name=" + encodeURIComponent(d3.select(".saveLayoutName").property("value"));
                         xmlhttp.send(params);
                     };
 
                     CLMSUI.vent.trigger("xinetSaveLayout", callback);
-                }
-            }
-        };
-        xmlhttp.send();
-    },
-
-    defaultOptions: {
-        dragTo: "Pan",
     },
 
     initialize: function(viewOptions) {
@@ -90,15 +71,20 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             "<span class='layoutLabel noBreak sectionDividerLeft' >Layout:</span>" +
             "<button class='btn btn-1 btn-1a autoLayoutButton'>Auto</button>" +
             "<p id='loadLayoutButton' class='btn btn-1 btn-1a'></p>" +
-            "<input type='text' name='name' id='name' class='savedLayoutName' value='' placeholder='Enter Save Layout Name'>" +
+            "<input type='text' name='name' id='name' class='saveLayoutName' value='' placeholder='Enter Save Layout Name'>" +
             "<button class='btn btn-1 btn-1a saveLayoutButton'>Save</button>";
 
         mainDivSel.html(
             buttonHtml
         );
 
+        if (!CLMSUI.loggedIn){
+            d3.select(".saveLayoutName").style("display", "none");
+            d3.select(".saveLayoutButton").style("display", "none");
+        }
+
         if (this.model.get("clmsModel").get("xiNETLayout")) {
-            d3.select(".savedLayoutName").property("value", this.model.get("clmsModel").get("xiNETLayout").name);
+            d3.select(".saveLayoutName").property("value", this.model.get("clmsModel").get("xiNETLayout").name);
         }
 
         var tooltips = {
@@ -189,7 +175,6 @@ CLMSUI.xiNetControlsViewBB = Backbone.View.extend({
             },
         ];
 
-        var self = this;
         toggleButtonData
             .forEach(function(d) {
                 d.type = d.type || "checkbox";
@@ -410,7 +395,7 @@ CLMSUI.xiNetLayoutListViewBB = CLMSUI.DropDownMenuViewBB.extend({
             return {
                 name: selectedKey,
                 func: function() {
-                    d3.select(".savedLayoutName").property("value", selectedKey);
+                    d3.select(".saveLayoutName").property("value", selectedKey);
                     CLMSUI.compositeModelInst.clearGroups();
                     CLMSUI.vent.trigger("xinetLoadLayout", layouts[selectedKey]);
                 },
