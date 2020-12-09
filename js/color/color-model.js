@@ -297,6 +297,9 @@ CLMSUI.BackboneModelTypes.MetaDataColourModel = CLMSUI.BackboneModelTypes.Colour
         this.set("labels", this.get("colScale").copy().range(labels));
     },
     getValue: function (obj) {  // obj can be anything with a getMeta function - crosslink or, now, proteins
+        if (obj.crossLinks) {
+            return obj.crossLinks[0].getMeta(this.get("field"));
+        }
         return obj.getMeta(this.get("field"));
     },
 });

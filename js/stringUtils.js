@@ -50,7 +50,7 @@ CLMSUI.STRINGUtils = {
             var promiseObj = new Promise (function (resolve, reject) {
                 $.ajax ({
                     type: "post",
-                    url: "https://string-db.org/api/json/get_string_ids",
+                    url: "https://version-11-0.string-db.org/api/json/get_string_ids",
                     data: {
                         identifiers: pidString,
                         species: taxonID,
@@ -118,7 +118,7 @@ CLMSUI.STRINGUtils = {
                 var promiseObj = new Promise (function (resolve, reject) {
                     $.ajax ({
                         type: "post",
-                        url: "https://string-db.org/api/tsv/network",
+                        url: "https://version-11-0.string-db.org/api/tsv/network",
                         data: {
                             identifiers: networkKey,
                             species: taxonID,
