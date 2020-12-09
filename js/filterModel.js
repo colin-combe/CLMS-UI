@@ -9,6 +9,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 fdrMode: false,
                 //subset
                 linears: true,
+                monolinks: true,
                 crosslinks: true,
                 betweenLinks: true,
                 selfLinks: true,
@@ -22,7 +23,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 C: true,
                 Q: true,
                 unval: false,
-                AUTO: true,
+                AUTO: true, // if u change this to true one of the unit tests will fail
                 decoys: true,
                 //distance
                 distanceUndef: true,
@@ -70,6 +71,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 fdrMode: "boolean",
                 //subset
                 linears: "boolean",
+                monolinks: "boolean",
                 crosslinks: "boolean",
                 betweenLinks: "boolean",
                 selfLinks: "boolean",
@@ -188,11 +190,23 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
 
             subsetFilter: function(match) {
                 var linear = match.isLinear();
+                var mono = match.isMonoLink();
                 var ambig = match.isAmbig();
 
                 //linears? - if linear (linkPos === 0) and linears not selected return false
                 //cross-links? - if xl (linkPos > 0) and xls not selected return false
-                if (this.get(linear ? "linears" : "crosslinks") === false) {
+                if (mono && !this.get("monolinks")) {
+                    return false;
+                }
+                else
+                if (linear && !this.get("linears")) {
+                    return false;
+                }
+                //self-links? - if self links's not selected and match is self link return false
+                // possible an ambiguous self link will still get displayed
+                else if (!linear && !mono && !((match.couldBelongToSelfLink && !match.confirmedHomomultimer && this.get("selfLinks")) ||
+                        (match.couldBelongToBetweenLink && this.get("betweenLinks")) ||
+                        (match.confirmedHomomultimer && this.get("homomultimericLinks")))) {
                     return false;
                 }
 
@@ -200,16 +214,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 if (ambig && !this.get("ambig")) {
                     return false;
                 }
-                //self-links? - if self links's not selected and match is self link return false
-                // possible an ambiguous self link will still get displayed
 
-                if (!((match.couldBelongToSelfLink && !match.confirmedHomomultimer && this.get("selfLinks")) ||
-                        (match.couldBelongToBetweenLink && this.get("betweenLinks")) ||
-                        (match.confirmedHomomultimer && this.get("homomultimericLinks")))) {
-                    return false;
-                }
-
-                //temp
                 var aaApart = +this.get("aaApart");
                 if (!isNaN(aaApart)) {
                     // if not homomultimer and not ambig and is a selfLink
@@ -226,7 +231,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                 if (!isNaN(pepLengthFilter)) {
                     var seq1length = match.matchedPeptides[0].sequence.length;
                     if (seq1length > 0 && (seq1length < pepLengthFilter ||
-                            (!linear && match.matchedPeptides[1].sequence.length < pepLengthFilter))) {
+                            (!linear && !mono && match.matchedPeptides[1].sequence.length < pepLengthFilter))) {
                         return false;
                     }
                 }
@@ -314,7 +319,7 @@ CLMSUI.BackboneModelTypes = _.extend(CLMSUI.BackboneModelTypes || {},
                                         var interactor = participants.get(pids[p]);
                                         var toSearch = interactor[dataField];// + " " + interactor.description;
                                         if (dataField == "name" && interactor.accession) {  // hacky nevermind
-                                            toSearch = toSearch + " " + interactor.accession; 
+                                            toSearch = toSearch + " " + interactor.accession;
                                         }
                                         if (toSearch.toLowerCase().indexOf(partString) != -1) {
                                             found = true;

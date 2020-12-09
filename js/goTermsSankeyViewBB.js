@@ -382,7 +382,7 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .append("rect")
                         .attr ("y", -10)
                         .attr ("height", height + 10)
-                        .attr ("x", function(d) { return d.x ? d.x : 0; })
+                        .attr ("x", function(d) { return isFinite(d.x) ? d.x : 0; })
                         .attr ("width", function (d) { return d.width ? d.width : 0; })
                 ;
 
@@ -442,23 +442,25 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     })
                     .on("mouseover", function(d) {
                         var term = d.term;
-                        nodeSel
-                            .style("display", function(d2) {
-                                return term.isDirectRelation(d2.term) ? null : "none";  // ? 1 : 0;
-                            })
-                            .select ("text")
-                            .attr ("clip-path", function (d2) {
-                                return d2.strMatch || term.isDirectRelation(d2.term) ? null : self.textOrient(d2);  // ? 1 : 0;
-                            })
-                            .call (textPos, function () { return true; })
-                        ;
+                        // nodeSel
+                        //     .style("display", function(d2) {
+                        //         return term.isDirectRelation(d2.term) ? null : "none";  // ? 1 : 0;
+                        //     })
+                        //     .select ("text")
+                        //     .attr ("clip-path", function (d2) {
+                        //         return d2.strMatch || term.isDirectRelation(d2.term) ? null : self.textOrient(d2);  // ? 1 : 0;
+                        //     })
+                        //     .call (textPos, function () { return true; })
+                        // ;
 
-                        //nodeSel.style("opacity", function(d2) {
-                       //     return term.isDirectRelation(d2.term) ? 1 : 0;
-                        //});
-                        //nodeSel.select("rect").attr("fill", function(dr) {
-                            //return d == dr ? d.color = color(d.name.replace(/ .*/, "")) : "none";
-                        //});
+                        // nodeSel.style("opacity", function(d2) {
+                        //    return term.isDirectRelation(d2.term) ? 1 : 0;
+                        // });
+                        // nodeSel.select("rect").attr("fill", function(dr) {
+                        //     return d == dr ? d.color = color(d.name.replace(/ .*/, "")) : "none";
+                        // });
+
+                        self.hideAllExceptMe(term);
 
                         linkSel.style("display", function(dlink) {
                             return d.id == dlink.source.id || d.id == dlink.target.id ? null : "none";
@@ -478,16 +480,20 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     })
                     .on("mouseout", function() {
                         //if (self.fixed.length == 0) {
-                        nodeSel
-                            .style("display", null)
-                            .select ("text")
-                            .attr ("clip-path", function(d2) { return d2.strMatch ? null : self.textOrient(d2); })
-                            .call (textPos, function () { return false; })
-                        ;
-                        //nodeSel.style("opacity", 1);
-                        //nodeSel.select("rect").attr("fill", function(d) {
+                        // nodeSel
+                        //     .style("display", null)
+                        //     .select ("text")
+                        //     .attr ("clip-path", function(d2) { return d2.strMatch ? null : self.textOrient(d2); })
+                        //     .call (textPos, function () { return false; })
+                        // ;
+
+                        // nodeSel.style("opacity", 1);
+                        // nodeSel.select("rect").attr("fill", function(d) {
                         //    return d.color = color(d.name.replace(/ .*/, ""));
-                        //});
+                        // });
+
+                        self.hideAllExceptMe();
+
                         linkSel.style("display", "none");
                         // }
                         self.model.get("tooltipModel").set("contents", null);
@@ -514,7 +520,10 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
                     .style("stroke", function(d) {
                         return d3.rgb(d.color).darker(2);
                     })
-                ;
+                    .append("title")
+                    .text(function(d) {
+                        return d.name + ":" + d.value;
+                    });
 
                 nodeEnter.append("text")
                     .attr("dy", ".35em")
@@ -561,6 +570,23 @@ CLMSUI.GoTermsViewBB = CLMSUI.utils.BaseFrameView.extend({
         }
 
         return this;
+    },
+
+    hideAllExceptMe: function (term) {
+        var nodeSel = this.foregroundGroup.selectAll(".node")
+            .data(this.data.nodes, function(d) {
+                return d.id;
+            })
+        ;
+        if (!term){
+            nodeSel.style("opacity", function (d2) {
+                return 1;
+            });
+        }else {
+            nodeSel.style("opacity", function (d2) {
+                return term.isDirectRelation(d2.term) ? 1 : 0;
+            });
+        }
     },
 
     updateThenRender: function () {

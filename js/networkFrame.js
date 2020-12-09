@@ -81,15 +81,21 @@ CLMSUI.init.postDataLoaded = function () {
     CLMSUI.compositeModelInst.applyFilter(); // do it first time so filtered sets aren't empty
 
     CLMSUI.vent.trigger("initialSetupDone"); //	Message that models and views are ready for action, with filter set initially
+
+    //todo - bit hacky having this here, but it works here and not elsewhere (for reasons unknown)
+    if (CLMSUI.compositeModelInst.get("clmsModel").get("searches").size > 1) {
+        d3.select("#linkColourSelect").property("value","Group");
+    }
+
 };
 
 // This bar function calls postDataLoaded on the 4th go, ensuring all data is in place from various data loading ops
-var allDataLoaded = _.after(3, CLMSUI.init.postDataLoaded);
+var allDataLoaded = _.after(4, CLMSUI.init.postDataLoaded);
 
 // for qunit testing
 CLMSUI.init.pretendLoad = function () {
     allDataLoaded();
-    allDataLoaded();
+    // allDataLoaded();
 };
 
 
@@ -373,12 +379,19 @@ CLMSUI.init.views = function () {
     });
 
     // Generate checkboxes for view dropdown
-    var checkBoxData = [{
-        id: "circularChkBxPlaceholder",
-        label: "Circular",
-        eventName: "circularViewShow",
-        tooltip: "Proteins are arranged in a circle, with crosslinks drawn in-between",
-    },
+    var checkBoxData = [        {
+            id: "keyChkBxPlaceholder",
+            label: "Legend & Colours",
+            eventName: "keyViewShow",
+            tooltip: "Explains and allows changing of current colour scheme",
+            sectionEnd: true
+        },
+        {
+            id: "circularChkBxPlaceholder",
+            label: "Circular",
+            eventName: "circularViewShow",
+            tooltip: "Proteins are arranged in a circle, with crosslinks drawn in-between",
+        },
         {
             id: "nglChkBxPlaceholder",
             label: "3D (NGL)",
@@ -401,7 +414,7 @@ CLMSUI.init.views = function () {
             id: "spectrumChkBxPlaceholder",
             label: "Spectrum",
             eventName: "spectrumShow",
-            tooltip: "View the spectrum for a selected match (selection made through Selected Match Table after selecting Cross-Links)",
+            tooltip: "View the spectrum for a selected match (selection made through Selected Match Table after selecting Crosslinks)",
             sectionEnd: true
         },
         {
@@ -434,21 +447,14 @@ CLMSUI.init.views = function () {
             label: "Search Summaries",
             eventName: "searchesViewShow",
             tooltip: "Shows metadata for current searches",
-            sectionEnd: true
+            sectionEnd: false
         },
         {
-            id: "keyChkBxPlaceholder",
-            label: "Legend & Colours",
-            eventName: "keyViewShow",
-            tooltip: "Explains and allows changing of current colour scheme",
-            sectionEnd: true
+            id: "goTermsChkBxPlaceholder",
+            label: "GO Terms",
+            eventName: "goTermsViewShow",
+            tooltip: "Browse Gene Ontology terms"
         },
-        // {
-        //     id: "goTermsChkBxPlaceholder",
-        //     label: "GO Terms",
-        //     eventName: "goTermsViewShow",
-        //     tooltip: "Browse Gene Ontology terms"
-        // },
     ];
     checkBoxData.forEach(function (cbdata) {
         var options = $.extend({
@@ -822,7 +828,7 @@ CLMSUI.init.viewsEssential = function (options) {
                 sectionBegin: true
             },
                 {
-                    name: "Filtered Cross-Links",
+                    name: "Filtered Crosslinks",
                     func: downloadLinks,
                     tooltip: "Produces a CSV File of Filtered Cross-Link data"
                 },
@@ -845,13 +851,18 @@ CLMSUI.init.viewsEssential = function (options) {
                     name: "Protein Accession list",
                     func: downloadProteinAccessions,
                     tooltip: "Produces a single row CSV File of visible Proteins' Accession numbers",
+                },
+                {
+                    name: "Groups",
+                    func: downloadGroups,
+                    tooltip: "Produces a CSV File of Proteins' Accession numbers with group membership given in the 'complex' column",
                     sectionEnd: true
                 },
                 {
                     name: "Filtered Matches ",  // extra space to differentiate from first entry in menu
                     func: downloadSSL,
                     tooltip: "Produces an SSL file for quantitation in SkyLine",
-                    categoryTitle: "As an SSL File (needs fixed)",
+                    categoryTitle: "As an SSL File",
                     sectionBegin: true,
                     sectionEnd: true
                 },
@@ -927,6 +938,9 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "keyViewShow",
         model: compModel,
     });
+    //if (CLMSUI.compositeModelInst.get("clmsModel").get("searches").size > 1) {
+    //     d3.select("#linkColourSelect").property("value","Group");
+    //}
 
     new CLMSUI.SearchSummaryViewBB({
         el: "#searchSummaryPanel",
@@ -981,7 +995,7 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
             model: compModel,
             attr: "proteinColourAssignment"
         },
-        label: "Choose Protein Colour Scheme"
+        label: "Protein Colour Scheme"
     });
 
     new CLMSUI.CrosslinkViewer({
@@ -1059,12 +1073,6 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "scatterplotViewShow",
     });
 
-    // new CLMSUI.CSVFileChooserBB({
-    //     el: "#csvPanel",
-    //     model: compModel,
-    //     displayEventName: "csvFileChooserShow",
-    // });
-
     new CLMSUI.LinkMetaDataFileChooserBB({
         el: "#linkMetaLoadPanel",
         model: compModel,
@@ -1083,11 +1091,11 @@ CLMSUI.init.viewsThatNeedAsyncData = function () {
         displayEventName: "userAnnotationsMetaDataFileChooserShow",
     });
 
-    // new CLMSUI.GoTermsViewBB({
-    //     el: "#goTermsPanel",
-    //     model: compModel,
-    //     displayEventName: "goTermsViewShow",
-    // });
+    new CLMSUI.GoTermsViewBB({
+        el: "#goTermsPanel",
+        model: compModel,
+        displayEventName: "goTermsViewShow",
+    });
 
     new CLMSUI.ProteinInfoViewBB({
         el: "#proteinInfoPanel",

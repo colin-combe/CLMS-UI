@@ -47,6 +47,10 @@ function downloadProteinAccessions() {
     download(getProteinAccessions(), 'text/csv', downloadFilename("proteinAccessions"));
 }
 
+function downloadGroups() {
+    download(getGroups(), 'text/csv', downloadFilename("groups"));
+}
+
 function download(content, contentType, fileName) {
     const oldToNewTypes = {
         "application/svg": "image/svg+xml;charset=utf-8",
@@ -468,15 +472,12 @@ function getLinksCSV() {
 }
 
 function getPPIsCSV() {
+    const clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
     const headerArray = ["Protein1", "Protein2", "Unique Distance Restraints", "DecoyType"];
-    // var searchIDs = Array.from(clmsModel.get("searches").keys());
-    // searchIDs.forEach(function(sid) {
-    //     headerArray.push("Search_" + sid);
-    // });
-    // console.log("searchIds", searchIDs);
-
-    // var metaColumns = (clmsModel.get("crossLinkMetaRegistry") || d3.set()).values();
-    // headerArray = headerArray.concat(metaColumns);
+    const searchIDs = Array.from(clmsModel.get("searches").keys());
+    searchIDs.forEach(function (sid) {
+        headerArray.push("Search_" + sid);
+    });
 
     const headerRow = '"' + headerArray.join('","') + '"';
     const rows = [headerRow];
@@ -491,7 +492,7 @@ function getPPIsCSV() {
         if (!crosslink.isLinearLink()) {
             ppiId = ppiId + "-" + crosslink.toProtein.id;
         }
-        var ppi = ppiMap.get(ppiId);
+        let ppi = ppiMap.get(ppiId);
         if (!ppi) {
             ppi = [];
             ppiMap.set(ppiId, ppi);
@@ -500,83 +501,60 @@ function getPPIsCSV() {
     }
 
     for (let ppi of ppiMap.values()) {
+        const row = [];
         const aCrosslink = ppi[0];
         const linear = aCrosslink.isLinearLink();
+        const decoyType = getDecoyTypeFromCrosslink(aCrosslink);
 
-        let decoyType;
-        if (linear) {
-            if (aCrosslink.fromProtein.is_decoy) {
-                decoyType = "D";
-            } else {
-                decoyType = "T";
-            }
-        } else {
-            const decoy1 = aCrosslink.fromProtein.is_decoy;
-            const decoy2 = aCrosslink.toProtein.is_decoy;
-            if (decoy1 && decoy2) {
-                decoyType = "DD";
-            } else if (decoy1 || decoy2) {
-                decoyType = "TD";
-            } else {
-                decoyType = "TT";
+        var searchesFound = new Set();
+        for (let crosslink of ppi){
+            const filteredMatchesAndPepPos = crosslink.filteredMatches_pp;
+            for (let fm_pp of filteredMatchesAndPepPos) {
+                const match = fm_pp.match;
+                searchesFound.add(match.searchId);
             }
         }
 
-        rows.push([mostReadableId(aCrosslink.fromProtein), (linear ? "" : mostReadableId(aCrosslink.toProtein)), ppi.length, decoyType].join(","))
+        row.push(mostReadableId(aCrosslink.fromProtein), (linear ? "" : mostReadableId(aCrosslink.toProtein)), ppi.length, decoyType);
+
+        // // Add presence in searches
+        for (var s = 0; s < searchIDs.length; s++) {
+            row.push(searchesFound.has(searchIDs[s]) ? "X" : "");
+        }
+        //
+        // // Add metadata information
+        // for (var m = 0; m < metaColumns.length; m++) {
+        //     var mval = crossLink.getMeta(metaColumns[m]);
+        //     row.push(mval === undefined ? "" : mval);
+        // }
+
+        rows.push('"' + row.join('","') + '"');
+
     }
 
-    /*    var ppiMap = crossLinks.map(function(crossLink, i) {
-            var row = [];
-            var linear = crossLink.isLinearLink();
-            var filteredMatchesAndPepPos = crossLink.filteredMatches_pp;
-            row.push(
-                mostReadableId(crossLink.fromProtein), crossLink.fromResidue, crossLink.fromProtein.sequence[crossLink.fromResidue - 1],
-                (linear ? "" : mostReadableId(crossLink.toProtein)), crossLink.toResidue, !linear && crossLink.toResidue ? crossLink.toProtein.sequence[crossLink.toResidue - 1] : ""
-            );
-
-            var highestScore = null;
-            var searchesFound = new Set();
-            var filteredMatchCount = filteredMatchesAndPepPos.length; // me n lutz fix
-            var linkAutovalidated = false;
-            var validationStats = [];
-            for (var fm_pp = 0; fm_pp < filteredMatchCount; fm_pp++) {
-                var match = filteredMatchesAndPepPos[fm_pp].match;
-                if (highestScore == null || match.score() > highestScore) {
-                    highestScore = match.score().toFixed(4);
-                }
-                if (match.autovalidated === true) {
-                    linkAutovalidated = true;
-                }
-                validationStats.push(match.validated);
-                searchesFound.add(match.searchId);
-            }
-            row.push(highestScore, filteredMatchCount, linkAutovalidated, validationStats.toString(), crossLink.getMeta("fdr"));
-
-            // Distance info
-            var pDist = physicalDistances[i];
-            if (pDist && pDist.distance) {
-                var chain = pDist.chainInfo;
-                row.push(distance2dp(pDist.distance), chain.from, chain.to, chain.fromRes + 1, chain.toRes + 1); // +1 to return to 1-INDEXED
-            } else {
-                row.push("", "", "", "", "");
-            }
-
-            // // Add presence in searches
-            // for (var s = 0; s < searchIDs.length; s++) {
-            //     row.push(searchesFound.has(searchIDs[s]) ? "X" : "");
-            // }
-            //
-            // // Add metadata information
-            // for (var m = 0; m < metaColumns.length; m++) {
-            //     var mval = crossLink.getMeta(metaColumns[m]);
-            //     row.push(mval === undefined ? "" : mval);
-            // }
-
-            return '"' + row.join('","') + '"';
-        }, this);
-
-    */
     return rows.join("\r\n") + '\r\n';
+}
+
+function getDecoyTypeFromCrosslink (aCrosslink) {
+    let decoyType;
+    if (aCrosslink.isLinearLink()) {
+        if (aCrosslink.fromProtein.is_decoy) {
+            decoyType = "D";
+        } else {
+            decoyType = "T";
+        }
+    } else {
+        const decoy1 = aCrosslink.fromProtein.is_decoy;
+        const decoy2 = aCrosslink.toProtein.is_decoy;
+        if (decoy1 && decoy2) {
+            decoyType = "DD";
+        } else if (decoy1 || decoy2) {
+            decoyType = "TD";
+        } else {
+            decoyType = "TT";
+        }
+    }
+    return decoyType;
 }
 
 function getResidueCount() {
@@ -719,4 +697,29 @@ function getProteinAccessions() {
         }
     }
     return accs.join(",");
+}
+
+function getGroups() {
+    const headerArray = ["ProteinID", "Name", "Complex"];
+    const headerRow = '"' + headerArray.join('","') + '"';
+    const rows = [headerRow];
+
+    const clmsModel = CLMSUI.compositeModelInst.get("clmsModel");
+    const groups = CLMSUI.compositeModelInst.get("groups");
+    console.log("**", groups);
+    const proteins = clmsModel.get("participants").values();
+    for (let p of proteins) {
+        if (!p.is_decoy) {
+            const row = [p.id, p.name];
+            const protGroups = [];
+            for (let g of groups.entries()) {
+                if (g[1].has(p.id)) {
+                    protGroups.push(g[0]);
+                }
+            }
+            row.push(protGroups.join(","));
+            rows.push('"' + row.join('","') + '"');
+        }
+    }
+    return rows.join("\r\n") + '\r\n';
 }

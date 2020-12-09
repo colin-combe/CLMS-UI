@@ -1379,7 +1379,7 @@ CLMSUI.utils = {
             var labels = colourScheme.isCategorical() ? colourScheme.get("labels").range() : [];
             var commaed = d3.format(",");
             var totalStr = commaed(d3.sum(counts));
-            var itemStr = matchLevel ? " Matches" : " Cross-Links";
+            var itemStr = matchLevel ? " Matches" : " Crosslinks";
             var pairs = _.zip (labels, counts);
             var linkCountStr = counts.map(function(count, i) {
                 return commaed(count) + " " + (matchLevel ? "in " : "") + (labels[i] || colourScheme.get("undefinedLabel"));
@@ -1469,7 +1469,7 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend({
         d3.select(this.el).attr("class", "btn selectHolder")
             .append("span")
             .attr("class", "noBreak")
-            .html("<span class='rainbow'></span>"+(options.label || "Choose Cross-Link Colour Scheme")+" ►");
+            .html((options.label || "Crosslink Colour Scheme")+" ►");
 
         var addOptions = function(selectSel) {
             var optionSel = selectSel
@@ -1530,20 +1530,22 @@ CLMSUI.utils.ColourCollectionOptionViewBB = Backbone.View.extend({
 
 CLMSUI.utils.sectionTable = function(domid, data, idPrefix, columnHeaders, headerFunc, rowFilterFunc, cellFunc, openSectionIndices, clickFunc) {
     var self = this;
+    const legalDom = CLMSUI.utils.makeLegalDomID;
     var setArrow = function(d) {
-        var assocTable = d3.select("#" + idPrefix + d.id);
+        var assocTable = d3.select("#" + idPrefix + legalDom(d.id));
         d3.select(this).classed("tableShown", assocTable.style("display") !== "none");
     };
 
+
     var dataJoin = domid.selectAll("section").data(data, function(d) {
-        return d.id;
+        return legalDom(d.id);
     });
     dataJoin.exit().remove();
     var newElems = dataJoin.enter().append("section").attr("class", "sectionTable");
 
     var newHeaders = newElems.append("h2")
         .on("click", function(d, i) {
-            var assocTable = d3.select("#" + idPrefix + d.id);
+            var assocTable = d3.select("#" + idPrefix + legalDom(d.id));
             var tableIsHidden = (assocTable.style("display") == "none");
             assocTable.style("display", tableIsHidden ? "table" : "none");
             if (clickFunc) {
@@ -1565,7 +1567,7 @@ CLMSUI.utils.sectionTable = function(domid, data, idPrefix, columnHeaders, heade
     var newTables = newElems.append("table")
         .html("<caption></caption><thead><tr><th></th><th></th></tr></thead><tbody></tbody>")
         .attr("id", function(d) {
-            return idPrefix + d.id;
+            return idPrefix + legalDom(d.id);
         })
         .style("display", function(d, i) {
             return !openSectionIndices || openSectionIndices.indexOf(i) >= 0 ? "table" : "none";
@@ -1583,21 +1585,66 @@ CLMSUI.utils.sectionTable = function(domid, data, idPrefix, columnHeaders, heade
 
     // yet another cobble a table together function, but as a string
     var makeTable237 = function(arrOfObjs) {
-        var t = "<table><tr>";
-        var headers = d3.keys(arrOfObjs[0]);
-        headers.forEach(function(h) {
-            t += "<TH>" + h + "</TH>";
-        });
-        t += "</TR>";
-        arrOfObjs.forEach(function(obj) {
-            t += "<TR>";
-            d3.values(obj).forEach(function(h) {
-                t += "<TD>" + h + "</TD>";
+        if (arrOfObjs) {
+            var t = "<table><tr>";
+            var headers = d3.keys(arrOfObjs[0]);
+            headers.forEach(function (h) {
+                t += "<TH>" + h + "</TH>";
             });
             t += "</TR>";
-        });
-        t += "</TABLE>";
-        return t;
+            const goTermsMap = CLMSUI.compositeModelInst.get("go");
+            arrOfObjs.forEach(function (obj) {
+                if (obj.key != "features") { //todo -hack for Uniprot object
+                    t += "<TR>";
+                    d3.values(obj).forEach(function (h) {
+                        if (typeof (h) == "string") {
+                            t += "<TD>" + h + "</TD>";
+                        } else {
+                            t += "<TD>";
+                            for (let i of h) {
+                                if (obj.key != "go") {
+                                    t += i + "</BR>";
+                                } else {
+                                    t += i + " : " + goTermsMap.get(i).name + "</BR>";
+                                }
+                            }
+                            t += "</TD>";
+                        }
+                    });
+                    t += "</TR>";
+                }
+                //
+                // if (obj.key == "go") {
+                //     t += "<TR>";
+                //     d3.values(obj).forEach(function (h) {
+                //         const isArray = typeof (h);
+                //         t += "<TD>" + isArray + h + "</TD>";
+                //     });
+                //     t += "</TR>";
+                //     //  return makeTable237(obj.value);
+                //     // var goTermsMap = CLMSUI.compositeModelInst.get("go");
+                //     // var goTermsText = "";
+                //     // // for (var goId of interactor.uniprot.go) {
+                //     // //     var goTerm = goTermsMap.get(goId);
+                //     // //     goTermsText += goTerm.name + "<br>";
+                //     // // }
+                //     // // contents.push(["GO", goTermsText]);
+                //     // d3.values(obj).forEach(function (h) {
+                //     //     goTermsText += h + ":" + goTermsMap.get(h) + "; ";
+                //     // });
+                //     // t += "<TR>";
+                //     // d3.values(obj).forEach(function (h) {
+                //     //     t += "<TD>" + goTermsText + "</TD>";
+                //     // });
+                //     // t += "</TR>";
+                // }
+
+            });
+            t += "</TABLE>";
+            return t;
+        } else {
+            return "";
+        }
     };
 
     var arrayExpandFunc = function(d, entries) {

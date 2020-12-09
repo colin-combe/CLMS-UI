@@ -73,22 +73,22 @@ CLMSUI.NGLUtils = {
 
                     // If have a pdb code AND legal accession IDs use a web service in matchPDBChainsToUniprot to glean matches
                     // between ngl protein chains and clms proteins. This is asynchronous so we use a callback
-                    if (pdbSettings[0].pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
-                        console.log("WEB SERVICE CALLED");
-                        CLMSUI.NGLUtils.matchPDBChainsToUniprot(pdbSettings, nglSequences, interactorArr, function (uniprotMappingResults) {
-                            CLMSUI.utils.xilog ("UniprotMapRes", uniprotMappingResults, nglSequences);
-                            if (uniprotMappingResults.remaining.length) { // Some PDB sequences don't have unicode protein matches in this search
-                                var remainingSequences = _.pluck (uniprotMappingResults.remaining, "seqObj");   // strip the remaining ones back to just sequence objects
-                                //console.log ("rem", remainingSequences, uniprotMappingResults);
-                                matchByXiAlignment (remainingSequences, uniprotMappingResults.uniprotMapped);   // fire them into xi alignment routine
-                                //returnFailure ("No valid uniprot data returned");
-                            } else {
-                                sequenceMapsAvailable (uniprotMappingResults.uniprotMapped);
-                            }
-                        });
-                    } else { // without access to pdb codes have to match comparing all proteins against all chains
+                    // if (pdbSettings[0].pdbCode && CLMSUI.modelUtils.getLegalAccessionIDs(interactorMap).length) {
+                    //     console.log("WEB SERVICE CALLED");
+                    //     CLMSUI.NGLUtils.matchPDBChainsToUniprot(pdbSettings, nglSequences, interactorArr, function (uniprotMappingResults) {
+                    //         CLMSUI.utils.xilog ("UniprotMapRes", uniprotMappingResults, nglSequences);
+                    //         if (uniprotMappingResults.remaining.length) { // Some PDB sequences don't have unicode protein matches in this search
+                    //             var remainingSequences = _.pluck (uniprotMappingResults.remaining, "seqObj");   // strip the remaining ones back to just sequence objects
+                    //             //console.log ("rem", remainingSequences, uniprotMappingResults);
+                    //             matchByXiAlignment (remainingSequences, uniprotMappingResults.uniprotMapped);   // fire them into xi alignment routine
+                    //             //returnFailure ("No valid uniprot data returned");
+                    //         } else {
+                    //             sequenceMapsAvailable (uniprotMappingResults.uniprotMapped);
+                    //         }
+                    //     });
+                    // } else { // without access to pdb codes have to match comparing all proteins against all chains
                         matchByXiAlignment (nglSequences, []);
-                    }
+                    // }
 
                     // bit to continue onto after ngl protein chain to clms protein matching has been done
                     function sequenceMapsAvailable (sequenceMap) {
@@ -476,28 +476,24 @@ CLMSUI.NGLUtils = {
         return lines;
     },
 
-        export3dLinksCSV: function (structure, nglModelWrapper, name, remarks) {
-            var crossLinks = nglModelWrapper.getFullLinks();
-            var pymolLinks =  CLMSUI.NGLUtils.make3dLinkSyntax (structure, crossLinks, remarks);
-            var fileName = downloadFilename ("CSV_NGL", "csv");
-            download (pymolLinks.join("\r\n"), "plain/text", fileName);
-        },
+    export3dLinksCSV: function (structure, nglModelWrapper, name, selectedOnly) {
+        var crossLinks = nglModelWrapper.getFullLinks();
+        var pymolLinks =  CLMSUI.NGLUtils.make3dLinkSyntax (structure, crossLinks, nglModelWrapper, selectedOnly);
+        var fileName = downloadFilename ("CSV_NGL", "csv");
+        download (pymolLinks.join("\r\n"), "plain/text", fileName);
+    },
 
-        make3dLinkSyntax: function (structure, links, remarks) {
-            var pdbids = structure.chainToOriginalStructureIDMap || {};
-            var cp = structure.getChainProxy();
-            var rp = structure.getResidueProxy();
+    make3dLinkSyntax: function (structure, links, nglModelWrapper, selectedOnly) {
+        var pdbids = structure.chainToOriginalStructureIDMap || {};
+        var cp = structure.getChainProxy();
+        var rp = structure.getResidueProxy();
 
-            var remarkLines = ["model,chain1,res1,chain2,res2,distance"];
-            // (remarks || []).map (function (remark) {
-            //     return "# "+remark;
-            // });
+        var remarkLines = ["model,chain1,res1,chain2,res2,distance"];
+        var selectedLinkIds = nglModelWrapper.get("compositeModel").get("selection").map(l => l.id);
 
-            // var pdbs = d3.set(d3.values(pdbids)).values();
-            // if (_.isEmpty (pdbs)) { pdbs = [structure.name]; }
-            // var pdbLines = pdbs.map (function (pdb) { return "fetch "+pdb+", async=0"; });
-
-            var crossLinkLines = links.map (function (link) {
+        var crossLinkLines = [];
+        for (var link of links){
+            if (!selectedOnly || selectedLinkIds.indexOf(link.origId) !== -1) {
                 cp.index = link.residueA.chainIndex;
                 var chainA = cp.chainname;
                 cp.index = link.residueB.chainIndex;
@@ -508,16 +504,15 @@ CLMSUI.NGLUtils = {
                 var name2 = rp.qualifiedName().replace("/", ":");
                 // .getXLinkDistanceFromPDBCoords (matrices, seqIndex1, seqIndex2, chainIndex1, chainIndex2);
                 var distObj = CLMSUI.compositeModelInst.get("clmsModel").get("distancesObj");
-                return (pdbids[link.residueA.chainIndex] || structure.name) + ","
-                          + chainA + "," + link.residueA.resno + ","
-                          + chainB + "," + link.residueB.resno + ","
-                          + distObj.getXLinkDistanceFromPDBCoords (distObj.matrices, link.residueA.seqIndex, link.residueB.seqIndex, link.residueA.chainIndex, link.residueA.chainIndex);
-                ;
-            });
+                crossLinkLines.push((pdbids[link.residueA.chainIndex] || structure.name) + ","
+                    + chainA + "," + link.residueA.resno + ","
+                    + chainB + "," + link.residueB.resno + ","
+                    + distObj.getXLinkDistanceFromPDBCoords(distObj.matrices, link.residueA.seqIndex, link.residueB.seqIndex, link.residueA.chainIndex, link.residueB.chainIndex));
+            }
+        }
 
-            var lines = remarkLines.concat(crossLinkLines);
-            return lines;
-        },
+        return remarkLines.concat(crossLinkLines);
+    },
 
     exportHaddockCrossLinkSyntax: function (structure, nglModelWrapper, name, remarks, crossLinkerObj) {
         var crossLinks = nglModelWrapper.getFullLinks();

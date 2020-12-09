@@ -36,7 +36,7 @@ header('Content-type: text/html; charset=utf-8');
             $pattern = '/[^0-9,\-]/';
             if (preg_match($pattern, $sid)){
                 header();
-                echo ("<!DOCTYPE html>\n<html><head></head><body>You're having a laugh.</body></html>");
+                echo ("<!DOCTYPE html>\n<html><head></head><body>404.</body></html>");
                 exit;
             }
             $pageName = "Validation";
@@ -71,13 +71,14 @@ header('Content-type: text/html; charset=utf-8');
         <link rel="stylesheet" href="./css/validate.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/filter.css<?php echo $cacheBuster ?>">
         <link rel="stylesheet" href="./css/validationPage.css<?php echo $cacheBuster ?>">
+        <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
 
         <script type="text/javascript" src="../vendor/js/c3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../vendor/js/split.min.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/split.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/svgexp.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/underscore.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery-3.4.1.js<?php echo $cacheBuster ?>"></script>
@@ -137,27 +138,22 @@ header('Content-type: text/html; charset=utf-8');
     <body>
         <!-- Main -->
         <div id="main">
-
             <div class="mainContent">
-                <div id="topDiv">
-                </div>
+                <div class="page-header" style="position:relative">
+                    <i class="fa fa-home fa-xi" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
+                    <span class="headerLabel">
+                        <?php echo $_SESSION['session_name'] ?>
+                    </span>
+                    <p id="expDropdownPlaceholder"></p>
+                    <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
+                </div> <!-- page-header -->
+                <div id="topDiv"></div>
                 <div id="bottomDiv"></div>
             </div>
-
-            <div class="page-header">
-                <i class="fa fa-home fa-xi" onclick="window.location = '../history/history.html';" title="Return to search history"></i>
-                <span class="headerLabel">
-                    <?php echo $_SESSION['session_name'] ?>
-                </span>
-                <p id="expDropdownPlaceholder"></p>
-                <button class='btn btn-1 btn-1a' onclick=<?php echo '"window.location = \'./network.php?sid='.$sid.'\'";' ?> title="View results">Done</button>
-            </div> <!-- page-header -->
-
             <div class="controls">
                 <span id="filterPlaceholder"></span>
             </div>
         </div><!-- MAIN -->
-
 
         <script>
         //<![CDATA[

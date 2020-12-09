@@ -64,25 +64,24 @@
       	<link rel="stylesheet" href="./css/list.css<?php echo $cacheBuster ?>">
       	<link rel="stylesheet" href="./css/goTermsView.css<?php echo $cacheBuster ?>">
 
-        <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script> <!-- IE11 Promise Polyfill -->
+       <link rel="stylesheet" href="./css/xiView.css<?php echo $cacheBuster ?>">
 
         <script type="text/javascript" src="../vendor/js/byrei-dyndiv_1.0rc1-src.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/colorbrewer.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/ngl_verbose.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/c3.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="../vendor/js/split.min.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/split.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/svgexp.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/underscore.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/spin.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery-3.4.1.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/backbone.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery.jsonview.js<?php echo $cacheBuster ?>"></script>
-	      <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="../vendor/js/d3table.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/cola.js<?php echo $cacheBuster ?>"></script><!-- for xiNET layout -->
-	      <script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
-	      <script type="text/javascript" src="../vendor/js/clusterfck.js<?php echo $cacheBuster ?>"></script>
-	      <script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
+	    <script type="text/javascript" src="../vendor/js/multiple-select.js<?php echo $cacheBuster ?>"></script>
+	    <script type="text/javascript" src="../vendor/js/workerpool.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/d3-octree.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="../vendor/js/jquery-ui.js<?php echo $cacheBuster ?>"></script>
 
@@ -120,7 +119,6 @@
         <script type="text/javascript" src="./js/NGLModelWrapperBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/PDBFileChooser.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/STRINGFileChooser.js<?php echo $cacheBuster ?>"></script>
-        <!-- <script type="text/javascript" src="./js/CSVFileChooserViewBB.js<?php echo $cacheBuster ?>"></script> -->
         <script type="text/javascript" src="./js/metaDataFileChoosers.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/NGLViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/bioseq32.js<?php echo $cacheBuster ?>"></script>
@@ -129,7 +127,9 @@
         <script type="text/javascript" src="./js/alignSettingsViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/selectionTableViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/circularViewBB.js<?php echo $cacheBuster ?>"></script>
-        <script type="text/javascript" src="./js/linkColourAssignment.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/color/color-model.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/color/link-color-model.js<?php echo $cacheBuster ?>"></script>
+        <script type="text/javascript" src="./js/color/protein-color-model.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/spectrumViewWrapper.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/validate.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/loadSpectrum.js<?php echo $cacheBuster ?>"></script>
@@ -141,10 +141,11 @@
         <script type="text/javascript" src="./js/searchSummaryViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/urlSearchBoxViewBB.js<?php echo $cacheBuster ?>"></script>
         <script type="text/javascript" src="./js/xiNetControlsViewBB.js<?php echo $cacheBuster ?>"></script>
-        <!-- <script type="text/javascript" src="./js/listViewBB.js<?php echo $cacheBuster ?>"></script> -->
-        <!-- <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script> -->
-        <!-- <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script> -->
-        <!-- <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script> -->
+         <script type="text/javascript" src="./js/goTermsSankeyViewBB.js<?php echo $cacheBuster ?>"></script>
+         <script type="text/javascript" src="./js/goTerm.js<?php echo $cacheBuster ?>"></script>
+         <script type="text/javascript" src="./js/sankey.js<?php echo $cacheBuster ?>"></script>
+
+        <script type="text/javascript" src="../userGUI/js/dialogs.js<?php echo $cacheBuster ?>"></script>
 
         <!-- Spectrum view files -->
         <script type="text/javascript" src="../spectrum/vendor/datatables.min.js<?php echo $cacheBuster ?>"></script>
@@ -308,16 +309,16 @@
         }
 
         // 2. Can load GO file in parallel - saves I/O time on initialising (whichever is shorter, go terms or spectrum matches)
-//         url = "./go.obo";
-//         d3.text (url, function(error, txt) {
-//             if (error) {
-//                 console.log("error", error, "for", url, arguments);
-//             } else {
-//                 CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
-//                 //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
-//                 allDataLoaded ();
-//             }
-//         });
+        url = "./go.obo";
+        d3.text (url, function(error, txt) {
+            if (error) {
+                console.log("error", error, "for", url, arguments);
+            } else {
+                CLMSUI.go = CLMSUI.modelUtils.loadGOAnnotations (txt);  // temp store until CLMS model is built
+                //CLMSUI.jsongo = CLMSUI.modelUtils.jsonifyGoMap (CLMSUI.go);
+                allDataLoaded ();
+            }
+        });
 
         // 3. Can load BLOSUM matrics in parallel - saves a little bit of intiialisation
         CLMSUI.init.blosumLoading ();

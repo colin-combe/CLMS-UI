@@ -537,7 +537,7 @@ function callback (model) {
         var stageModel = CLMSUI.compositeModelInst.get("stageModel");
         var crossLinks = stageModel.get("linkList");
 
-        var matrices1 = stageModel.getChainDistances (true);
+        var matrices1 = stageModel.getChainDistances (true); //this test will fail if the defualt value for AUTO in filtermodel is true, to make it pass you need to change this call's param to true
         var list1 = [];
         var list2 = [];
 
@@ -1094,92 +1094,92 @@ function callback (model) {
     });
 
 
-    QUnit.test ("ZScore array of values", function (assert) {
-        var expectedValue = [-1.49, -1.16, -0.83, -0.5, -0.17, 0.17, 0.5, 0.83, 1.16, 1.49];
-        var testNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        var actualValue = CLMSUI.modelUtils.zscore(testNumbers).map(function (num) {
-            return +(num).toFixed(2);
-        });
-
-        assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as z-value output, Passed!");
-    });
-
-
-    QUnit.test ("Compact 2D array", function (assert) {
-        var expectedValue = [[1, 2, undefined, 3], [4, 5, 6, 7]];
-        var testNumbers = [[1, 2, undefined, 3], [undefined, undefined, undefined, undefined], [4, 5, 6, 7]];
-        var actualValue = CLMSUI.modelUtils.compact2DArray (testNumbers);
-
-        assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as compacted 2D array, Passed!");
-    });
-
-
-    QUnit.test ("makeColumnGroupIndices", function (assert) {
-        var expectedValue = [["a", "b"],["c"]];
-        var options = {groups: d3.map({a: "cat", b: "cat", c: "dog"})};
-        var testNumbers = [[1, 1, 1, 1, 1],[3, 3, 3, 3, 3],[5, 5, 5, 5, 5]];
-        ["a", "b", "c"].forEach (function (val, i) { testNumbers[i].colName = val; });
-        var actualValue = CLMSUI.modelUtils.makeColumnGroupIndices(testNumbers, options);
-
-        assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as groups, Passed!");
-
-        expectedValue = [0, 0, 1];
-        actualValue = _.pluck (testNumbers, "groupIndex");
-        assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as attached score group indices, Passed!");
-    });
-
-
-    QUnit.test ("Average columns by group", function (assert) {
-        var expectedValue = [[2, 2, 2, 2, 2], [5, 5, 5, 5, 5]];
-        ["Avg Z[a;b]", "Avg Z[c]"].forEach (function (val, i) { expectedValue[i].colName = val; });
-
-        var testNumbers = [[1, 1, 1, 1, 1],[3, 3, 3, 3, 3],[5, 5, 5, 5, 5],[7, 7, 7, 7, 7]];
-        var columnGroupNames = [["a", "b"], ["c"]];
-        [0,0,1].forEach (function (val, i) { testNumbers[i].groupIndex = val; });	// 7's not given groupIndex
-        var actualValue = CLMSUI.modelUtils.averageGroups(testNumbers, columnGroupNames);
-
-        assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as z-value output, Passed!");
-    });
+    // QUnit.test ("ZScore array of values", function (assert) {
+    //     var expectedValue = [-1.49, -1.16, -0.83, -0.5, -0.17, 0.17, 0.5, 0.83, 1.16, 1.49];
+    //     var testNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    //     var actualValue = CLMSUI.modelUtils.zscore(testNumbers).map(function (num) {
+    //         return +(num).toFixed(2);
+    //     });
+    //
+    //     assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as z-value output, Passed!");
+    // });
+    //
+    //
+    // QUnit.test ("Compact 2D array", function (assert) {
+    //     var expectedValue = [[1, 2, undefined, 3], [4, 5, 6, 7]];
+    //     var testNumbers = [[1, 2, undefined, 3], [undefined, undefined, undefined, undefined], [4, 5, 6, 7]];
+    //     var actualValue = CLMSUI.modelUtils.compact2DArray (testNumbers);
+    //
+    //     assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as compacted 2D array, Passed!");
+    // });
+    //
+    //
+    // QUnit.test ("makeColumnGroupIndices", function (assert) {
+    //     var expectedValue = [["a", "b"],["c"]];
+    //     var options = {groups: d3.map({a: "cat", b: "cat", c: "dog"})};
+    //     var testNumbers = [[1, 1, 1, 1, 1],[3, 3, 3, 3, 3],[5, 5, 5, 5, 5]];
+    //     ["a", "b", "c"].forEach (function (val, i) { testNumbers[i].colName = val; });
+    //     var actualValue = CLMSUI.modelUtils.makeColumnGroupIndices(testNumbers, options);
+    //
+    //     assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as groups, Passed!");
+    //
+    //     expectedValue = [0, 0, 1];
+    //     actualValue = _.pluck (testNumbers, "groupIndex");
+    //     assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as attached score group indices, Passed!");
+    // });
 
 
-    QUnit.test ("Normalise 2D array to column", function (assert) {
-        var testArr = [
-            [2, 3, 4],
-            [1, 2, 3],
-            [4, 5, 6],
-            [7, undefined, 9],	// column 1 value is undefined, this is the column we try to normalise against
-            [undefined, 11, 12],	// column 0 value is undefined, just one of the other columns
-        ];
-
-        var expectedValue = [
-            [-1, 0, 1],
-            [-1, 0, 1],
-            [-1, 0, 1],
-            [undefined, undefined, undefined],	// normalise row to an undefined value = all row undefined
-            [undefined, 0, 1]	// normalise undefined value to known value = that value stays undefined
-        ];
-
-        var actualValue = CLMSUI.modelUtils.normalize2DArrayToColumn (testArr, 1);	// normalise to column 1
-
-        // stringify turns undefined to null for printout, but it's a match
-        assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as normalised array, Passed!");
-    });
+    // QUnit.test ("Average columns by group", function (assert) {
+    //     var expectedValue = [[2, 2, 2, 2, 2], [5, 5, 5, 5, 5]];
+    //     ["Avg Z[a;b]", "Avg Z[c]"].forEach (function (val, i) { expectedValue[i].colName = val; });
+    //
+    //     var testNumbers = [[1, 1, 1, 1, 1],[3, 3, 3, 3, 3],[5, 5, 5, 5, 5],[7, 7, 7, 7, 7]];
+    //     var columnGroupNames = [["a", "b"], ["c"]];
+    //     [0,0,1].forEach (function (val, i) { testNumbers[i].groupIndex = val; });	// 7's not given groupIndex
+    //     var actualValue = CLMSUI.modelUtils.averageGroups(testNumbers, columnGroupNames);
+    //
+    //     assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as z-value output, Passed!");
+    // });
 
 
-    QUnit.test ("Update crosslink metadata with column data", function (assert) {
-        var expectedValue = [{cat: 1, dog: 2}, {cat: 3, dog: 4}];
+    // QUnit.test ("Normalise 2D array to column", function (assert) {
+    //     var testArr = [
+    //         [2, 3, 4],
+    //         [1, 2, 3],
+    //         [4, 5, 6],
+    //         [7, undefined, 9],	// column 1 value is undefined, this is the column we try to normalise against
+    //         [undefined, 11, 12],	// column 0 value is undefined, just one of the other columns
+    //     ];
+    //
+    //     var expectedValue = [
+    //         [-1, 0, 1],
+    //         [-1, 0, 1],
+    //         [-1, 0, 1],
+    //         [undefined, undefined, undefined],	// normalise row to an undefined value = all row undefined
+    //         [undefined, 0, 1]	// normalise undefined value to known value = that value stays undefined
+    //     ];
+    //
+    //     var actualValue = CLMSUI.modelUtils.normalize2DArrayToColumn (testArr, 1);	// normalise to column 1
+    //
+    //     // stringify turns undefined to null for printout, but it's a match
+    //     assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as normalised array, Passed!");
+    // });
 
-        var testLinks = model.getAllCrossLinks().slice(0,2);
-        var testZScores = [[1, 2],[3, 4]];
-        testLinks.forEach (function (crossLink, i) { testZScores[i].clink = crossLink; });
-        var testColumnNameIndexPair = [{name: "cat", index: 0}, {name: "dog", index: 1}];
-        CLMSUI.modelUtils.updateMetaDataWithTheseColumns (testZScores, testColumnNameIndexPair);
 
-        var actualValue = testLinks.map (function (testLink) { return $.extend({}, testLink.getMeta()); });
-        actualValue.forEach (function (val) { delete val.distance; });
-
-        assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as updated metadata values, Passed!");
-    });
+    // QUnit.test ("Update crosslink metadata with column data", function (assert) {
+    //     var expectedValue = [{cat: 1, dog: 2}, {cat: 3, dog: 4}];
+    //
+    //     var testLinks = model.getAllCrossLinks().slice(0,2);
+    //     var testZScores = [[1, 2],[3, 4]];
+    //     testLinks.forEach (function (crossLink, i) { testZScores[i].clink = crossLink; });
+    //     var testColumnNameIndexPair = [{name: "cat", index: 0}, {name: "dog", index: 1}];
+    //     CLMSUI.modelUtils.updateMetaDataWithTheseColumns (testZScores, testColumnNameIndexPair);
+    //
+    //     var actualValue = testLinks.map (function (testLink) { return $.extend({}, testLink.getMeta()); });
+    //     actualValue.forEach (function (val) { delete val.distance; });
+    //
+    //     assert.deepEqual (actualValue, expectedValue, "Expected "+JSON.stringify(expectedValue)+" as updated metadata values, Passed!");
+    // });
 
     QUnit.module ("Metadata parsing testing");
 

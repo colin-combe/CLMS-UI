@@ -40,6 +40,11 @@ CLMSUI.FilterViewBB = Backbone.View.extend({
                     tooltip: "Show linear peptides",
                 },
                 {
+                    label: "Monolinks",
+                    id: "monolinks",
+                    tooltip: "Show monolinks",
+                },
+                {
                     label: "Crosslinks",
                     id: "crosslinks",
                     tooltip: "Show crosslinks",
